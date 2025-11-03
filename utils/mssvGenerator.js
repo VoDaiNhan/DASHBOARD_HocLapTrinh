@@ -1,39 +1,41 @@
 import { pool } from '../config/database.js';
 
 /**
- * Tạo MSSV tự động cho sinh viên
+ * Tạo MSSV tự động cho sinh viên (Thread-safe với database sequence)
  * Format: YY + số tăng dần (5 chữ số)
  * Ví dụ: 2400001, 2400002, ...
+ * 
+ * ✅ Fix race condition: Sử dụng PostgreSQL sequence
+ * Nhiều user đăng ký cùng lúc không bị trùng MSSV
  */
 export const generateMSSV = async () => {
+  const client = await pool.connect();
+  
   try {
-    // Lấy 2 số cuối của năm hiện tại
-    const currentYear = new Date().getFullYear().toString().slice(-2);
+    // Bắt đầu transaction
+    await client.query('BEGIN');
     
-    // Query để tìm MSSV lớn nhất trong năm hiện tại
-    const query = `
-      SELECT COALESCE(MAX(CAST(SUBSTRING(mssv, 3) AS INTEGER)), 0) as max_num
-      FROM public.users
-      WHERE mssv LIKE $1 || '%'
-        AND role = 'sinh_vien'
-        AND mssv IS NOT NULL
-    `;
+    // Gọi function generate_mssv_safe() từ database
+    // Function này sử dụng sequence nên thread-safe
+    const result = await client.query('SELECT public.generate_mssv_safe() as mssv');
+    const mssv = result.rows[0].mssv;
     
-    const result = await pool.query(query, [currentYear]);
-    const maxNum = result.rows[0]?.max_num || 0;
-    
-    // Tạo MSSV mới: YY + số tăng dần (5 chữ số)
-    const newNum = maxNum + 1;
-    const mssv = currentYear + String(newNum).padStart(5, '0');
+    // Commit transaction
+    await client.query('COMMIT');
     
     return mssv;
   } catch (error) {
+    // Rollback nếu có lỗi
+    await client.query('ROLLBACK');
     console.error('Error generating MSSV:', error);
     
-    // Fallback: Tạo MSSV từ timestamp nếu có lỗi
-    const timestamp = Date.now().toString().slice(-7);
+    // Fallback: Tạo MSSV từ timestamp + random
+    const timestamp = Date.now().toString().slice(-5);
+    const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
     const currentYear = new Date().getFullYear().toString().slice(-2);
-    return currentYear + timestamp;
+    return currentYear + timestamp + random;
+  } finally {
+    client.release();
   }
 };
 

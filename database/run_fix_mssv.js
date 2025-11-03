@@ -18,7 +18,7 @@ const pool = new Pool({
   }
 });
 
-async function importStudents() {
+async function fixMSSVSequence() {
   const client = await pool.connect();
   
   try {
@@ -29,37 +29,25 @@ async function importStudents() {
     console.log('✅ Kết nối database thành công!\n');
     
     // Đọc file SQL
-    console.log('📖 Đang đọc file import_students.sql...');
-    const sqlFilePath = path.join(__dirname, 'import_students.sql');
+    console.log('📖 Đang đọc fix_mssv_sequence.sql...');
+    const sqlFilePath = path.join(__dirname, 'fix_mssv_sequence.sql');
     const sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
     
     // Chạy SQL
-    console.log('⚙️  Đang import dữ liệu học sinh...\n');
+    console.log('⚙️  Đang tạo sequence và function mới...\n');
     await client.query(sqlContent);
     
-    // Lấy thống kê
-    const statsResult = await client.query(`
-      SELECT 
-        class_name,
-        COUNT(*) as student_count
-      FROM public.class
-      GROUP BY class_name
-      ORDER BY class_name;
-    `);
-    
-    const totalResult = await client.query('SELECT COUNT(*) as total FROM public.class');
-    
-    console.log('✅ Import thành công!');
+    console.log('✅ Fix MSSV race condition thành công!');
     console.log('='.repeat(50));
-    console.log(`📊 Tổng số học sinh trong database: ${totalResult.rows[0].total}`);
-    console.log('\n📋 Danh sách lớp:');
-    statsResult.rows.forEach(row => {
-      console.log(`   - ${row.class_name}: ${row.student_count} học sinh`);
-    });
+    console.log('📝 Đã tạo:');
+    console.log('   - Sequence: public.mssv_sequence');
+    console.log('   - Function: public.generate_mssv_safe()');
+    console.log('\n🔒 Giờ đây MSSV sẽ được tạo thread-safe');
+    console.log('   → Không còn bị trùng khi nhiều người đăng ký cùng lúc!');
     console.log('='.repeat(50));
     
   } catch (error) {
-    console.error('❌ Lỗi khi import dữ liệu:', error.message);
+    console.error('❌ Lỗi khi fix MSSV sequence:', error.message);
     throw error;
   } finally {
     client.release();
@@ -67,15 +55,15 @@ async function importStudents() {
   }
 }
 
-// Chạy import
-importStudents()
+// Chạy fix
+fixMSSVSequence()
   .then(() => {
     console.log('\n✨ Hoàn tất!');
+    console.log('💡 Bây giờ restart server và thử đăng ký lại nhé!');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n💥 Import thất bại:', error);
+    console.error('\n💥 Fix thất bại:', error);
     process.exit(1);
   });
-
 

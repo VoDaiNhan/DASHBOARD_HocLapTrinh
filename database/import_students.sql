@@ -126,3 +126,4 @@ BEGIN
   RAISE NOTICE '   - 22ct115: % học sinh', (SELECT COUNT(*) FROM public.class WHERE class_name = '22ct115');
 END $$;
 
+
