@@ -1,32 +1,49 @@
-import pkg from 'pg';
+import sql from 'mssql';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { Pool } = pkg;
-
-// PostgreSQL Pool (Direct database connection - Neon)
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for Neon SSL connection
+// SQL Server Configuration
+const config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: true, // For Azure
+    trustServerCertificate: true // For local dev
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
   }
-});
+};
+
+// Global connection pool
+let pool = null;
+
+// Get or create pool
+export async function getPool() {
+  if (!pool) {
+    pool = await sql.connect(config);
+  }
+  return pool;
+}
 
 // Test connection function
 export async function testConnection() {
   try {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL configuration missing');
+    if (!process.env.DB_SERVER || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+      throw new Error('SQL Server configuration missing. Check DB_SERVER, DB_USER, DB_PASSWORD, DB_NAME in .env');
     }
 
-    // Test PostgreSQL connection
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
+    // Test SQL Server connection
+    const pool = await getPool();
+    await pool.request().query('SELECT 1 as test');
     
-    // Chỉ hiển thị thông báo thành công
     console.log('✅ Database connected successfully');
+    console.log(`📊 Database: ${process.env.DB_NAME} on ${process.env.DB_SERVER}`);
     
     return true;
   } catch (error) {
@@ -35,7 +52,11 @@ export async function testConnection() {
   }
 }
 
+// Export for backward compatibility
+export { sql, pool };
+
 export default {
-  pool,
-  testConnection
+  getPool,
+  testConnection,
+  sql
 };

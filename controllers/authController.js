@@ -1,17 +1,17 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database.js';
-import { generateMSSV } from '../utils/mssvGenerator.js';
+import { pool, sql } from '../config/database.js';
 import { sendMSSVEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 /**
  * Register - Đăng ký tài khoản mới
  * Sinh viên cần: email, password, full_name, class_name
- * Kiểm tra email và full_name có trong danh sách lớp không
+ * Kiểm tra full_name và class_name có trong danh sách lớp không
+ * Lấy StudentID từ bảng class làm MSSV
  * Mặc định role = "sinh_vien"
- * Tự động tạo MSSV và gửi qua email
+ * Gửi MSSV qua email mà user đã nhập
  */
 export const register = async (req, res) => {
   try {
@@ -35,46 +35,45 @@ export const register = async (req, res) => {
     // Mặc định role = "sinh_vien"
     const userRole = role || 'sinh_vien';
     
-    // KIỂM TRA: Email và full_name có trong danh sách lớp không
+    // KIỂM TRA: full_name và class_name có trong danh sách lớp không
     if (userRole === 'sinh_vien') {
-      const classCheck = await pool.query(
-        'SELECT id, is_registered FROM public.class WHERE class_name = $1 AND email = $2 AND full_name = $3',
-        [class_name, email, full_name]
-      );
+      // Check trong bảng class: LopID = class_name và HoTenSV = full_name
+      const classCheckResult = await pool.request()
+        .input('class_name', sql.NVarChar(20), class_name)
+        .input('full_name', sql.NVarChar(255), full_name)
+        .query('SELECT id, StudentID FROM class WHERE LopID = @class_name AND HoTenSV = @full_name');
 
-      if (!classCheck.rows || classCheck.rows.length === 0) {
+      if (!classCheckResult.recordset || classCheckResult.recordset.length === 0) {
         return res.status(403).json({
           error: 'Registration denied',
           message: 'Bạn không có trong danh sách lớp học này'
         });
       }
 
-      // Kiểm tra đã đăng ký chưa
-      if (classCheck.rows[0].is_registered) {
+      // Lấy StudentID từ bảng class làm MSSV
+      const mssv = classCheckResult.recordset[0].StudentID;
+
+      // Kiểm tra MSSV (StudentID) đã được sử dụng chưa (đã có user nào đăng ký với MSSV này chưa)
+      const existingMSSVResult = await pool.request()
+        .input('mssv', sql.NVarChar(20), mssv)
+        .query('SELECT id FROM users WHERE mssv = @mssv');
+      
+      if (existingMSSVResult.recordset.length > 0) {
         return res.status(400).json({
           error: 'Registration failed',
-          message: 'Tài khoản này đã được đăng ký'
+          message: 'MSSV này đã được đăng ký'
         });
       }
 
       // Kiểm tra email đã được sử dụng bởi tài khoản khác chưa
-      const existingUser = await pool.query('SELECT id FROM public.users WHERE email = $1', [email]);
-      if (existingUser.rows.length > 0) {
+      const existingUserResult = await pool.request()
+        .input('email', sql.NVarChar(255), email)
+        .query('SELECT id FROM users WHERE email = @email');
+      
+      if (existingUserResult.recordset.length > 0) {
         return res.status(400).json({
           error: 'Registration failed',
           message: 'Email đã được sử dụng'
-        });
-      }
-
-      // Tạo MSSV tự động cho sinh viên
-      let mssv = null;
-      try {
-        mssv = await generateMSSV();
-      } catch (mssvError) {
-        console.error('Error generating MSSV:', mssvError);
-        return res.status(500).json({
-          error: 'Server error',
-          message: 'Không thể tạo MSSV. Vui lòng thử lại sau.'
         });
       }
 
@@ -83,28 +82,20 @@ export const register = async (req, res) => {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Lưu user vào database
-      const insertQuery = `
-        INSERT INTO public.users (email, mssv, full_name, password, class_id, role)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, email, mssv, full_name, role, created_at
-      `;
-      
-      const result = await pool.query(insertQuery, [
-        email,
-        mssv,
-        full_name,
-        passwordHash,
-        classCheck.rows[0].id,
-        userRole
-      ]);
+      const insertResult = await pool.request()
+        .input('email', sql.NVarChar(255), email)
+        .input('mssv', sql.NVarChar(20), mssv)
+        .input('full_name', sql.NVarChar(255), full_name)
+        .input('password', sql.NVarChar(255), passwordHash)
+        .input('class_id', sql.Int, classCheckResult.recordset[0].id)
+        .input('role', sql.NVarChar(20), userRole)
+        .query(`
+          INSERT INTO users (email, mssv, full_name, password, class_id, role)
+          OUTPUT INSERTED.id, INSERTED.email, INSERTED.mssv, INSERTED.full_name, INSERTED.role, INSERTED.created_at
+          VALUES (@email, @mssv, @full_name, @password, @class_id, @role)
+        `);
 
-      const newUser = result.rows[0];
-
-      // Cập nhật trạng thái đã đăng ký trong bảng class
-      await pool.query(
-        'UPDATE public.class SET is_registered = true WHERE id = $1',
-        [classCheck.rows[0].id]
-      );
+      const newUser = insertResult.recordset[0];
 
       // Gửi email MSSV cho sinh viên
       if (mssv) {
@@ -132,8 +123,11 @@ export const register = async (req, res) => {
       });
     } else {
       // Cho giảng viên và quản lý ngành đăng ký mà không cần kiểm tra class
-      const existingUser = await pool.query('SELECT id FROM public.users WHERE email = $1', [email]);
-      if (existingUser.rows.length > 0) {
+      const existingUserResult = await pool.request()
+        .input('email', sql.NVarChar(255), email)
+        .query('SELECT id FROM users WHERE email = @email');
+      
+      if (existingUserResult.recordset.length > 0) {
         return res.status(400).json({
           error: 'Registration failed',
           message: 'Email đã được sử dụng'
@@ -145,21 +139,19 @@ export const register = async (req, res) => {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Lưu user vào database (không có class_id cho giảng viên)
-      const insertQuery = `
-        INSERT INTO public.users (email, mssv, full_name, password, role)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, email, mssv, full_name, role, created_at
-      `;
-      
-      const result = await pool.query(insertQuery, [
-        email,
-        null,
-        full_name,
-        passwordHash,
-        userRole
-      ]);
+      const insertResult = await pool.request()
+        .input('email', sql.NVarChar(255), email)
+        .input('mssv', sql.NVarChar(20), null)
+        .input('full_name', sql.NVarChar(255), full_name)
+        .input('password', sql.NVarChar(255), passwordHash)
+        .input('role', sql.NVarChar(20), userRole)
+        .query(`
+          INSERT INTO users (email, mssv, full_name, password, role)
+          OUTPUT INSERTED.id, INSERTED.email, INSERTED.mssv, INSERTED.full_name, INSERTED.role, INSERTED.created_at
+          VALUES (@email, @mssv, @full_name, @password, @role)
+        `);
 
-      const newUser = result.rows[0];
+      const newUser = insertResult.recordset[0];
 
       return res.status(201).json({
         success: true,
@@ -178,11 +170,11 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error('Register error:', error);
     
-    // Check for duplicate email or mssv
-    if (error.code === '23505') { // PostgreSQL unique violation
+    // Check for duplicate email or mssv (SQL Server error code 2627)
+    if (error.number === 2627) { // SQL Server unique violation
       return res.status(400).json({
         error: 'Registration failed',
-        message: error.constraint === 'users_email_key' 
+        message: error.message.includes('email') || error.message.includes('users_email')
           ? 'Email đã tồn tại'
           : 'MSSV đã tồn tại'
       });
@@ -215,24 +207,26 @@ export const login = async (req, res) => {
     let user;
     if (mssv && !email) {
       // Login bằng MSSV
-      const result = await pool.query(
-        `SELECT u.id, u.email, u.mssv, u.full_name, u.password, u.role, c.class_name 
-         FROM public.users u 
-         LEFT JOIN public.class c ON u.class_id = c.id 
-         WHERE u.mssv = $1`,
-        [mssv]
-      );
-      user = result.rows[0];
+      const result = await pool.request()
+        .input('mssv', sql.NVarChar(20), mssv)
+        .query(`
+          SELECT u.id, u.email, u.mssv, u.full_name, u.password, u.role, c.LopID as class_name 
+          FROM users u 
+          LEFT JOIN class c ON u.class_id = c.id 
+          WHERE u.mssv = @mssv
+        `);
+      user = result.recordset[0];
     } else {
       // Login bằng email
-      const result = await pool.query(
-        `SELECT u.id, u.email, u.mssv, u.full_name, u.password, u.role, c.class_name 
-         FROM public.users u 
-         LEFT JOIN public.class c ON u.class_id = c.id 
-         WHERE u.email = $1`,
-        [email]
-      );
-      user = result.rows[0];
+      const result = await pool.request()
+        .input('email', sql.NVarChar(255), email)
+        .query(`
+          SELECT u.id, u.email, u.mssv, u.full_name, u.password, u.role, c.LopID as class_name 
+          FROM users u 
+          LEFT JOIN class c ON u.class_id = c.id 
+          WHERE u.email = @email
+        `);
+      user = result.recordset[0];
     }
 
     // Check user exists
@@ -270,18 +264,17 @@ export const login = async (req, res) => {
 
     // Lưu session vào database (đã convert sang giờ VN)
     try {
-      await pool.query(
-        `INSERT INTO public.user_sessions 
-         (user_id, access_token, refresh_token, token_expires_at, refresh_token_expires_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [
-          user.id,
-          accessToken,
-          refreshToken,
-          tokenExpiresAt.toISOString(),
-          refreshTokenExpiresAt.toISOString()
-        ]
-      );
+      await pool.request()
+        .input('user_id', sql.UniqueIdentifier, user.id)
+        .input('access_token', sql.NVarChar(sql.MAX), accessToken)
+        .input('refresh_token', sql.NVarChar(sql.MAX), refreshToken)
+        .input('token_expires_at', sql.DateTime2, tokenExpiresAt.toISOString())
+        .input('refresh_token_expires_at', sql.DateTime2, refreshTokenExpiresAt.toISOString())
+        .query(`
+          INSERT INTO user_sessions 
+          (user_id, access_token, refresh_token, token_expires_at, refresh_token_expires_at)
+          VALUES (@user_id, @access_token, @refresh_token, @token_expires_at, @refresh_token_expires_at)
+        `);
     } catch (sessionError) {
       console.warn('Warning: Could not insert into user_sessions table:', sessionError.message);
     }
@@ -328,19 +321,18 @@ export const getCurrentUser = async (req, res) => {
     }
 
     // Lấy thông tin user từ database
-    const result = await pool.query(
-      'SELECT id, email, mssv, full_name, phone, address, class_id, role, created_at FROM public.users WHERE id = $1',
-      [req.user.userId]
-    );
+    const result = await pool.request()
+      .input('user_id', sql.UniqueIdentifier, req.user.userId)
+      .query('SELECT id, email, mssv, full_name, phone, address, class_id, role, created_at FROM users WHERE id = @user_id');
 
-    if (!result.rows || result.rows.length === 0) {
+    if (!result.recordset || result.recordset.length === 0) {
       return res.status(404).json({
         error: 'Not found',
         message: 'User không tồn tại'
       });
     }
 
-    const user = result.rows[0];
+    const user = result.recordset[0];
 
     return res.json({
       success: true,
@@ -373,10 +365,9 @@ export const logout = async (req, res) => {
 
     // Xóa session khỏi database (hard delete để bảo mật)
     try {
-      await pool.query(
-        'DELETE FROM public.user_sessions WHERE access_token = $1',
-        [token]
-      );
+      await pool.request()
+        .input('token', sql.NVarChar(sql.MAX), token)
+        .query('DELETE FROM user_sessions WHERE access_token = @token');
       console.log('✅ Session deleted successfully from database');
     } catch (sessionError) {
       console.warn('Warning: Could not delete session from user_sessions table:', sessionError.message);
@@ -411,12 +402,11 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Tìm user trong database
-    const result = await pool.query(
-      'SELECT id, email, full_name FROM public.users WHERE email = $1',
-      [email]
-    );
+    const result = await pool.request()
+      .input('email', sql.NVarChar(255), email)
+      .query('SELECT id, email, full_name FROM users WHERE email = @email');
 
-    const user = result.rows[0];
+    const user = result.recordset[0];
 
     // Không báo lỗi nếu email không tồn tại để tránh brute force
     if (!user) {
@@ -431,10 +421,11 @@ export const forgotPassword = async (req, res) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
     // Lưu token vào database
-    await pool.query(
-      'INSERT INTO public.password_resets (user_id, token, expires_at) VALUES ($1, $2, $3)',
-      [user.id, resetToken, expiresAt]
-    );
+    await pool.request()
+      .input('user_id', sql.UniqueIdentifier, user.id)
+      .input('token', sql.NVarChar(255), resetToken)
+      .input('expires_at', sql.DateTime2, expiresAt)
+      .query('INSERT INTO password_resets (user_id, token, expires_at) VALUES (@user_id, @token, @expires_at)');
 
     // Gửi email reset password
     try {
@@ -473,12 +464,11 @@ export const verifyResetToken = async (req, res) => {
     }
 
     // Tìm token trong database
-    const result = await pool.query(
-      'SELECT id, user_id, expires_at, is_used FROM public.password_resets WHERE token = $1',
-      [token]
-    );
+    const result = await pool.request()
+      .input('token', sql.NVarChar(255), token)
+      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
 
-    const resetRecord = result.rows[0];
+    const resetRecord = result.recordset[0];
 
     // Kiểm tra token có tồn tại không
     if (!resetRecord) {
@@ -549,12 +539,11 @@ export const resetPassword = async (req, res) => {
     }
 
     // Tìm token trong database
-    const tokenResult = await pool.query(
-      'SELECT id, user_id, expires_at, is_used FROM public.password_resets WHERE token = $1',
-      [token]
-    );
+    const tokenResult = await pool.request()
+      .input('token', sql.NVarChar(255), token)
+      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
 
-    const resetRecord = tokenResult.rows[0];
+    const resetRecord = tokenResult.recordset[0];
 
     // Kiểm tra token có tồn tại không
     if (!resetRecord) {
@@ -585,16 +574,15 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Cập nhật password mới cho user
-    await pool.query(
-      'UPDATE public.users SET password = $1, updated_at = NOW() WHERE id = $2',
-      [hashedPassword, resetRecord.user_id]
-    );
+    await pool.request()
+      .input('password', sql.NVarChar(255), hashedPassword)
+      .input('user_id', sql.UniqueIdentifier, resetRecord.user_id)
+      .query('UPDATE users SET password = @password, updated_at = GETDATE() WHERE id = @user_id');
 
     // Đánh dấu token đã được sử dụng
-    await pool.query(
-      'UPDATE public.password_resets SET is_used = true WHERE id = $1',
-      [resetRecord.id]
-    );
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, resetRecord.id)
+      .query('UPDATE password_resets SET is_used = 1 WHERE id = @id');
 
     return res.json({
       success: true,
@@ -635,35 +623,32 @@ export const refreshToken = async (req, res) => {
     }
 
     // Check refresh token exists in database and is still valid
-    // Note: refresh_token_expires_at is stored in VN time (UTC+7), so we need to convert NOW() to VN time
-    const sessionResult = await pool.query(
-      'SELECT user_id, is_active FROM public.user_sessions WHERE refresh_token = $1 AND refresh_token_expires_at > NOW() AT TIME ZONE \'Asia/Ho_Chi_Minh\'',
-      [refresh_token]
-    );
+    const sessionResult = await pool.request()
+      .input('refresh_token', sql.NVarChar(sql.MAX), refresh_token)
+      .query('SELECT user_id, is_active FROM user_sessions WHERE refresh_token = @refresh_token AND refresh_token_expires_at > GETDATE()');
 
-    if (!sessionResult.rows || sessionResult.rows.length === 0) {
+    if (!sessionResult.recordset || sessionResult.recordset.length === 0) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Refresh token không còn hợp lệ'
       });
     }
 
-    const session = sessionResult.rows[0];
+    const session = sessionResult.recordset[0];
 
     // Get user info to generate new tokens
-    const userResult = await pool.query(
-      'SELECT id, role FROM public.users WHERE id = $1',
-      [decoded.userId]
-    );
+    const userResult = await pool.request()
+      .input('user_id', sql.UniqueIdentifier, decoded.userId)
+      .query('SELECT id, role FROM users WHERE id = @user_id');
 
-    if (!userResult.rows || userResult.rows.length === 0) {
+    if (!userResult.recordset || userResult.recordset.length === 0) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User không tồn tại'
       });
     }
 
-    const user = userResult.rows[0];
+    const user = userResult.recordset[0];
 
     // Generate new tokens
     const newAccessToken = generateAccessToken(user.id, user.role);
@@ -681,12 +666,17 @@ export const refreshToken = async (req, res) => {
     const refreshTokenExpiresAt = new Date(refreshTokenExpiresAtUTC.getTime() + 7 * 60 * 60 * 1000);
 
     // Update session in database (đã convert sang giờ VN)
-    await pool.query(
-      `UPDATE public.user_sessions 
-       SET access_token = $1, refresh_token = $2, token_expires_at = $3, refresh_token_expires_at = $4, updated_at = NOW()
-       WHERE refresh_token = $5`,
-      [newAccessToken, newRefreshToken, tokenExpiresAt.toISOString(), refreshTokenExpiresAt.toISOString(), refresh_token]
-    );
+    await pool.request()
+      .input('access_token', sql.NVarChar(sql.MAX), newAccessToken)
+      .input('refresh_token', sql.NVarChar(sql.MAX), newRefreshToken)
+      .input('token_expires_at', sql.DateTime2, tokenExpiresAt.toISOString())
+      .input('refresh_token_expires_at', sql.DateTime2, refreshTokenExpiresAt.toISOString())
+      .input('old_refresh_token', sql.NVarChar(sql.MAX), refresh_token)
+      .query(`
+        UPDATE user_sessions 
+        SET access_token = @access_token, refresh_token = @refresh_token, token_expires_at = @token_expires_at, refresh_token_expires_at = @refresh_token_expires_at, updated_at = GETDATE()
+        WHERE refresh_token = @old_refresh_token
+      `);
 
     return res.json({
       success: true,

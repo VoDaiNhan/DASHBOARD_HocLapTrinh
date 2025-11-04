@@ -1,5 +1,5 @@
 import { verifyAccessToken } from '../utils/jwt.js';
-import { pool } from '../config/database.js';
+import { pool, sql } from '../config/database.js';
 
 /**
  * Middleware để verify JWT token từ request header
@@ -29,12 +29,11 @@ export const verifyToken = async (req, res, next) => {
 
     // Lấy thông tin user từ database
     try {
-      const result = await pool.query(
-        'SELECT id, role FROM public.users WHERE id = $1',
-        [decoded.userId]
-      );
+      const result = await pool.request()
+        .input('user_id', sql.UniqueIdentifier, decoded.userId)
+        .query('SELECT id, role FROM users WHERE id = @user_id');
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!result.recordset || result.recordset.length === 0) {
         return res.status(401).json({
           error: 'Unauthorized',
           message: 'User không tồn tại'
@@ -43,13 +42,11 @@ export const verifyToken = async (req, res, next) => {
 
       // Check session exists, is active, and not expired
       // We check both JWT signature (above) and database timestamp (here)
-      // Note: token_expires_at is stored in VN time (UTC+7), so we need to convert NOW() to VN time
-      const sessionResult = await pool.query(
-        'SELECT id FROM public.user_sessions WHERE access_token = $1 AND is_active = true AND token_expires_at > NOW() AT TIME ZONE \'Asia/Ho_Chi_Minh\'',
-        [token]
-      );
+      const sessionResult = await pool.request()
+        .input('token', sql.NVarChar(sql.MAX), token)
+        .query('SELECT id FROM user_sessions WHERE access_token = @token AND is_active = 1 AND token_expires_at > GETDATE()');
 
-      if (!sessionResult.rows || sessionResult.rows.length === 0) {
+      if (!sessionResult.recordset || sessionResult.recordset.length === 0) {
         return res.status(401).json({
           error: 'Unauthorized',
           message: 'Session không tồn tại, đã hết hạn hoặc đã bị đăng xuất'
@@ -58,8 +55,8 @@ export const verifyToken = async (req, res, next) => {
 
       // Lưu user vào request để sử dụng trong routes
       req.user = {
-        userId: result.rows[0].id,
-        role: result.rows[0].role
+        userId: result.recordset[0].id,
+        role: result.recordset[0].role
       };
       req.token = token;
       

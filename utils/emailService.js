@@ -150,23 +150,84 @@ Hệ thống Quản lý Học Lập Trình
     // Nội dung email
     const subject = 'Đặt lại mật khẩu';
     const htmlBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Đặt lại mật khẩu</h2>
-        <p>Xin chào <strong>${fullName}</strong>,</p>
-        <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>
-        <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: center;">
-          <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-            Đặt lại mật khẩu
-          </a>
-        </div>
-        <p style="color: #666; font-size: 14px;">Hoặc copy link sau vào trình duyệt:</p>
-        <p style="color: #007bff; font-size: 12px; word-break: break-all;">${resetUrl}</p>
-        <p style="color: #ff0000; font-size: 14px;"><strong>Lưu ý:</strong> Link này sẽ hết hạn sau 15 phút.</p>
-        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-          Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.<br>
-          Trân trọng,<br>Hệ thống Quản lý Học Lập Trình
-        </p>
-      </div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt lại mật khẩu</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: 0.5px;">
+                                🔐 Đặt lại mật khẩu
+                            </h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Xin chào <strong style="color: #667eea;">${fullName}</strong>,
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #555555; font-size: 15px; line-height: 1.6;">
+                                Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình. Vui lòng nhấn vào nút bên dưới để tiếp tục.
+                            </p>
+                            
+                            <!-- Button -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                                            Đặt lại mật khẩu
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Warning -->
+                            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0; border-radius: 4px;">
+                                <p style="margin: 0; color: #856404; font-size: 14px; line-height: 1.5;">
+                                    <strong>⚠️ Lưu ý:</strong> Link này sẽ hết hạn sau <strong style="color: #dc3545;">15 phút</strong>. Vui lòng đặt lại mật khẩu ngay.
+                                </p>
+                            </div>
+                            
+                            <!-- Security Notice -->
+                            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                                <p style="margin: 0 0 15px 0; color: #888888; font-size: 13px; line-height: 1.6;">
+                                    <strong>🔒 Bảo mật tài khoản:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và liên hệ với chúng tôi ngay lập tức.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 25px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                            <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;">
+                                Trân trọng,
+                            </p>
+                            <p style="margin: 0; color: #667eea; font-size: 15px; font-weight: 600;">
+                                Hệ thống Quản lý Học Lập Trình
+                            </p>
+                            <p style="margin: 15px 0 0 0; color: #999999; font-size: 12px;">
+                                Email này được gửi tự động, vui lòng không trả lời.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
     `;
 
     const textBody = `
