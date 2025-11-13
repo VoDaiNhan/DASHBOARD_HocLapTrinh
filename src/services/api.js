@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://be-dashboard-hoclaptrinh.onrender.com';
+const API_BASE_URL = 'https://be-dashboard-hoclaptrinh.onrender.com/api';
 
 /**
  * Decode JWT token to get payload (without verification)
