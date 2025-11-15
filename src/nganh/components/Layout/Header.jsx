@@ -1,280 +1,51 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
+import { Menu, Bell, User, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { authAPI } from '../../../services/api';
-
-const X = () => (
-  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
-
-const Menu = () => (
-  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-
-const Bell = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-  </svg>
-);
-
-const Search = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
-
-const User = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const LogOut = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-  </svg>
-);
-
-const Settings = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
-const Moon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-  </svg>
-);
-
-const Sun = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-  </svg>
-);
+import GlobalSearch from './GlobalSearch';
 
 const Header = ({ onMenuClick }) => {
   const { isDarkMode, toggleTheme } = useTheme();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
-  const [user, setUser] = useState(null);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const [profileData, setProfileData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-
-  useEffect(() => {
-    const userData = sessionStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleProfileClick = async () => {
-    setUserMenuOpen(false);
-    setLoadingProfile(true);
-    setProfileModalOpen(true);
-    
-    try {
-      const response = await authAPI.getCurrentUser();
-      setProfileData(response.data.user);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Clear all data
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
-      sessionStorage.removeItem('user');
-      sessionStorage.removeItem('dashboardType');
-      
-      // Redirect to login
-      window.location.href = '/login';
-    }
-  };
-
   return (
-    <>
-      <header className={`shadow-sm border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={onMenuClick}
-              className={`lg:hidden p-2 rounded-md ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} transition-colors`}
-            >
-              <Menu />
-            </button>
-            
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm sinh viên, khóa học..."
-                  className={`pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-80 border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'border-gray-300'}`}
-                />
-              </div>
-            </div>
+    <header className={`shadow-sm border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={onMenuClick}
+            className={`lg:hidden p-2 rounded-md ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} transition-colors`}
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          
+          <div className="hidden md:flex items-center space-x-4">
+            <GlobalSearch />
           </div>
+        </div>
 
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <button className={`relative p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
-              <Bell />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-danger-500 rounded-full"></span>
-            </button>
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-            
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
-              >
-                <div className="hidden md:block text-right">
-                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user?.full_name || 'Quản lý ngành'}</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email || 'Email'}</p>
-                </div>
-                <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-              </button>
-
-              {/* User Dropdown Menu */}
-              {userMenuOpen && (
-                <div className={`absolute right-0 mt-2 w-56 rounded-lg shadow-lg border py-1 z-50 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                  <div className={`px-4 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user?.full_name || 'Quản lý ngành'}</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email || 'Email'}</p>
-                  </div>
-                  
-                  <div className="py-1">
-                    <button onClick={handleProfileClick} className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700'}`}>
-                      <User className="h-4 w-4 mr-3 text-gray-400" />
-                      <span>Hồ sơ của tôi</span>
-                    </button>
-                    
-                    <button className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700'}`}>
-                      <Settings className="h-4 w-4 mr-3 text-gray-400" />
-                      <span>Cài đặt</span>
-                    </button>
-                  </div>
-                  
-                  <div className={`border-t py-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <button 
-                      onClick={handleLogout}
-                      className={`w-full flex items-center px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 transition-colors ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
-                    >
-                      <LogOut className="h-4 w-4 mr-3" />
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+        <div className="flex items-center space-x-2 md:space-x-4">
+          <button className={`relative p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}>
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 h-2 w-2 bg-danger-500 rounded-full"></span>
+          </button>
+          <button
+            onClick={toggleTheme}
+            className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          
+          <div className="flex items-center space-x-3">
+            <div className="hidden md:block text-right">
+              <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>TS. Nguyễn Văn An</p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Giảng viên</p>
+            </div>
+            <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-white" />
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Profile Modal */}
-      {profileModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-lg shadow-xl max-w-md w-full mx-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            {/* Modal Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Hồ sơ của tôi</h2>
-              <button
-                onClick={() => setProfileModalOpen(false)}
-                className={`transition-colors ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <X />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6">
-              {loadingProfile ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                </div>
-              ) : profileData ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Họ và tên</label>
-                    <div className={`rounded-lg px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>{profileData.full_name}</div>
-                  </div>
-
-                  {profileData.mssv && (
-                    <div>
-                      <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>MSGV</label>
-                      <div className={`rounded-lg px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>{profileData.mssv}</div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
-                    <div className={`rounded-lg px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>{profileData.email}</div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Địa chỉ</label>
-                      <div className={`rounded-lg px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>{profileData.address || <span className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}>Không có thông tin</span>}</div>
-                    </div>
-
-                    <div>
-                      <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Số điện thoại</label>
-                      <div className={`rounded-lg px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>{profileData.phone || <span className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}>Không có thông tin</span>}</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Không thể tải thông tin hồ sơ</div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className={`flex justify-end p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <button
-                onClick={() => setProfileModalOpen(false)}
-                className={`px-4 py-2 rounded-lg transition-colors ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      </div>
+    </header>
   );
 };
 
