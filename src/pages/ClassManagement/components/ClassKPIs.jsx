@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, CheckCircle, AlertTriangle, UserCheck, Award } from 'lucide-react';
+import { GraduationCap, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const ClassKPIs = ({ stats = {} }) => {
   const kpiCards = [
@@ -13,51 +13,31 @@ const ClassKPIs = ({ stats = {} }) => {
     {
       title: 'Lớp đạt chuẩn tiến độ',
       value: `${stats.meetingStandardPercentage || 0}%`,
-      description: '% lớp có tiến độ >80%',
+      description: 'Tỷ lệ lớp có tiến độ >80%',
       icon: CheckCircle,
       color: 'green'
     },
     {
       title: 'Lớp có vấn đề',
       value: `${stats.problematicPercentage || 0}%`,
-      description: '% lớp có tiến độ <60% hoặc điểm TB <7',
+      description: 'Tiến độ <60% hoặc điểm TB <7',
       icon: AlertTriangle,
       color: 'red'
-    },
-    {
-      title: 'Giảng viên phụ trách nhiều lớp nhất',
-      value: stats.topInstructorName || 'N/A',
-      description: `${stats.topInstructorClassCount || 0} lớp`,
-      icon: UserCheck,
-      color: 'purple'
-    },
-    {
-      title: 'Điểm TB ngành',
-      value: (stats.averageScore || 0).toFixed(1),
-      description: 'Điểm trung bình của tất cả lớp',
-      icon: Award,
-      color: 'yellow',
-      suffix: '/10'
     }
   ];
 
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
-      green: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-100' },
-      red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' },
-      purple: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100' },
-      yellow: { bg: 'bg-yellow-50', text: 'text-yellow-600', border: 'border-yellow-100' }
-    };
-    return colors[color] || colors.blue;
+  const colorMap = {
+    blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
+    green: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-100' },
+    red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' }
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {kpiCards.map((kpi, index) => {
         const Icon = kpi.icon;
-        const colors = getColorClasses(kpi.color);
-        
+        const colors = colorMap[kpi.color] || colorMap.blue;
+
         return (
           <div
             key={index}
@@ -69,14 +49,7 @@ const ClassKPIs = ({ stats = {} }) => {
               </div>
             </div>
             <h3 className="text-gray-600 text-xs font-medium mb-1">{kpi.title}</h3>
-            <div className="flex items-baseline gap-1 mb-1">
-              <p className={`text-2xl font-bold text-gray-900 ${kpi.suffix ? '' : ''}`}>
-                {kpi.value}
-              </p>
-              {kpi.suffix && (
-                <span className="text-sm text-gray-500">{kpi.suffix}</span>
-              )}
-            </div>
+            <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
             <p className="text-xs text-gray-500">{kpi.description}</p>
           </div>
         );
@@ -86,4 +59,3 @@ const ClassKPIs = ({ stats = {} }) => {
 };
 
 export default ClassKPIs;
-

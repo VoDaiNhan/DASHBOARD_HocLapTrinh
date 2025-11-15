@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowUpDown, ArrowUp, ArrowDown, Download, Eye } from 'lucide-react';
+import { coursePerformanceData } from '../../../data/coursePerformanceData';
 
 const ClassSummaryTable = ({ classes = [], onClassClick }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -70,13 +71,20 @@ const ClassSummaryTable = ({ classes = [], onClassClick }) => {
   };
 
   // Transform classes data và nhóm theo lớp
+  const classStudentCounts = useMemo(() => {
+    const counters = {};
+    coursePerformanceData.students.forEach((student) => {
+      counters[student.className] = (counters[student.className] || 0) + 1;
+    });
+    return counters;
+  }, []);
+
   const transformData = filteredClasses.map(cls => ({
     id: cls.id,
     name: cls.name || '',
     course: cls.course || cls.courseName || '',
     instructor: cls.instructor || 'N/A',
-    studentCount: cls.enrolledStudents || cls.studentCount || 0,
-    averageScore: cls.averageScore || 0,
+    studentCount: classStudentCounts[cls.name] || cls.enrolledStudents || cls.studentCount || 0,
     averageProgress: cls.completionRate || cls.averageProgress || 0,
     riskLevel: cls.riskLevel || 'low',
     note: cls.note || '-'
@@ -168,15 +176,6 @@ const ClassSummaryTable = ({ classes = [], onClassClick }) => {
               </th>
               <th
                 className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('averageScore')}
-              >
-                <div className="flex items-center gap-1">
-                  Điểm TB
-                  {getSortIcon('averageScore')}
-                </div>
-              </th>
-              <th
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('averageProgress')}
               >
                 <div className="flex items-center gap-1">
@@ -246,9 +245,6 @@ const ClassSummaryTable = ({ classes = [], onClassClick }) => {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     {item.studentCount}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    {item.averageScore?.toFixed(1) || '0.0'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                     <div className="flex items-center gap-2">

@@ -4,8 +4,9 @@
 
 @layer base {
   html {
-    /* Shrink global UI scale across the entire app (1rem = 14px) */
-    font-size: 14px;
+    /* Tự động co giãn kích thước chữ theo độ rộng màn hình để zoom hợp lý */
+    font-size: clamp(13px, 0.95vw, 16px);
+    scroll-behavior: smooth;
   }
   * {
     @apply border-gray-200;

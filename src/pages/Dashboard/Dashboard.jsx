@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DashboardHeader from './components/DashboardHeader';
 import KPIMetrics from './components/KPIMetrics';
+import CoursePerformanceSection from './components/CoursePerformanceSection';
 import ProgressOverview from './components/ProgressOverview';
 import NotificationPanel from './components/NotificationPanel';
 import PerformanceChart from './components/PerformanceChart';
 import IndustryAnalysis from './components/IndustryAnalysis';
-import IndustryFilters from './components/IndustryFilters';
 import { mockDashboardData } from '../../data/mockData';
 
 const Dashboard = () => {
@@ -17,6 +17,8 @@ const Dashboard = () => {
     performance: 'all',
     status: 'all'
   });
+  const [searchText, setSearchText] = useState('');
+  const [completionRange, setCompletionRange] = useState('all');
 
   useEffect(() => {
     // Simulate API call
@@ -48,17 +50,6 @@ const Dashboard = () => {
     // Xử lý filter change nếu cần
   };
 
-  const handleAnalyzeClick = () => {
-    console.log('Phân tích chi tiết ngành clicked');
-    // Navigate to detailed analysis page or open modal
-    alert('Tính năng Phân tích chi tiết ngành sẽ được triển khai sau');
-  };
-
-  const handleExportClick = () => {
-    console.log('Xuất báo cáo ngành clicked');
-    // Export report logic
-    alert('Tính năng Xuất báo cáo ngành sẽ được triển khai sau');
-  };
 
   if (loading) {
     return (
@@ -90,12 +81,16 @@ const Dashboard = () => {
     <div className="space-y-6">
       <DashboardHeader />
       
-      {/* Bộ lọc toàn ngành */}
-      <IndustryFilters
-        onFilterChange={handleIndustryFilterChange}
-        onAnalyze={handleAnalyzeClick}
-        onExport={handleExportClick}
-      />
+      {/* Phân bố năng lực theo môn học - đã gộp filter và bảng */}
+      <div>
+        <CoursePerformanceSection 
+          searchText={searchText} 
+          completionRange={completionRange}
+          onSearchChange={setSearchText}
+          onCompletionRangeChange={setCompletionRange}
+          onFilterChange={handleIndustryFilterChange}
+        />
+      </div>
       
       {/* Chỉ số tổng quan nhanh (KPI Cards) */}
       <div>
