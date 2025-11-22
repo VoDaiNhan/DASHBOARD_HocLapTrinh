@@ -7,7 +7,7 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 
-// Giảng viên imports
+// Giảng viên 
 import LayoutTeacher from './giangvien/components/Layout/Layout';
 import DashboardTeacher from './giangvien/pages/Dashboard/Dashboard';
 import ClassManagement from './giangvien/pages/ClassManagement/ClassManagement';
