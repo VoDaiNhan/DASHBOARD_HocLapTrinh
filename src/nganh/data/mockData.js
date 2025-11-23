@@ -802,7 +802,7 @@ export const mockStudentTrackingData = {
     {
       id: 1,
       name: 'Nguyễn Văn Minh',
-      studentId: 'SV001',
+      studentId: '122000001',
       email: 'minh.nv@student.edu.vn',
       phone: '0901234567',
       status: 'active',
@@ -835,7 +835,7 @@ export const mockStudentTrackingData = {
     {
       id: 2,
       name: 'Trần Thị Hương',
-      studentId: 'SV002',
+      studentId: '122000002',
       email: 'huong.tt@student.edu.vn',
       phone: '0901234568',
       status: 'active',
@@ -867,7 +867,7 @@ export const mockStudentTrackingData = {
     {
       id: 3,
       name: 'Lê Hoàng Nam',
-      studentId: 'SV003',
+      studentId: '122000003',
       email: 'nam.lh@student.edu.vn',
       phone: '0901234569',
       status: 'at_risk',
@@ -900,7 +900,7 @@ export const mockStudentTrackingData = {
     {
       id: 4,
       name: 'Phạm Thị Lan',
-      studentId: 'SV004',
+      studentId: '122000004',
       email: 'lan.pt@student.edu.vn',
       phone: '0901234570',
       status: 'active',
@@ -932,7 +932,7 @@ export const mockStudentTrackingData = {
     {
       id: 5,
       name: 'Vũ Đức Thành',
-      studentId: 'SV005',
+      studentId: '122000005',
       email: 'thanh.vd@student.edu.vn',
       phone: '0901234571',
       status: 'active',

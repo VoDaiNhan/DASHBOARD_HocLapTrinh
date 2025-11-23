@@ -2,7 +2,7 @@
 
 export const studentInfo = {
   name: "Nguyễn Văn An",
-  studentId: "SV2023001",
+  studentId: "122000331",
   class: "CNTT K18",
   course: "Lập trình Web",
   avatar: "https://ui-avatars.com/api/?name=Nguyen+Van+An&background=3b82f6&color=fff&size=128",

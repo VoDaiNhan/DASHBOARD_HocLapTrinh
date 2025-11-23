@@ -12,23 +12,79 @@ import { mockDashboardData, mockStudentTrackingData } from '../../data/mockData'
 const Reports = () => {
   const [stats, setStats] = useState({});
   const [performanceData, setPerformanceData] = useState([]);
+  const [allStudents] = useState(mockStudentTrackingData.students);
+  const [allCourses] = useState(mockDashboardData.courseMonitoring);
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [filters, setFilters] = useState({ dateRange: 'week', reportType: 'all' });
+  const [filters, setFilters] = useState({ 
+    dateRange: 'week', 
+    reportType: 'all',
+    course: '',
+    class: '',
+    riskLevel: ''
+  });
   const [isSaveReportModalOpen, setIsSaveReportModalOpen] = useState(false);
 
+  // Filter data based on current filters
   useEffect(() => {
-    // Load stats
+    let filteredStudents = [...allStudents];
+    let filteredCourses = [...allCourses];
+
+    // Filter by course
+    if (filters.course) {
+      filteredStudents = filteredStudents.filter(student =>
+        student.courses?.some(c => c.id === filters.course)
+      );
+      filteredCourses = filteredCourses.filter(course =>
+        course.name.toLowerCase().includes(filters.course.toLowerCase())
+      );
+    }
+
+    // Filter by class
+    if (filters.class) {
+      filteredStudents = filteredStudents.filter(student =>
+        student.courses?.some(c => c.className === filters.class)
+      );
+    }
+
+    // Filter by risk level
+    if (filters.riskLevel) {
+      filteredStudents = filteredStudents.filter(student =>
+        student.riskLevel === filters.riskLevel
+      );
+    }
+
+    // Filter by report type
+    if (filters.reportType !== 'all') {
+      if (filters.reportType === 'students') {
+        // Show only student-related data
+      } else if (filters.reportType === 'courses') {
+        // Show only course-related data
+      }
+    }
+
+    setStudents(filteredStudents);
+    setCourses(filteredCourses);
+
+    // Update stats based on filtered data
+    const atRiskCount = filteredStudents.filter(s => s.status === 'at_risk').length;
+    const avgScore = filteredStudents.length > 0
+      ? filteredStudents.reduce((sum, s) => sum + s.averageScore, 0) / filteredStudents.length
+      : 0;
+    const avgCompletion = filteredStudents.length > 0
+      ? filteredStudents.reduce((sum, s) => sum + s.completionRate, 0) / filteredStudents.length
+      : 0;
+
     setStats({
-      totalStudents: mockDashboardData.kpiMetrics.totalStudents,
+      totalStudents: filteredStudents.length,
       studentChange: mockDashboardData.kpiMetrics.studentChange,
-      activeCourses: mockDashboardData.kpiMetrics.activeCourses,
+      activeCourses: filteredCourses.length,
       courseChange: mockDashboardData.kpiMetrics.courseChange,
-      averageScore: mockDashboardData.kpiMetrics.averageCompletion,
+      averageScore: avgScore,
       scoreChange: mockDashboardData.kpiMetrics.completionChange,
-      completionRate: mockDashboardData.kpiMetrics.averageCompletion * 10,
+      completionRate: avgCompletion,
       completionChange: mockDashboardData.kpiMetrics.completionChange,
-      atRiskStudents: mockDashboardData.kpiMetrics.atRiskStudents,
+      atRiskStudents: atRiskCount,
       riskChange: mockDashboardData.kpiMetrics.riskChange,
       pendingAssignments: 12,
       pendingChange: -5
@@ -36,17 +92,10 @@ const Reports = () => {
 
     // Load performance data
     setPerformanceData(mockDashboardData.performanceChart);
-
-    // Load students
-    setStudents(mockStudentTrackingData.students);
-
-    // Load courses
-    setCourses(mockDashboardData.courseMonitoring);
-  }, []);
+  }, [filters, allStudents, allCourses]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-    // In real app, fetch data based on filters
   };
 
   return (

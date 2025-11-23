@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 
 // Auth imports
 import Login from './pages/auth/Login';
@@ -72,7 +73,7 @@ const StudentApp = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <SidebarNew 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)}
@@ -84,7 +85,7 @@ const StudentApp = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <HeaderNew onMenuClick={() => setSidebarOpen(true)} setCurrentPage={setCurrentPage} />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
           <div className="max-w-7xl mx-auto">
             {renderPage()}
           </div>
@@ -110,15 +111,17 @@ function App() {
   // Auth routes wrapper
   if (!isAuthenticated) {
     return (
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+      <DarkModeProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </DarkModeProvider>
     );
   }
 
@@ -129,67 +132,77 @@ function App() {
       window.location.reload();
     }, 1000);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang chuyển hướng...</p>
+      <DarkModeProvider>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Đang chuyển hướng...</p>
+          </div>
         </div>
-      </div>
+      </DarkModeProvider>
     );
   }
 
   // Student dashboard (no router)
   if (selectedDashboard === 'student') {
-    return <StudentApp />;
+    return (
+      <DarkModeProvider>
+        <StudentApp />
+      </DarkModeProvider>
+    );
   }
 
   // Ngành dashboard (with router and ThemeProvider)
   if (selectedDashboard === 'nghanh') {
     return (
-      <ThemeProvider>
-        <Router>
-          <LayoutNghanh>
-            <Routes>
-              <Route path="/" element={<DashboardNghanh />} />
-              <Route path="/dashboard" element={<DashboardNghanh />} />
-              <Route path="/teachers" element={<TeacherManagementNghanh />} />
-              <Route path="/courses" element={<CourseManagementNghanh />} />
-              <Route path="/courses/:id" element={<CourseDetailNghanh />} />
-              <Route path="/classes" element={<ClassManagementNghanh />} />
-              <Route path="/classes/:id" element={<ClassDetailNghanh />} />
-              <Route path="/students" element={<StudentTrackingNghanh />} />
-              <Route path="/reports" element={<ReportsNghanh />} />
-              <Route path="/settings" element={<SettingsNghanh />} />
-            </Routes>
-          </LayoutNghanh>
-        </Router>
-      </ThemeProvider>
+      <DarkModeProvider>
+        <ThemeProvider>
+          <Router>
+            <LayoutNghanh>
+              <Routes>
+                <Route path="/" element={<DashboardNghanh />} />
+                <Route path="/dashboard" element={<DashboardNghanh />} />
+                <Route path="/teachers" element={<TeacherManagementNghanh />} />
+                <Route path="/courses" element={<CourseManagementNghanh />} />
+                <Route path="/courses/:id" element={<CourseDetailNghanh />} />
+                <Route path="/classes" element={<ClassManagementNghanh />} />
+                <Route path="/classes/:id" element={<ClassDetailNghanh />} />
+                <Route path="/students" element={<StudentTrackingNghanh />} />
+                <Route path="/reports" element={<ReportsNghanh />} />
+                <Route path="/settings" element={<SettingsNghanh />} />
+              </Routes>
+            </LayoutNghanh>
+          </Router>
+        </ThemeProvider>
+      </DarkModeProvider>
     );
   }
 
   // Teacher dashboard (with router)
   return (
-    <Router>
-        <div className="min-h-screen bg-gray-50">
-          <LayoutTeacher>
-            <Routes>
-              <Route path="/" element={<DashboardTeacher />} />
-              <Route path="/dashboard" element={<DashboardTeacher />} />
-              <Route path="/courses" element={<CourseManagement />} />
-              <Route path="/courses/:id" element={<CourseDetail />} />
-              <Route path="/classes" element={<ClassManagement />} />
-              <Route path="/classes/:id" element={<ClassDetail />} />
-              <Route path="/students" element={<StudentTracking />} />
-              <Route path="/assignments" element={<AssignmentManagement />} />
-              <Route path="/assignments/create" element={<AssignmentCreate />} />
-              <Route path="/assignments/:id" element={<AssignmentDetail />} />
-              <Route path="/assignments/:id/edit" element={<AssignmentEdit />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </LayoutTeacher>
-        </div>
-    </Router>
+    <DarkModeProvider>
+      <Router>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <LayoutTeacher>
+              <Routes>
+                <Route path="/" element={<DashboardTeacher />} />
+                <Route path="/dashboard" element={<DashboardTeacher />} />
+                <Route path="/courses" element={<CourseManagement />} />
+                <Route path="/courses/:id" element={<CourseDetail />} />
+                <Route path="/classes" element={<ClassManagement />} />
+                <Route path="/classes/:id" element={<ClassDetail />} />
+                <Route path="/students" element={<StudentTracking />} />
+                <Route path="/assignments" element={<AssignmentManagement />} />
+                <Route path="/assignments/create" element={<AssignmentCreate />} />
+                <Route path="/assignments/:id" element={<AssignmentDetail />} />
+                <Route path="/assignments/:id/edit" element={<AssignmentEdit />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </LayoutTeacher>
+          </div>
+      </Router>
+    </DarkModeProvider>
   );
 }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Home, Users, BookOpen, BarChart3, Settings, LogOut, GraduationCap, FileText } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
+import { authAPI } from '../../../services/api';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -25,8 +26,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="h-8 w-8 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-white" />
@@ -46,12 +47,12 @@ const Sidebar = ({ isOpen, onClose }) => {
                   to={item.href}
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                     item.current
-                      ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 border-r-2 border-primary-600 dark:border-primary-400'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                   }`}
                   onClick={() => onClose()}
                 >
-                  <item.icon className={`mr-3 h-5 w-5 ${item.current ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <item.icon className={`mr-3 h-5 w-5 ${item.current ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}`} />
                   {item.name}
                 </Link>
               </li>
@@ -59,9 +60,24 @@ const Sidebar = ({ isOpen, onClose }) => {
           </ul>
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
-          <button className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <button 
+            onClick={async () => {
+              try {
+                await authAPI.logout();
+              } catch (error) {
+                console.error('Logout error:', error);
+              } finally {
+                sessionStorage.removeItem('access_token');
+                sessionStorage.removeItem('refresh_token');
+                sessionStorage.removeItem('user');
+                sessionStorage.removeItem('dashboardType');
+                window.location.href = '/login';
+              }
+            }}
+            className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <LogOut className="mr-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
             Đăng Xuất
           </button>
         </div>

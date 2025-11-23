@@ -13,21 +13,22 @@ const StudentList = ({ students, classId }) => {
       completed: { class: 'status-badge status-completed', text: 'Hoàn thành' },
       dropped: { class: 'status-badge bg-gray-100 text-gray-800', text: 'Đã bỏ học' }
     };
-    
+
     return statusConfig[status] || statusConfig.active;
   };
 
   const getPerformanceColor = (score) => {
-    if (score >= 9.0) return 'text-success-600';
-    if (score >= 8.0) return 'text-primary-600';
-    if (score >= 7.0) return 'text-warning-600';
-    return 'text-danger-600';
+    if (score >= 8.0) return 'text-success-600';      // Giỏi
+    if (score >= 6.5) return 'text-primary-600';      // Khá
+    if (score >= 5.0) return 'text-warning-600';      // Trung bình
+    if (score >= 4.0) return 'text-orange-600';       // Yếu
+    return 'text-danger-600';                          // Kém
   };
 
   const filteredAndSortedStudents = students
     ?.filter(student => {
       const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           student.email.toLowerCase().includes(searchTerm.toLowerCase());
+        student.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = filterStatus === 'all' || student.status === filterStatus;
       return matchesSearch && matchesStatus;
     })
@@ -81,7 +82,6 @@ const StudentList = ({ students, classId }) => {
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="name">Sắp xếp theo tên</option>
-              <option value="score">Sắp xếp theo điểm</option>
               <option value="progress">Sắp xếp theo tiến độ</option>
             </select>
           </div>
@@ -102,9 +102,6 @@ const StudentList = ({ students, classId }) => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tiến độ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Điểm TB
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Bài tập
@@ -142,24 +139,12 @@ const StudentList = ({ students, classId }) => {
                           <span className="font-medium text-gray-900">{Math.round(student.completionRate || 0)}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
+                          <div
                             className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${student.completionRate || 0}%` }}
                           ></div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <span className={`text-sm font-medium ${getPerformanceColor(student.averageScore || 0)}`}>
-                        {(student.averageScore || 0).toFixed(1)}
-                      </span>
-                      {student.scoreChange > 0 ? (
-                        <TrendingUp className="h-4 w-4 text-success-600 ml-2" />
-                      ) : student.scoreChange < 0 ? (
-                        <TrendingDown className="h-4 w-4 text-danger-600 ml-2" />
-                      ) : null}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -171,13 +156,13 @@ const StudentList = ({ students, classId }) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      <a 
+                      <a
                         href={`mailto:${student.email}`}
                         className="text-gray-400 hover:text-primary-600 transition-colors"
                       >
                         <Mail className="h-4 w-4" />
                       </a>
-                      <a 
+                      <a
                         href={`tel:${student.phone}`}
                         className="text-gray-400 hover:text-primary-600 transition-colors"
                       >

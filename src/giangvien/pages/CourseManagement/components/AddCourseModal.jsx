@@ -1,7 +1,8 @@
 import { X, BookOpen, Clock, Users, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const AddCourseModal = ({ isOpen, onClose, onSave }) => {
+  const [teacherName, setTeacherName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     duration: '',
@@ -15,6 +16,17 @@ const AddCourseModal = ({ isOpen, onClose, onSave }) => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    // Lấy tên giảng viên từ sessionStorage và tự động điền vào form
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      const name = user?.full_name || 'Giảng viên';
+      setTeacherName(name);
+      setFormData(prev => ({ ...prev, instructor: name }));
+    }
+  }, [isOpen]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -126,9 +138,10 @@ const AddCourseModal = ({ isOpen, onClose, onSave }) => {
                     type="text"
                     value={formData.instructor}
                     onChange={(e) => handleChange('instructor', e.target.value)}
-                    placeholder="Ví dụ: TS. Nguyễn Văn An"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Tên giảng viên"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                     required
+                    readOnly
                   />
                 </div>
               </div>

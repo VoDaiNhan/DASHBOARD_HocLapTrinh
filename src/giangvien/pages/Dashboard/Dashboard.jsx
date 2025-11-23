@@ -5,7 +5,8 @@ import ProgressOverview from './components/ProgressOverview';
 import CourseMonitoring from './components/CourseMonitoring';
 import NotificationPanel from './components/NotificationPanel';
 import PerformanceChart from './components/PerformanceChart';
-import { mockDashboardData } from '../../data/mockData';
+import GradeDistribution from './components/GradeDistribution';
+import { mockDashboardData, mockStudentTrackingData } from '../../data/mockData';
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -80,6 +81,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <ProgressOverview data={dashboardData?.progressOverview} selectedClass={filters.class} />
+          <GradeDistribution 
+            data={dashboardData?.gradeDistribution} 
+            students={mockStudentTrackingData?.students || []}
+          />
           <PerformanceChart data={dashboardData?.performanceChart} />
         </div>
         

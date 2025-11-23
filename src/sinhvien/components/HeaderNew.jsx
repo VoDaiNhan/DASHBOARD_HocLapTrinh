@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authAPI } from '../../services/api';
+import DarkModeToggle from '../../components/DarkModeToggle';
+import SmartSearch from '../../components/SmartSearch';
+import NotificationPanel from '../../components/NotificationPanel';
 
 const X = () => (
   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,36 +108,28 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6">
         <div className="flex items-center space-x-3">
           {/* Mobile menu button */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
           >
             <Menu />
           </button>
           
           {/* Search bar */}
           <div className="hidden md:flex items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm khóa học, bài tập..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent w-80 text-sm"
-              />
-            </div>
+            <SmartSearch userRole="student" />
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
           {/* Notification button */}
-          <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-danger-500 rounded-full"></span>
-          </button>
+          <NotificationPanel />
+          
+          <DarkModeToggle />
           
           {/* User profile */}
           <div className="relative" ref={userMenuRef}>
@@ -143,8 +138,8 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
               className="flex items-center space-x-3 pl-3 border-l border-gray-200 hover:opacity-80 transition-opacity"
             >
               <div className="hidden md:block text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Người dùng'}</p>
-                <p className="text-xs text-gray-500">{user?.mssv || 'Sinh viên'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.full_name || 'Người dùng'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.mssv || 'Sinh viên'}</p>
               </div>
               <div className="h-9 w-9 bg-primary-600 rounded-full flex items-center justify-center">
                 <User className="h-5 w-5 text-white" />
@@ -153,19 +148,19 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
 
             {/* User Dropdown Menu */}
             {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Người dùng'}</p>
-                  <p className="text-xs text-gray-500">{user?.email || 'Email'}</p>
-                  {user?.mssv && <p className="text-xs text-gray-500">MSSV: {user.mssv}</p>}
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.full_name || 'Người dùng'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || 'Email'}</p>
+                  {user?.mssv && <p className="text-xs text-gray-500 dark:text-gray-400">MSSV: {user.mssv}</p>}
                 </div>
                 
                 <div className="py-1">
                   <button 
                     onClick={handleProfileClick}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <User className="h-4 w-4 mr-3 text-gray-400" />
+                    <User className="h-4 w-4 mr-3 text-gray-400 dark:text-gray-500" />
                     <span>Hồ sơ của tôi</span>
                   </button>
                   
@@ -174,17 +169,17 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
                       if (setCurrentPage) setCurrentPage('profile');
                       setUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
-                    <Settings className="h-4 w-4 mr-3 text-gray-400" />
+                    <Settings className="h-4 w-4 mr-3 text-gray-400 dark:text-gray-500" />
                     <span>Cài đặt</span>
                   </button>
                 </div>
                 
-                <div className="border-t border-gray-100 py-1">
+                <div className="border-t border-gray-100 dark:border-gray-700 py-1">
                   <button 
                     onClick={handleLogout}
-                    className="w-full flex items-center px-4 py-2 text-sm text-danger-600 hover:bg-danger-50 transition-colors"
+                    className="w-full flex items-center px-4 py-2 text-sm text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                   >
                     <LogOut className="h-4 w-4 mr-3" />
                     <span>Đăng xuất</span>
@@ -199,13 +194,13 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
       {/* Profile Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Hồ sơ của tôi</h2>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Hồ sơ của tôi</h2>
               <button
                 onClick={() => setProfileModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X />
               </button>
@@ -220,53 +215,53 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
               ) : profileData ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
-                    <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.full_name}</div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Họ và tên</label>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.full_name}</div>
                   </div>
 
                   {profileData.mssv && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">MSSV</label>
-                      <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.mssv}</div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">MSSV</label>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.mssv}</div>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.email}</div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.email}</div>
                   </div>
 
                   {profileData.class && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Lớp</label>
-                      <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.class}</div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lớp</label>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.class}</div>
                     </div>
                   )}
 
                   {profileData.address && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-                      <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.address}</div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.address}</div>
                     </div>
                   )}
 
                   {profileData.phone && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-                      <div className="bg-gray-50 rounded-lg px-4 py-2 text-gray-900">{profileData.phone}</div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2 text-gray-900 dark:text-gray-100">{profileData.phone}</div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">Không thể tải thông tin hồ sơ</div>
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">Không thể tải thông tin hồ sơ</div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end p-6 border-t border-gray-200">
+            <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setProfileModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Đóng
               </button>

@@ -136,8 +136,13 @@ const generateStudentName = (index, usedNames) => {
 };
 
 const generateStudentId = (className, index) => {
-  const classSuffix = className.slice(-3);
-  return `SV${classSuffix}${String(index + 1).padStart(3, '0')}`;
+  // Format: 122000XXX (9 chữ số)
+  // 122 = năm nhập học (2022)
+  // 000 = padding
+  // XXX = số thứ tự sinh viên (001-999)
+  const classNumber = className.slice(-3); // 111, 112, 113
+  const studentNumber = String(index + 1).padStart(3, '0');
+  return `122${classNumber}${studentNumber}`;
 };
 
 const clampPercent = (value) => Math.round(Math.min(100, Math.max(0, value)));

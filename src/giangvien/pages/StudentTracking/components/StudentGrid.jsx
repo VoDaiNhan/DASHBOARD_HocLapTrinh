@@ -22,10 +22,11 @@ const StudentGrid = ({ students, onStudentSelect, loading }) => {
   };
 
   const getPerformanceColor = (score) => {
-    if (score >= 9.0) return 'text-success-600';
-    if (score >= 8.0) return 'text-primary-600';
-    if (score >= 7.0) return 'text-warning-600';
-    return 'text-danger-600';
+    if (score >= 8.0) return 'text-success-600';      // Giỏi
+    if (score >= 6.5) return 'text-primary-600';      // Khá
+    if (score >= 5.0) return 'text-warning-600';      // Trung bình
+    if (score >= 4.0) return 'text-orange-600';       // Yếu
+    return 'text-danger-600';                          // Kém
   };
 
   if (loading) {
