@@ -1,10 +1,10 @@
 import { User, Mail, Phone, MapPin, Calendar, Camera } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const ProfileSettings = () => {
   const [profile, setProfile] = useState({
-    fullName: 'TS. Nguyễn Văn An',
-    email: 'nguyen.van.an@university.edu.vn',
+    fullName: 'TS. Võ Đại Nhân',
+    email: 'nhan354a@gmail.com',
     phone: '0901234567',
     position: 'Giảng viên',
     department: 'Khoa Công nghệ Thông tin',
@@ -12,6 +12,19 @@ const ProfileSettings = () => {
     joinDate: '01/09/2020',
     bio: 'Giảng viên chuyên ngành Khoa học Máy tính với hơn 10 năm kinh nghiệm giảng dạy.'
   });
+
+  useEffect(() => {
+    // Lấy thông tin từ sessionStorage
+    const userData = sessionStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      setProfile(prev => ({
+        ...prev,
+        fullName: user?.full_name || prev.fullName,
+        email: user?.email || prev.email
+      }));
+    }
+  }, []);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
