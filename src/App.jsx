@@ -73,7 +73,7 @@ const StudentApp = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen" style={{ backgroundColor: '#F0F2F5' }}>
       <SidebarNew 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)}
@@ -85,7 +85,7 @@ const StudentApp = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <HeaderNew onMenuClick={() => setSidebarOpen(true)} setCurrentPage={setCurrentPage} />
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6" style={{ backgroundColor: '#F0F2F5' }}>
           <div className="max-w-7xl mx-auto">
             {renderPage()}
           </div>

@@ -2,7 +2,7 @@
 
 export const studentInfo = {
   name: "Nguyễn Văn An",
-  studentId: "122000331",
+  studentId: "SV2023001",
   class: "CNTT K18",
   course: "Lập trình Web",
   avatar: "https://ui-avatars.com/api/?name=Nguyen+Van+An&background=3b82f6&color=fff&size=128",
@@ -15,38 +15,52 @@ export const studentInfo = {
 };
 
 // Hàm tạo dữ liệu tiến độ dựa trên khóa học đã đăng ký
+// Mỗi khóa học sẽ có 1 đường riêng trên biểu đồ
 export const generateProgressData = (enrolledCourses) => {
   if (!enrolledCourses || enrolledCourses.length === 0) {
     return [];
   }
 
-  const weeks = ["Tuần 1", "Tuần 2", "Tuần 3", "Tuần 4", "Tuần 5", "Tuần 6", "Tuần 7", "Tuần 8"];
+  const weeklyTargets = [
+    { week: "Tuần 1", target: 12.5 },
+    { week: "Tuần 2", target: 25 },
+    { week: "Tuần 3", target: 37.5 },
+    { week: "Tuần 4", target: 50 },
+    { week: "Tuần 5", target: 62.5 },
+    { week: "Tuần 6", target: 75 },
+    { week: "Tuần 7", target: 87.5 },
+    { week: "Tuần 8", target: 100 }
+  ];
   
-  return weeks.map((week, index) => {
-    // Tính tiến độ thực tế dựa trên số bài tập đã hoàn thành
-    const totalExercises = enrolledCourses.reduce((sum, course) => {
-      return sum + (courseExercises[course.id]?.length || 0);
-    }, 0);
-    
-    const completedExercises = enrolledCourses.reduce((sum, course) => {
-      const courseExs = courseExercises[course.id] || [];
-      return sum + courseExs.filter(ex => ex.completed).length;
-    }, 0);
-    
-    // Tiến độ thực tế tăng dần theo tuần
-    const actualProgress = Math.min(100, Math.round((completedExercises / totalExercises) * 100));
-    const weeklyProgress = Math.min(100, Math.round(((index + 1) / weeks.length) * actualProgress));
-    
-    // Mục tiêu tăng đều theo tuần
-    const targetProgress = Math.round(((index + 1) / weeks.length) * 100);
-    
-    return {
-      week,
-      progress: weeklyProgress,
-      target: targetProgress,
-      completedExercises: Math.round((weeklyProgress / 100) * completedExercises),
-      totalExercises
+  // Tính tiến độ cho từng khóa học riêng biệt
+  return weeklyTargets.map((targetItem, weekIndex) => {
+    const dataPoint = {
+      week: targetItem.week,
+      target: targetItem.target
     };
+
+    // Tính tiến độ cho từng khóa học
+    enrolledCourses.forEach((course) => {
+      const courseExs = courseExercises[course.id] || [];
+      const totalExercises = courseExs.length;
+      const completedExercises = courseExs.filter(ex => ex.completed).length;
+    
+      // Tính phần trăm hoàn thành thực tế
+      const actualProgress = totalExercises > 0 
+        ? Math.min(100, Math.round((completedExercises / totalExercises) * 100))
+        : 0;
+      
+      // Phân bổ tiến độ theo tuần (giả định tiến độ tăng đều)
+      const weeklyProgress = Math.min(100, Math.round(((weekIndex + 1) / weeklyTargets.length) * actualProgress));
+    
+      // Sử dụng tên khóa học làm key (loại bỏ ký tự đặc biệt để làm key hợp lệ)
+      const courseKey = course.name.replace(/[^a-zA-Z0-9]/g, '_');
+      dataPoint[courseKey] = weeklyProgress;
+      // Lưu thêm thông tin để hiển thị tên đầy đủ
+      dataPoint[`${courseKey}_name`] = course.name;
+    });
+
+    return dataPoint;
   });
 };
 
@@ -109,540 +123,292 @@ export const alerts = [
 
 // Bài tập theo từng khóa học (mỗi khóa học có 5 bài tập)
 export const courseExercises = {
-  1: [ // Lập trình Web (IT3080)
+  1: [ // Nhập môn Lập trình (IT1010)
     {
       id: 101,
       courseId: 1,
-      courseName: "Lập trình Web",
-      title: "Xây dựng Landing Page với HTML/CSS",
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập 1: Tính toán cơ bản",
       level: "Easy",
       fitPercent: 95,
-      description: "Tạo trang landing page responsive với HTML5 và CSS3",
-      estimatedTime: "2 giờ",
-      skills: ["HTML", "CSS", "Responsive Design"],
+      description: "Viết chương trình tính tổng, hiệu, tích, thương của hai số",
+      estimatedTime: "1 giờ",
+      skills: ["Biến", "Kiểu dữ liệu", "Phép toán"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản"]
     },
     {
       id: 102,
       courseId: 1,
-      courseName: "Lập trình Web",
-      title: "JavaScript DOM Manipulation",
-      level: "Medium",
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập 2: Cấu trúc điều kiện",
+      level: "Easy",
       fitPercent: 90,
-      description: "Thao tác với DOM, xử lý events và tạo interactive elements",
-      estimatedTime: "3 giờ",
-      skills: ["JavaScript", "DOM", "Events"],
+      description: "Sử dụng if-else để giải quyết bài toán phân loại",
+      estimatedTime: "2 giờ",
+      skills: ["If-else", "Switch-case", "Logic"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"]
     },
     {
       id: 103,
       courseId: 1,
-      courseName: "Lập trình Web",
-      title: "Xây dựng Todo App với React",
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập 3: Vòng lặp",
       level: "Medium",
       fitPercent: 88,
-      description: "Tạo ứng dụng quản lý công việc với React Hooks",
-      estimatedTime: "4 giờ",
-      skills: ["React", "Hooks", "State Management"],
+      description: "Sử dụng vòng lặp để tính tổng, giai thừa, dãy số",
+      estimatedTime: "2.5 giờ",
+      skills: ["For", "While", "Do-while"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"]
     },
     {
       id: 104,
       courseId: 1,
-      courseName: "Lập trình Web",
-      title: "Tích hợp API với React",
-      level: "Hard",
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập 4: Hàm và Thủ tục",
+      level: "Medium",
       fitPercent: 85,
-      description: "Kết nối API RESTful và hiển thị dữ liệu động",
-      estimatedTime: "5 giờ",
-      skills: ["React", "API", "Fetch", "Async/Await"],
+      description: "Tạo các hàm để tính toán và xử lý dữ liệu",
+      estimatedTime: "3 giờ",
+      skills: ["Hàm", "Tham số", "Giá trị trả về"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Code quality"]
     },
     {
       id: 105,
       courseId: 1,
-      courseName: "Lập trình Web",
-      title: "Xây dựng Dashboard với React",
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập 5: Dự án tổng hợp",
       level: "Hard",
       fitPercent: 92,
-      description: "Tạo dashboard hoàn chỉnh với charts và real-time data",
-      estimatedTime: "6 giờ",
-      skills: ["React", "Charts", "Tailwind CSS"],
+      description: "Xây dựng chương trình quản lý đơn giản sử dụng tất cả kiến thức đã học",
+      estimatedTime: "4 giờ",
+      skills: ["Tổng hợp", "Dự án", "Thực hành"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề", "Code quality"]
     }
   ],
-  2: [ // Cấu trúc Dữ liệu & Giải thuật (IT3090)
+  2: [ // Kỹ thuật Lập trình (IT1020)
     {
       id: 201,
       courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài tập 1: Xử lý Mảng một chiều",
+      level: "Easy",
+      fitPercent: 95,
+      description: "Thao tác cơ bản với mảng: nhập, xuất, tìm kiếm, sắp xếp",
+      estimatedTime: "2 giờ",
+      skills: ["Mảng", "Vòng lặp", "Thuật toán cơ bản"],
+      completed: false,
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"]
+    },
+    {
+      id: 202,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài tập 2: Xử lý Mảng hai chiều",
+      level: "Medium",
+      fitPercent: 90,
+      description: "Làm việc với ma trận: nhập xuất, tính tổng, tích ma trận",
+      estimatedTime: "3 giờ",
+      skills: ["Mảng 2D", "Ma trận", "Thuật toán"],
+      completed: false,
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"]
+    },
+    {
+      id: 203,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài tập 3: Xử lý Chuỗi",
+      level: "Medium",
+      fitPercent: 88,
+      description: "Các thao tác với chuỗi: đếm từ, đảo ngược, tìm kiếm",
+      estimatedTime: "2.5 giờ",
+      skills: ["Chuỗi", "String manipulation", "Thuật toán"],
+      completed: false,
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"]
+    },
+    {
+      id: 204,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài tập 4: Con trỏ và Quản lý bộ nhớ",
+      level: "Hard",
+      fitPercent: 85,
+      description: "Sử dụng con trỏ để quản lý bộ nhớ động",
+      estimatedTime: "4 giờ",
+      skills: ["Con trỏ", "Bộ nhớ động", "Memory management"],
+      completed: false,
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Code quality"]
+    },
+    {
+      id: 205,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài tập 5: Xử lý File",
+      level: "Hard",
+      fitPercent: 87,
+      description: "Đọc/ghi file, xử lý dữ liệu từ file",
+      estimatedTime: "3.5 giờ",
+      skills: ["File I/O", "Xử lý dữ liệu", "Thực hành"],
+      completed: false,
+      points: 10,
+      criteria: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề", "Code quality"]
+    }
+  ],
+  3: [ // Cấu trúc Dữ liệu & Giải thuật (IT2030)
+    {
+      id: 301,
+      courseId: 3,
       courseName: "Cấu trúc Dữ liệu & Giải thuật",
-      title: "Implement Array và Linked List",
+      title: "Bài tập 1: Array và Linked List",
       level: "Medium",
       fitPercent: 90,
       description: "Cài đặt các thao tác cơ bản trên Array và Linked List",
       estimatedTime: "3 giờ",
       skills: ["Data Structures", "Arrays", "Linked List"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Thuật toán & Cấu trúc dữ liệu", "Giải quyết vấn đề"]
     },
     {
-      id: 202,
-      courseId: 2,
+      id: 302,
+      courseId: 3,
       courseName: "Cấu trúc Dữ liệu & Giải thuật",
-      title: "Stack và Queue Applications",
+      title: "Bài tập 2: Stack và Queue",
       level: "Medium",
       fitPercent: 88,
-      description: "Giải quyết bài toán thực tế với Stack và Queue",
+      description: "Implement Stack và Queue, ứng dụng giải quyết bài toán",
       estimatedTime: "3 giờ",
       skills: ["Stack", "Queue", "Problem Solving"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Thuật toán & Cấu trúc dữ liệu", "Giải quyết vấn đề"]
     },
     {
-      id: 203,
-      courseId: 2,
+      id: 303,
+      courseId: 3,
       courseName: "Cấu trúc Dữ liệu & Giải thuật",
-      title: "Binary Tree Traversal",
+      title: "Bài tập 3: Tree Traversal",
       level: "Hard",
       fitPercent: 85,
-      description: "Cài đặt các phương pháp duyệt cây nhị phân",
+      description: "Cài đặt các phương pháp duyệt cây nhị phân (Preorder, Inorder, Postorder)",
       estimatedTime: "4 giờ",
       skills: ["Trees", "Recursion", "Traversal"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Thuật toán & Cấu trúc dữ liệu", "Giải quyết vấn đề"]
     },
     {
-      id: 204,
-      courseId: 2,
+      id: 304,
+      courseId: 3,
       courseName: "Cấu trúc Dữ liệu & Giải thuật",
-      title: "Sorting Algorithms",
+      title: "Bài tập 4: Sorting Algorithms",
       level: "Hard",
       fitPercent: 87,
-      description: "Implement và so sánh các thuật toán sắp xếp",
+      description: "Implement và so sánh các thuật toán sắp xếp (Bubble, Quick, Merge)",
       estimatedTime: "5 giờ",
       skills: ["Sorting", "Algorithms", "Complexity Analysis"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Thuật toán & Cấu trúc dữ liệu", "Giải quyết vấn đề", "Code quality"]
     },
     {
-      id: 205,
-      courseId: 2,
+      id: 305,
+      courseId: 3,
       courseName: "Cấu trúc Dữ liệu & Giải thuật",
-      title: "Graph Algorithms",
+      title: "Bài tập 5: Graph Algorithms",
       level: "Hard",
       fitPercent: 82,
       description: "BFS, DFS và tìm đường đi ngắn nhất trên đồ thị",
       estimatedTime: "6 giờ",
       skills: ["Graph", "BFS", "DFS", "Dijkstra"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Thuật toán & Cấu trúc dữ liệu", "Giải quyết vấn đề"]
     }
   ],
-  3: [ // Cơ sở Dữ liệu (IT3100)
-    {
-      id: 301,
-      courseId: 3,
-      courseName: "Cơ sở Dữ liệu",
-      title: "Thiết kế Database Schema",
-      level: "Medium",
-      fitPercent: 92,
-      description: "Thiết kế schema cho hệ thống quản lý thư viện",
-      estimatedTime: "3 giờ",
-      skills: ["Database Design", "ERD", "Normalization"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 302,
-      courseId: 3,
-      courseName: "Cơ sở Dữ liệu",
-      title: "SQL Queries - Basic",
-      level: "Easy",
-      fitPercent: 95,
-      description: "Viết các câu truy vấn SQL cơ bản (SELECT, WHERE, JOIN)",
-      estimatedTime: "2 giờ",
-      skills: ["SQL", "SELECT", "JOIN"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 303,
-      courseId: 3,
-      courseName: "Cơ sở Dữ liệu",
-      title: "SQL Queries - Advanced",
-      level: "Hard",
-      fitPercent: 88,
-      description: "Subqueries, Views, Stored Procedures và Triggers",
-      estimatedTime: "4 giờ",
-      skills: ["SQL", "Subqueries", "Stored Procedures"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 304,
-      courseId: 3,
-      courseName: "Cơ sở Dữ liệu",
-      title: "Database Optimization",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Tối ưu hóa queries, indexing và performance tuning",
-      estimatedTime: "5 giờ",
-      skills: ["Optimization", "Indexing", "Performance"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 305,
-      courseId: 3,
-      courseName: "Cơ sở Dữ liệu",
-      title: "NoSQL với MongoDB",
-      level: "Medium",
-      fitPercent: 90,
-      description: "Làm việc với MongoDB và thiết kế document-based database",
-      estimatedTime: "4 giờ",
-      skills: ["MongoDB", "NoSQL", "Document DB"],
-      completed: false,
-      points: 10
-    }
-  ],
-  4: [ // Mạng Máy tính (IT3110)
+  4: [ // Lập trình Hướng đối tượng (IT2040)
     {
       id: 401,
       courseId: 4,
-      courseName: "Mạng Máy tính",
-      title: "Network Fundamentals Lab",
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập 1: Class và Object",
       level: "Easy",
-      fitPercent: 90,
-      description: "Thực hành cấu hình mạng cơ bản và IP addressing",
+      fitPercent: 95,
+      description: "Tạo class và object, các phương thức cơ bản",
       estimatedTime: "2 giờ",
-      skills: ["Networking", "IP", "Subnetting"],
+      skills: ["Class", "Object", "OOP Basics"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Lập trình hướng đối tượng", "Kỹ năng lập trình cơ bản"]
     },
     {
       id: 402,
       courseId: 4,
-      courseName: "Mạng Máy tính",
-      title: "TCP/IP Protocol Analysis",
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập 2: Encapsulation",
       level: "Medium",
-      fitPercent: 87,
-      description: "Phân tích gói tin TCP/IP với Wireshark",
-      estimatedTime: "3 giờ",
-      skills: ["TCP/IP", "Wireshark", "Protocol Analysis"],
+      fitPercent: 90,
+      description: "Áp dụng đóng gói dữ liệu với access modifiers",
+      estimatedTime: "2.5 giờ",
+      skills: ["Encapsulation", "Access Modifiers", "OOP"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Lập trình hướng đối tượng", "Code quality"]
     },
     {
       id: 403,
       courseId: 4,
-      courseName: "Mạng Máy tính",
-      title: "Router Configuration",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Cấu hình router và routing protocols",
-      estimatedTime: "4 giờ",
-      skills: ["Routing", "OSPF", "RIP"],
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập 3: Inheritance",
+      level: "Medium",
+      fitPercent: 88,
+      description: "Sử dụng kế thừa để mở rộng class",
+      estimatedTime: "3 giờ",
+      skills: ["Inheritance", "OOP", "Class Design"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Lập trình hướng đối tượng", "Giải quyết vấn đề"]
     },
     {
       id: 404,
       courseId: 4,
-      courseName: "Mạng Máy tính",
-      title: "Network Security Lab",
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập 4: Polymorphism",
       level: "Hard",
-      fitPercent: 88,
-      description: "Thực hành firewall, VPN và bảo mật mạng",
-      estimatedTime: "5 giờ",
-      skills: ["Security", "Firewall", "VPN"],
+      fitPercent: 85,
+      description: "Áp dụng đa hình (method overriding, overloading)",
+      estimatedTime: "4 giờ",
+      skills: ["Polymorphism", "Method Overriding", "OOP"],
       completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Lập trình hướng đối tượng", "Giải quyết vấn đề", "Code quality"]
     },
     {
       id: 405,
       courseId: 4,
-      courseName: "Mạng Máy tính",
-      title: "Wireless Network Setup",
-      level: "Medium",
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập 5: Dự án OOP",
+      level: "Hard",
       fitPercent: 92,
-      description: "Cấu hình và bảo mật mạng không dây",
-      estimatedTime: "3 giờ",
-      skills: ["WiFi", "Wireless Security", "Access Point"],
-      completed: false,
-      points: 10
-    }
-  ],
-  5: [ // Tiếng Anh Chuyên ngành (FL2100)
-    {
-      id: 501,
-      courseId: 5,
-      courseName: "Tiếng Anh Chuyên ngành",
-      title: "Technical Vocabulary Practice",
-      level: "Easy",
-      fitPercent: 95,
-      description: "Học từ vựng chuyên ngành CNTT thông dụng",
-      estimatedTime: "1 giờ",
-      skills: ["Vocabulary", "IT Terms"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 502,
-      courseId: 5,
-      courseName: "Tiếng Anh Chuyên ngành",
-      title: "Reading Comprehension",
-      level: "Medium",
-      fitPercent: 90,
-      description: "Đọc hiểu tài liệu kỹ thuật và documentation",
-      estimatedTime: "2 giờ",
-      skills: ["Reading", "Comprehension"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 503,
-      courseId: 5,
-      courseName: "Tiếng Anh Chuyên ngành",
-      title: "Technical Writing",
-      level: "Medium",
-      fitPercent: 88,
-      description: "Viết email, báo cáo kỹ thuật bằng tiếng Anh",
-      estimatedTime: "2.5 giờ",
-      skills: ["Writing", "Technical Writing"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 504,
-      courseId: 5,
-      courseName: "Tiếng Anh Chuyên ngành",
-      title: "Presentation Skills",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Thuyết trình dự án công nghệ bằng tiếng Anh",
-      estimatedTime: "3 giờ",
-      skills: ["Presentation", "Public Speaking"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 505,
-      courseId: 5,
-      courseName: "Tiếng Anh Chuyên ngành",
-      title: "TOEIC Practice Test",
-      level: "Medium",
-      fitPercent: 92,
-      description: "Luyện thi TOEIC với đề thi mẫu",
-      estimatedTime: "2 giờ",
-      skills: ["TOEIC", "Test Preparation"],
-      completed: false,
-      points: 10
-    }
-  ],
-  6: [ // Lập trình Hướng đối tượng (IT2030)
-    {
-      id: 601,
-      courseId: 6,
-      courseName: "Lập trình Hướng đối tượng",
-      title: "OOP Concepts Implementation",
-      level: "Medium",
-      fitPercent: 92,
-      description: "Implement các khái niệm OOP cơ bản trong Java",
-      estimatedTime: "3 giờ",
-      skills: ["Java", "OOP", "Classes"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 602,
-      courseId: 6,
-      courseName: "Lập trình Hướng đối tượng",
-      title: "Inheritance và Polymorphism",
-      level: "Hard",
-      fitPercent: 88,
-      description: "Áp dụng kế thừa và đa hình trong bài toán thực tế",
-      estimatedTime: "4 giờ",
-      skills: ["Inheritance", "Polymorphism", "Java"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 603,
-      courseId: 6,
-      courseName: "Lập trình Hướng đối tượng",
-      title: "Design Patterns - Creational",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Implement Singleton, Factory, Builder patterns",
-      estimatedTime: "5 giờ",
-      skills: ["Design Patterns", "Java", "Best Practices"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 604,
-      courseId: 6,
-      courseName: "Lập trình Hướng đối tượng",
-      title: "Exception Handling",
-      level: "Medium",
-      fitPercent: 90,
-      description: "Xử lý ngoại lệ và error handling trong Java",
-      estimatedTime: "3 giờ",
-      skills: ["Exception Handling", "Java", "Error Handling"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 605,
-      courseId: 6,
-      courseName: "Lập trình Hướng đối tượng",
-      title: "GUI Application với Swing",
-      level: "Hard",
-      fitPercent: 87,
-      description: "Xây dựng ứng dụng desktop với Java Swing",
+      description: "Xây dựng ứng dụng hoàn chỉnh sử dụng tất cả khái niệm OOP",
       estimatedTime: "6 giờ",
-      skills: ["Java Swing", "GUI", "Event Handling"],
+      skills: ["OOP", "Project", "Design Patterns"],
       completed: false,
-      points: 10
-    }
-  ],
-  7: [ // Trí tuệ Nhân tạo (IT4050)
-    {
-      id: 701,
-      courseId: 7,
-      courseName: "Trí tuệ Nhân tạo",
-      title: "AI Fundamentals Quiz",
-      level: "Easy",
-      fitPercent: 90,
-      description: "Tìm hiểu các khái niệm cơ bản về AI",
-      estimatedTime: "2 giờ",
-      skills: ["AI", "Machine Learning Basics"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 702,
-      courseId: 7,
-      courseName: "Trí tuệ Nhân tạo",
-      title: "Linear Regression Implementation",
-      level: "Medium",
-      fitPercent: 88,
-      description: "Cài đặt thuật toán Linear Regression từ đầu",
-      estimatedTime: "4 giờ",
-      skills: ["Machine Learning", "Python", "NumPy"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 703,
-      courseId: 7,
-      courseName: "Trí tuệ Nhân tạo",
-      title: "Neural Network from Scratch",
-      level: "Hard",
-      fitPercent: 80,
-      description: "Xây dựng mạng neural đơn giản không dùng framework",
-      estimatedTime: "6 giờ",
-      skills: ["Neural Networks", "Backpropagation", "Python"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 704,
-      courseId: 7,
-      courseName: "Trí tuệ Nhân tạo",
-      title: "Image Classification với CNN",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Huấn luyện mô hình CNN để phân loại hình ảnh",
-      estimatedTime: "8 giờ",
-      skills: ["CNN", "TensorFlow", "Image Processing"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 705,
-      courseId: 7,
-      courseName: "Trí tuệ Nhân tạo",
-      title: "NLP Text Classification",
-      level: "Hard",
-      fitPercent: 82,
-      description: "Phân loại văn bản với Natural Language Processing",
-      estimatedTime: "7 giờ",
-      skills: ["NLP", "Text Mining", "Python"],
-      completed: false,
-      points: 10
-    }
-  ],
-  8: [ // Phát triển Ứng dụng Mobile (IT4060)
-    {
-      id: 801,
-      courseId: 8,
-      courseName: "Phát triển Ứng dụng Mobile",
-      title: "React Native Setup & Hello World",
-      level: "Easy",
-      fitPercent: 95,
-      description: "Cài đặt môi trường và tạo ứng dụng đầu tiên",
-      estimatedTime: "2 giờ",
-      skills: ["React Native", "Setup", "Basics"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 802,
-      courseId: 8,
-      courseName: "Phát triển Ứng dụng Mobile",
-      title: "Mobile UI Components",
-      level: "Medium",
-      fitPercent: 90,
-      description: "Xây dựng giao diện với React Native components",
-      estimatedTime: "3 giờ",
-      skills: ["React Native", "UI", "Components"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 803,
-      courseId: 8,
-      courseName: "Phát triển Ứng dụng Mobile",
-      title: "Navigation trong Mobile App",
-      level: "Medium",
-      fitPercent: 88,
-      description: "Implement navigation với React Navigation",
-      estimatedTime: "4 giờ",
-      skills: ["Navigation", "React Navigation", "Routing"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 804,
-      courseId: 8,
-      courseName: "Phát triển Ứng dụng Mobile",
-      title: "API Integration Mobile",
-      level: "Hard",
-      fitPercent: 87,
-      description: "Kết nối API và quản lý state trong mobile app",
-      estimatedTime: "5 giờ",
-      skills: ["API", "Fetch", "State Management"],
-      completed: false,
-      points: 10
-    },
-    {
-      id: 805,
-      courseId: 8,
-      courseName: "Phát triển Ứng dụng Mobile",
-      title: "Build & Deploy Mobile App",
-      level: "Hard",
-      fitPercent: 85,
-      description: "Build APK/IPA và deploy lên store",
-      estimatedTime: "6 giờ",
-      skills: ["Build", "Deploy", "App Store"],
-      completed: false,
-      points: 10
+      points: 10,
+      criteria: ["Lập trình hướng đối tượng", "Giải quyết vấn đề", "Code quality"]
     }
   ]
 };
@@ -681,10 +447,10 @@ export const learningPath = [
 ];
 
 export const errorStats = [
-  { type: "Syntax Error", count: 15, color: "#ef4444" },
-  { type: "Logic Error", count: 23, color: "#f59e0b" },
-  { type: "Runtime Error", count: 8, color: "#8b5cf6" },
-  { type: "Style Error", count: 12, color: "#06b6d4" }
+  { type: "Syntax Error", count: 15, color: "#dc2626" }, // Danger (màu chuẩn CSS)
+  { type: "Logic Error", count: 23, color: "#ff9800" }, // Accent Orange
+  { type: "Runtime Error", count: 8, color: "#3f51b5" }, // Primary Blue
+  { type: "Style Error", count: 12, color: "#5c6bc0" } // Primary Blue variant
 ];
 
 export const submissions = [
@@ -891,45 +657,69 @@ export const studyStats = {
   longestStreak: 12
 };
 
-// Danh sách tất cả khóa học có sẵn (catalog)
+// Danh sách 4 khóa học chính
 export const availableCourses = [
   {
     id: 1,
-    name: "Lập trình Web",
-    code: "IT3080",
+    name: "Nhập môn Lập trình",
+    code: "IT1010",
     instructor: "TS. Nguyễn Văn A",
     credits: 3,
     semester: "HK2 2024-2025",
     schedule: "Thứ 2, 4 (7:00-9:30)",
     room: "D3-201",
     category: "Chuyên ngành bắt buộc",
-    description: "Học về HTML, CSS, JavaScript, React và các công nghệ web hiện đại",
+    description: "Học các khái niệm cơ bản về lập trình, biến, hàm, vòng lặp, điều kiện và cấu trúc dữ liệu cơ bản",
     maxStudents: 60,
     enrolled: 45,
-    difficulty: "Intermediate",
+    difficulty: "Beginner",
     duration: "15 tuần",
-    thumbnail: "🌐",
+    thumbnail: "💻",
     topics: [
-      { name: "HTML & CSS", description: "Xây dựng giao diện web cơ bản" },
-      { name: "JavaScript ES6+", description: "Lập trình JavaScript hiện đại" },
-      { name: "React Basics", description: "Framework React cơ bản" },
-      { name: "State Management", description: "Quản lý state với hooks" },
-      { name: "Backend Integration", description: "Kết nối API và backend" }
+      { name: "Giới thiệu lập trình", description: "Khái niệm cơ bản về lập trình" },
+      { name: "Biến và Kiểu dữ liệu", description: "Các kiểu dữ liệu cơ bản" },
+      { name: "Cấu trúc điều khiển", description: "If-else, switch-case" },
+      { name: "Vòng lặp", description: "For, while, do-while" },
+      { name: "Hàm và Thủ tục", description: "Cách tạo và sử dụng hàm" }
     ]
   },
   {
     id: 2,
-    name: "Cấu trúc Dữ liệu & Giải thuật",
-    code: "IT3090",
+    name: "Kỹ thuật Lập trình",
+    code: "IT1020",
     instructor: "PGS.TS. Trần Thị B",
-    credits: 4,
+    credits: 3,
     semester: "HK2 2024-2025",
     schedule: "Thứ 3, 5 (13:00-15:30)",
     room: "D9-305",
     category: "Chuyên ngành bắt buộc",
-    description: "Nghiên cứu các cấu trúc dữ liệu và thuật toán cơ bản",
+    description: "Nâng cao kỹ năng lập trình với mảng, chuỗi, con trỏ, file và kỹ thuật lập trình nâng cao",
     maxStudents: 50,
     enrolled: 38,
+    difficulty: "Intermediate",
+    duration: "15 tuần",
+    thumbnail: "⚙️",
+    topics: [
+      { name: "Mảng và Chuỗi", description: "Xử lý mảng một chiều, hai chiều và chuỗi" },
+      { name: "Con trỏ", description: "Con trỏ và quản lý bộ nhớ" },
+      { name: "Xử lý File", description: "Đọc/ghi file" },
+      { name: "Kỹ thuật Debug", description: "Kỹ thuật tìm và sửa lỗi" },
+      { name: "Code Quality", description: "Viết code sạch và tối ưu" }
+    ]
+  },
+  {
+    id: 3,
+    name: "Cấu trúc Dữ liệu & Giải thuật",
+    code: "IT2030",
+    instructor: "TS. Lê Văn C",
+    credits: 4,
+    semester: "HK2 2024-2025",
+    schedule: "Thứ 6 (9:00-12:00)",
+    room: "D3-105",
+    category: "Chuyên ngành bắt buộc",
+    description: "Nghiên cứu các cấu trúc dữ liệu và thuật toán cơ bản như Array, Linked List, Stack, Queue, Tree, Graph",
+    maxStudents: 55,
+    enrolled: 42,
     difficulty: "Advanced",
     duration: "15 tuần",
     thumbnail: "🔢",
@@ -938,152 +728,103 @@ export const availableCourses = [
       { name: "Stack & Queue", description: "Ngăn xếp và hàng đợi" },
       { name: "Tree & Graph", description: "Cấu trúc phi tuyến" },
       { name: "Sorting Algorithms", description: "Các thuật toán sắp xếp" },
-      { name: "Dynamic Programming", description: "Quy hoạch động" }
-    ]
-  },
-  {
-    id: 3,
-    name: "Cơ sở Dữ liệu",
-    code: "IT3100",
-    instructor: "TS. Lê Văn C",
-    credits: 3,
-    semester: "HK2 2024-2025",
-    schedule: "Thứ 6 (9:00-12:00)",
-    room: "D3-105",
-    category: "Chuyên ngành bắt buộc",
-    description: "Thiết kế và quản lý cơ sở dữ liệu quan hệ",
-    maxStudents: 55,
-    enrolled: 42,
-    difficulty: "Intermediate",
-    duration: "15 tuần",
-    thumbnail: "💾",
-    topics: [
-      { name: "SQL Basics", description: "Ngôn ngữ SQL cơ bản" },
-      { name: "Database Design", description: "Thiết kế CSDL" },
-      { name: "Advanced SQL", description: "SQL nâng cao" },
-      { name: "Optimization", description: "Tối ưu hóa truy vấn" },
-      { name: "NoSQL", description: "Cơ sở dữ liệu phi quan hệ" }
+      { name: "Searching Algorithms", description: "Các thuật toán tìm kiếm" }
     ]
   },
   {
     id: 4,
-    name: "Mạng Máy tính",
-    code: "IT3110",
-    instructor: "TS. Phạm Thị D",
-    credits: 3,
-    semester: "HK2 2024-2025",
-    schedule: "Thứ 7 (7:00-10:00)",
-    room: "D5-401",
-    category: "Chuyên ngành bắt buộc",
-    description: "Các giao thức mạng, TCP/IP, và bảo mật mạng",
-    maxStudents: 45,
-    enrolled: 35,
-    difficulty: "Intermediate",
-    duration: "15 tuần",
-    thumbnail: "🌐",
-    topics: [
-      { name: "Network Fundamentals", description: "Kiến thức nền tảng" },
-      { name: "TCP/IP Protocol", description: "Giao thức TCP/IP" },
-      { name: "Routing & Switching", description: "Định tuyến và chuyển mạch" },
-      { name: "Network Security", description: "Bảo mật mạng" },
-      { name: "Wireless Networks", description: "Mạng không dây" }
-    ]
-  },
-  {
-    id: 5,
-    name: "Tiếng Anh Chuyên ngành",
-    code: "FL2100",
-    instructor: "ThS. Hoàng Thị E",
-    credits: 2,
-    semester: "HK2 2024-2025",
-    schedule: "Thứ 4 (15:00-17:00)",
-    room: "D1-203",
-    category: "Đại cương",
-    description: "Tiếng Anh chuyên ngành CNTT và kỹ năng giao tiếp",
-    maxStudents: 40,
-    enrolled: 32,
-    difficulty: "Beginner",
-    duration: "15 tuần",
-    thumbnail: "🗣️",
-    topics: [
-      { name: "Technical Vocabulary", description: "Từ vựng chuyên ngành" },
-      { name: "Reading Skills", description: "Kỹ năng đọc hiểu" },
-      { name: "Writing Skills", description: "Kỹ năng viết" },
-      { name: "Presentation Skills", description: "Kỹ năng thuyết trình" },
-      { name: "TOEIC Preparation", description: "Luyện thi TOEIC" }
-    ]
-  },
-  {
-    id: 6,
     name: "Lập trình Hướng đối tượng",
-    code: "IT2030",
+    code: "IT2040",
     instructor: "TS. Đỗ Văn F",
     credits: 3,
     semester: "HK2 2024-2025",
     schedule: "Thứ 3, 6 (7:00-9:30)",
     room: "D3-201",
     category: "Chuyên ngành bắt buộc",
-    description: "Lập trình OOP với Java",
+    description: "Lập trình OOP với các khái niệm Class, Object, Inheritance, Polymorphism, Encapsulation",
     maxStudents: 50,
     enrolled: 41,
     difficulty: "Intermediate",
     duration: "15 tuần",
     thumbnail: "☕",
     topics: [
-      { name: "OOP Concepts", description: "Khái niệm OOP" },
-      { name: "Java Basics", description: "Java cơ bản" },
+      { name: "OOP Concepts", description: "Khái niệm OOP cơ bản" },
+      { name: "Class và Object", description: "Tạo và sử dụng class" },
       { name: "Inheritance & Polymorphism", description: "Kế thừa và đa hình" },
-      { name: "Design Patterns", description: "Các mẫu thiết kế" },
-      { name: "GUI Programming", description: "Lập trình giao diện" }
-    ]
-  },
-  {
-    id: 7,
-    name: "Trí tuệ Nhân tạo",
-    code: "IT4050",
-    instructor: "PGS.TS. Nguyễn Thị G",
-    credits: 3,
-    semester: "HK2 2024-2025",
-    schedule: "Thứ 5 (13:00-16:00)",
-    room: "D7-501",
-    category: "Chuyên ngành tự chọn",
-    description: "Các thuật toán AI, Machine Learning cơ bản",
-    maxStudents: 40,
-    enrolled: 28,
-    difficulty: "Advanced",
-    duration: "15 tuần",
-    thumbnail: "🤖",
-    topics: [
-      { name: "AI Fundamentals", description: "Nền tảng AI" },
-      { name: "Machine Learning", description: "Học máy cơ bản" },
-      { name: "Neural Networks", description: "Mạng nơ-ron" },
-      { name: "Deep Learning", description: "Học sâu" },
-      { name: "AI Applications", description: "Ứng dụng AI" }
-    ]
-  },
-  {
-    id: 8,
-    name: "Phát triển Ứng dụng Mobile",
-    code: "IT4060",
-    instructor: "TS. Vũ Văn H",
-    credits: 3,
-    semester: "HK2 2024-2025",
-    schedule: "Thứ 2, 5 (15:00-17:30)",
-    room: "D5-203",
-    category: "Chuyên ngành tự chọn",
-    description: "Phát triển ứng dụng di động với React Native",
-    maxStudents: 35,
-    enrolled: 25,
-    difficulty: "Intermediate",
-    duration: "15 tuần",
-    thumbnail: "📱",
-    topics: [
-      { name: "Mobile Development Basics", description: "Cơ bản phát triển mobile" },
-      { name: "React Native", description: "Framework React Native" },
-      { name: "UI/UX Mobile", description: "Thiết kế giao diện mobile" },
-      { name: "API Integration", description: "Tích hợp API" },
-      { name: "Publishing Apps", description: "Xuất bản ứng dụng" }
+      { name: "Encapsulation", description: "Đóng gói dữ liệu" },
+      { name: "Design Patterns", description: "Các mẫu thiết kế cơ bản" }
     ]
   }
+];
+
+// Phân loại năng lực theo môn học
+export const competencyByCourse = {
+  1: { // Nhập môn Lập trình
+    "Kỹ năng lập trình cơ bản": 85,
+    "Giải quyết vấn đề": 78,
+    "Code quality": 72
+  },
+  2: { // Kỹ thuật Lập trình
+    "Kỹ năng lập trình cơ bản": 88,
+    "Giải quyết vấn đề": 82,
+    "Code quality": 80
+  },
+  3: { // Cấu trúc Dữ liệu & Giải thuật
+    "Thuật toán & Cấu trúc dữ liệu": 75,
+    "Giải quyết vấn đề": 80,
+    "Code quality": 78
+  },
+  4: { // Lập trình Hướng đối tượng
+    "Lập trình hướng đối tượng": 82,
+    "Kỹ năng lập trình cơ bản": 85,
+    "Giải quyết vấn đề": 80,
+    "Code quality": 85
+  }
+};
+
+// Đánh giá theo tiêu chí/năng lực (tổng hợp)
+export const competencyAssessment = {
+  "Kỹ năng lập trình cơ bản": {
+    score: 86.5,
+    level: "Khá",
+    description: "Nắm vững các khái niệm cơ bản về lập trình",
+    courses: ["Nhập môn Lập trình", "Kỹ thuật Lập trình", "Lập trình Hướng đối tượng"]
+  },
+  "Giải quyết vấn đề": {
+    score: 80,
+    level: "Khá",
+    description: "Có khả năng phân tích và giải quyết bài toán",
+    courses: ["Nhập môn Lập trình", "Kỹ thuật Lập trình", "Cấu trúc Dữ liệu & Giải thuật", "Lập trình Hướng đối tượng"]
+  },
+  "Code quality": {
+    score: 78.75,
+    level: "Khá",
+    description: "Viết code có cấu trúc và dễ đọc",
+    courses: ["Nhập môn Lập trình", "Kỹ thuật Lập trình", "Cấu trúc Dữ liệu & Giải thuật", "Lập trình Hướng đối tượng"]
+  },
+  "Thuật toán & Cấu trúc dữ liệu": {
+    score: 75,
+    level: "Trung bình",
+    description: "Hiểu và áp dụng các cấu trúc dữ liệu cơ bản",
+    courses: ["Cấu trúc Dữ liệu & Giải thuật"]
+  },
+  "Lập trình hướng đối tượng": {
+    score: 82,
+    level: "Khá",
+    description: "Áp dụng tốt các nguyên lý OOP",
+    courses: ["Lập trình Hướng đối tượng"]
+  }
+};
+
+// Mục tiêu tiến độ theo tuần (cho biểu đồ)
+export const weeklyTargets = [
+  { week: "Tuần 1", target: 12.5 },
+  { week: "Tuần 2", target: 25 },
+  { week: "Tuần 3", target: 37.5 },
+  { week: "Tuần 4", target: 50 },
+  { week: "Tuần 5", target: 62.5 },
+  { week: "Tuần 6", target: 75 },
+  { week: "Tuần 7", target: 87.5 },
+  { week: "Tuần 8", target: 100 }
 ];
 

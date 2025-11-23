@@ -14,8 +14,8 @@ const KPICard = ({ title, value, subtitle, icon, color = 'blue', trend }) => {
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{title}</p>
-          <h3 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">{value}</h3>
-          {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+          <h3 className="text-4xl font-bold text-gray-900 dark:text-white mb-1" style={{ color: '#111827' }}>{value}</h3>
+          {subtitle && <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>}
           {trend && (
             <div className={`text-xs mt-2 font-semibold ${trend.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {trend.positive ? '↑' : '↓'} {trend.value}
@@ -31,4 +31,3 @@ const KPICard = ({ title, value, subtitle, icon, color = 'blue', trend }) => {
 };
 
 export default KPICard;
-

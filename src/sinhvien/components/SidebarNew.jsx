@@ -74,7 +74,6 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
     { name: 'Khóa học', id: 'courses', icon: BookOpen },
     { name: 'Bài tập', id: 'exercises', icon: FileText },
     { name: 'Lỗi & Phản hồi', id: 'feedback', icon: MessageCircle },
-    { name: 'Kỹ năng Mềm', id: 'skills', icon: Award },
     { name: 'Hồ sơ', id: 'profile', icon: User },
   ];
 
@@ -99,7 +98,7 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
 
       {/* Sidebar */}
       <div 
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-sm transform ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 shadow-sm transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           isCollapsed && !shouldShowText ? 'lg:w-20' : 'w-64'
@@ -108,9 +107,9 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
         onMouseLeave={() => mode === 'hover' && setIsHovered(false)}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="h-8 w-8 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="h-8 w-8 bg-gradient-to-r from-primary-500 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
               <BarChart3 className="h-5 w-5 text-white" />
             </div>
             {showText && (
@@ -119,7 +118,7 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
           </div>
           <button 
             onClick={onClose} 
-            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 flex-shrink-0"
+            className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 flex-shrink-0"
           >
             <X />
           </button>
@@ -134,54 +133,27 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
                   onClick={() => handleNavigate(item.id)}
                   className={`flex items-center w-full px-3 py-3 text-sm font-medium rounded-lg transition-all group relative ${
                     currentPage === item.id
-                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                   title={!showText ? item.name : ''}
                 >
                   <item.icon 
                     className={`h-5 w-5 flex-shrink-0 ${
-                      currentPage === item.id ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300'
+                      currentPage === item.id ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-600'
                     }`} 
                   />
                   {showText && (
                     <span className="ml-3 whitespace-nowrap">{item.name}</span>
                   )}
                   {currentPage === item.id && (
-                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-600 dark:bg-primary-400 rounded-l-full"></div>
+                    <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary-500 rounded-l-full"></div>
                   )}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
-
-        {/* Logout Button */}
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <button 
-            onClick={async () => {
-              try {
-                sessionStorage.removeItem('access_token');
-                sessionStorage.removeItem('refresh_token');
-                sessionStorage.removeItem('user');
-                sessionStorage.removeItem('dashboardType');
-                window.location.href = '/login';
-              } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = '/login';
-              }
-            }}
-            className={`flex items-center w-full px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-              !showText ? 'justify-center' : ''
-            }`}
-            title={!showText ? 'Đăng xuất' : ''}
-          >
-            <LogOut className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-            {showText && (
-              <span className="ml-3 whitespace-nowrap">Đăng Xuất</span>
-            )}
-          </button>
-        </div>
 
       </div>
     </>
