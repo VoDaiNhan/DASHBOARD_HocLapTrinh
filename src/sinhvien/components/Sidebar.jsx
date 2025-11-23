@@ -1,4 +1,5 @@
 import React from 'react';
+import logo from '../../assets/unnamed.jpg';
 
 const Sidebar = ({ currentPage, setCurrentPage, darkMode }) => {
   const menuItems = [
@@ -13,9 +14,7 @@ const Sidebar = ({ currentPage, setCurrentPage, darkMode }) => {
     <aside className="w-64 shadow-lg h-screen sticky top-0 hidden md:block transition-all duration-300 sidebar-gradient">
       <div className="p-6">
         <div className="flex items-center space-x-3 mb-8">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xl font-bold logo-gradient">
-            SL
-          </div>
+          <img src={logo} alt="EduTracker Logo" className="h-10 w-10 rounded-lg object-cover" />
           <div>
             <h1 className="text-lg font-bold text-gray-800 dark:text-white">Student</h1>
             <p className="text-xs text-gray-600 dark:text-gray-400">Learning Dashboard</p>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logo from '../../assets/unnamed.jpg';
 
 const X = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,9 +110,7 @@ const SidebarNew = ({ isOpen, onClose, currentPage, setCurrentPage, mode = 'expa
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="h-8 w-8 bg-gradient-to-r from-primary-500 to-primary-700 rounded-lg flex items-center justify-center flex-shrink-0">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
+            <img src={logo} alt="EduTracker Logo" className="h-8 w-8 rounded-lg object-cover flex-shrink-0" />
             {showText && (
               <span className="text-xl font-bold text-gradient whitespace-nowrap">EduTracker</span>
             )}

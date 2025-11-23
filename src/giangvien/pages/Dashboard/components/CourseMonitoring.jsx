@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Clock, Users, MoreVertical, X, TrendingUp, TrendingDown, Minus, Award, Search } from 'lucide-react';
+import { Clock, Users, MoreVertical, X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { mockStudentTrackingData } from '../../../data/mockData';
 
 const CourseMonitoring = ({ data }) => {
     const [showModal, setShowModal] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
-    const [gradeFilter, setGradeFilter] = useState('all');
     const [teacherName, setTeacherName] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         // Lấy tên giảng viên từ sessionStorage (đã lưu khi đăng nhập)
@@ -32,14 +30,11 @@ const CourseMonitoring = ({ data }) => {
 
     const handleCourseClick = (course) => {
         setSelectedCourse(course);
-        setGradeFilter('all');
         setShowModal(true);
     };
 
     const handleCloseModal = () => {
         setShowModal(false);
-        setGradeFilter('all');
-        setSearchQuery('');
     };
 
     const getStudentsInCourse = (courseName) => {
@@ -49,70 +44,7 @@ const CourseMonitoring = ({ data }) => {
         );
     };
 
-    const getTrendIcon = (scoreChange) => {
-        if (scoreChange > 0) return <TrendingUp className="h-4 w-4 text-success-600" />;
-        if (scoreChange < 0) return <TrendingDown className="h-4 w-4 text-danger-600" />;
-        return <Minus className="h-4 w-4 text-gray-400" />;
-    };
 
-    const getGradeCategory = (score) => {
-        if (score >= 8.0) return 'excellent';
-        if (score >= 6.5) return 'good';
-        if (score >= 5.0) return 'average';
-        if (score >= 4.0) return 'weak';
-        return 'poor';
-    };
-
-    const filterStudentsByGrade = (students, courseName) => {
-        let filtered = students;
-        
-        // Lọc theo điểm
-        if (gradeFilter !== 'all') {
-            filtered = filtered.filter(student => {
-                const courseData = student.courses?.find(c => c.name === courseName);
-                if (!courseData) return false;
-                return getGradeCategory(courseData.score) === gradeFilter;
-            });
-        }
-        
-        // Lọc theo tìm kiếm
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(student => 
-                student.name.toLowerCase().includes(query) ||
-                student.studentId.toLowerCase().includes(query) ||
-                student.email.toLowerCase().includes(query)
-            );
-        }
-        
-        return filtered;
-    };
-
-    const gradeFilters = [
-        { value: 'all', label: 'Tất cả', color: 'gray' },
-        { value: 'excellent', label: 'Giỏi (≥ 8.0)', color: 'success' },
-        { value: 'good', label: 'Khá (6.5 - 8.0)', color: 'primary' },
-        { value: 'average', label: 'TB (5.0 - 6.5)', color: 'warning' },
-        { value: 'weak', label: 'Yếu (4.0 - 5.0)', color: 'orange' },
-        { value: 'poor', label: 'Kém (< 4.0)', color: 'danger' }
-    ];
-
-    const getFilterButtonClass = (filterValue) => {
-        const baseClass = "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors";
-        if (gradeFilter === filterValue) {
-            const activeColors = {
-                all: 'bg-gray-600 text-white',
-                excellent: 'bg-success-600 text-white',
-                good: 'bg-primary-600 text-white',
-                average: 'bg-warning-600 text-white',
-                orange: 'bg-orange-600 text-white',
-                danger: 'bg-danger-600 text-white'
-            };
-            const filter = gradeFilters.find(f => f.value === filterValue);
-            return `${baseClass} ${activeColors[filter?.color] || activeColors.all}`;
-        }
-        return `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`;
-    };
 
     return (
         <div className="card p-6">
@@ -211,7 +143,7 @@ const CourseMonitoring = ({ data }) => {
                         <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
                             {/* Thống kê tổng quan */}
                             <div className="mb-6">
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Thống kê tổng quan</h4>
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Thông tin khóa học</h4>
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
                                         <div className="flex items-center space-x-2 mb-2">
@@ -219,7 +151,7 @@ const CourseMonitoring = ({ data }) => {
                                             <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Tổng sinh viên</p>
                                         </div>
                                         <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                            {getStudentsInCourse(selectedCourse.name).length}
+                                            {selectedCourse.enrolledStudents}
                                         </p>
                                     </div>
                                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
@@ -339,112 +271,7 @@ const CourseMonitoring = ({ data }) => {
                                 </div>
                             </div>
 
-                            {/* Tìm kiếm và Bộ lọc */}
-                            <div className="mb-6 space-y-4">
-                                {/* Thanh tìm kiếm */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Tìm kiếm sinh viên</h4>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            placeholder="Tìm theo tên, MSSV, email..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                                        />
-                                    </div>
-                                </div>
 
-                                {/* Bộ lọc theo điểm */}
-                                <div>
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Lọc theo mức độ điểm</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {gradeFilters.map((filter) => {
-                                            const studentsInGrade = filter.value === 'all' 
-                                                ? getStudentsInCourse(selectedCourse.name)
-                                                : filterStudentsByGrade(getStudentsInCourse(selectedCourse.name), selectedCourse.name);
-                                            
-                                            return (
-                                                <button
-                                                    key={filter.value}
-                                                    onClick={() => setGradeFilter(filter.value)}
-                                                    className={getFilterButtonClass(filter.value)}
-                                                >
-                                                    {filter.label} ({studentsInGrade.length})
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Danh sách sinh viên */}
-                            <div>
-                                <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                                    Danh sách sinh viên trong khóa học
-                                </h4>
-                                {filterStudentsByGrade(getStudentsInCourse(selectedCourse.name), selectedCourse.name).length > 0 ? (
-                                    <div className="space-y-3">
-                                        {filterStudentsByGrade(getStudentsInCourse(selectedCourse.name), selectedCourse.name).map((student, index) => {
-                                            const courseData = student.courses.find(c => c.name === selectedCourse.name);
-                                            return (
-                                                <div 
-                                                    key={student.id}
-                                                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex items-center space-x-4 flex-1">
-                                                        <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                                                            <span className="text-primary-600 font-semibold">{index + 1}</span>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className="font-medium text-gray-900">{student.name}</p>
-                                                            <p className="text-sm text-gray-600">{student.studentId} • {student.email}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-6">
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-gray-600">Tiến độ</p>
-                                                            <p className="text-lg font-bold text-gray-900">{courseData?.progress || 0}%</p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-gray-600">Điểm</p>
-                                                            <div className="flex items-center space-x-1">
-                                                                <p className="text-lg font-bold text-gray-900">
-                                                                    {courseData?.score?.toFixed(1) || '-'}
-                                                                </p>
-                                                                {getTrendIcon(student.scoreChange)}
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-gray-600">Trạng thái</p>
-                                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                                                student.status === 'active' 
-                                                                    ? 'bg-success-100 text-success-700'
-                                                                    : student.status === 'at_risk'
-                                                                    ? 'bg-danger-100 text-danger-700'
-                                                                    : 'bg-gray-100 text-gray-700'
-                                                            }`}>
-                                                                {student.status === 'active' ? 'Đang học' : student.status === 'at_risk' ? 'Có nguy cơ' : 'Hoàn thành'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                                        <p className="text-gray-500">
-                                            {gradeFilter === 'all' 
-                                                ? 'Chưa có sinh viên nào trong khóa học này'
-                                                : 'Không có sinh viên nào trong mức điểm này'
-                                            }
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
                         </div>
 
                         {/* Footer */}

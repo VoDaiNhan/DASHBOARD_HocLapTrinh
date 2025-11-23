@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Home, Users, BookOpen, BarChart3, Settings, LogOut, GraduationCap, FileText } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { authAPI } from '../../../services/api';
+import logo from '../../../assets/unnamed.jpg';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -29,9 +30,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div className={`sidebar fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 bg-gradient-to-r from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
+            <img src={logo} alt="EduTracker Logo" className="h-10 w-10 rounded-lg object-cover" />
             <span className="text-xl font-bold text-gradient bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">EduTracker</span>
           </div>
           <button onClick={onClose} className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700">

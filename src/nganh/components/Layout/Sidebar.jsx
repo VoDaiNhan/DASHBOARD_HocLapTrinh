@@ -15,6 +15,7 @@ import {
 import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
+import logo from '../../../assets/unnamed.jpg';
 
 const TeacherMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(true);
@@ -234,9 +235,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           }`}
         >
           <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-5 w-5 text-white" />
-            </div>
+            <img src={logo} alt="EduTracker Logo" className="h-8 w-8 rounded-lg object-cover" />
             <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Department Manager
             </span>

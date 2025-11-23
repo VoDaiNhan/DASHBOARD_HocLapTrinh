@@ -34,9 +34,9 @@ const CourseManagement = () => {
         inProgress: progressData?.inProgress || 0,
         notStarted: progressData?.notStarted || 0,
         classes: [
-          { name: '22CT111', completionRate: 85 },
-          { name: '22CT112', completionRate: 78 },
-          { name: '22CT113', completionRate: 72 }
+          { name: '22CT111', completionRate: 83 },
+          { name: '22CT112', completionRate: 90 },
+          { name: '22CT113', completionRate: 66 }
         ]
       };
     });

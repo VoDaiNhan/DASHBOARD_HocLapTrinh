@@ -31,16 +31,25 @@ const ClassDetail = () => {
         const scheduleList = details.schedule || [];
         const completedSessions = scheduleList.filter(s => s.status === 'completed').length;
         const totalSessions = scheduleList.length;
-        const calculatedCompletion = totalSessions > 0 
-          ? Math.round((completedSessions / totalSessions) * 100) 
-          : 0;
+        
+        // Tính toán tiến độ hoàn thành bài tập của sinh viên
+        const students = details.students || [];
+        let calculatedCompletion = 0;
+        
+        if (students.length > 0) {
+          // Tính trung bình % hoàn thành bài tập của các sinh viên
+          const totalCompletionRate = students.reduce((sum, student) => {
+            return sum + (student.completionRate || 0);
+          }, 0);
+          calculatedCompletion = Math.round(totalCompletionRate / students.length);
+        }
         
         const combinedData = {
           ...foundClass,
           students: details.students,
           assignments: details.assignments,
           scheduleList: scheduleList,
-          completionRate: calculatedCompletion,  // Ghi đè bằng giá trị tính toán
+          completionRate: calculatedCompletion,  // Ghi đè bằng giá trị tính toán từ sinh viên
           completedSessions,
           totalSessions
         };
