@@ -106,11 +106,10 @@ const StudentFilters = ({ filters, onFilterChange, students }) => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="all">Tất cả mức độ</option>
-              <option value="excellent">Giỏi (≥8.0)</option>
-              <option value="good">Khá (6.5-7.9)</option>
-              <option value="average">Trung bình (5.0-6.4)</option>
-              <option value="weak">Yếu (4.0-4.9)</option>
-              <option value="poor">Kém (&lt;4.0)</option>
+              <option value="excellent">Xuất sắc (≥9.0)</option>
+              <option value="good">Tốt (8.0-8.9)</option>
+              <option value="average">Trung bình (7.0-7.9)</option>
+              <option value="poor">Yếu (&lt;7.0)</option>
             </select>
           </div>
 

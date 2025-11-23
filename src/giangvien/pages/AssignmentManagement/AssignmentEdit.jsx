@@ -28,10 +28,12 @@ const AssignmentEdit = () => {
   const [initialLoading, setInitialLoading] = useState(true);
 
   const courseOptions = [
-    { value: 'intro-prog', label: 'Nhập môn lập trình' },
-    { value: 'prog-technique', label: 'Kĩ thuật lập trình' },
-    { value: 'oop', label: 'Lập trình hướng đối tượng' },
-    { value: 'data-struct-algo', label: 'Cấu trúc dữ liệu và giải thuật' }
+    { value: 'web-dev', label: 'Phát Triển Web Frontend với React' },
+    { value: 'mobile-dev', label: 'Lập Trình Mobile với React Native' },
+    { value: 'data-science', label: 'Khoa Học Dữ Liệu với Python' },
+    { value: 'ai-ml', label: 'AI & Machine Learning' },
+    { value: 'backend', label: 'Backend Development với Node.js' },
+    { value: 'devops', label: 'DevOps & CI/CD' }
   ];
 
   const classOptions = [

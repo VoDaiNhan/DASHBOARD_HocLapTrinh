@@ -29,12 +29,12 @@ const CourseCard = ({ course }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 overflow-hidden group">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white flex-shrink-0">
-        <div className="flex items-start justify-between mb-4 min-h-[80px]">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2 group-hover:text-blue-100 transition-colors line-clamp-2">
+            <h3 className="text-xl font-bold mb-2 group-hover:text-blue-100 transition-colors">
               {course.name}
             </h3>
             <div className="flex items-center gap-2 text-blue-100 text-sm">
@@ -61,8 +61,8 @@ const CourseCard = ({ course }) => {
       </div>
 
       {/* Stats */}
-      <div className="p-6 flex-1 flex flex-col">
-        <div className="mb-6 flex justify-center">
+      <div className="p-6">
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-50 rounded-lg">
               <Users className="text-purple-600" size={20} />
@@ -70,6 +70,16 @@ const CourseCard = ({ course }) => {
             <div>
               <p className="text-sm text-gray-600">Sinh viên</p>
               <p className="text-lg font-bold text-gray-900">{course.enrolledStudents}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-50 rounded-lg">
+              <Award className="text-yellow-600" size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Điểm TB</p>
+              <p className="text-lg font-bold text-gray-900">{course.averageScore?.toFixed(1)}</p>
             </div>
           </div>
         </div>
@@ -101,15 +111,13 @@ const CourseCard = ({ course }) => {
         )}
 
         {/* View Details Button */}
-        <div className="mt-auto">
-          <Link
-            to={`/courses/${course.id}`}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 rounded-lg font-medium transition-colors group"
-          >
-            <span>Xem chi tiết</span>
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+        <Link
+          to={`/courses/${course.id}`}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 rounded-lg font-medium transition-colors group"
+        >
+          <span>Xem chi tiết</span>
+          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+        </Link>
       </div>
     </div>
   );

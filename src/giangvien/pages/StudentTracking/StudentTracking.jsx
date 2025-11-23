@@ -3,7 +3,6 @@ import { Search, Filter, Download, Plus, Users, TrendingUp, AlertTriangle, Award
 import StudentTrackingHeader from './components/StudentTrackingHeader';
 import StudentFilters from './components/StudentFilters';
 import StudentGrid from './components/StudentGrid';
-import StudentList from './components/StudentList';
 import StudentAnalytics from './components/StudentAnalytics';
 import StudentDetailModal from './components/StudentDetailModal';
 import { mockStudentTrackingData } from '../../data/mockData';
@@ -13,7 +12,7 @@ const StudentTracking = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', or 'analytics'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'analytics'
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -59,19 +58,18 @@ const StudentTracking = () => {
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      student.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      student.studentId.toLowerCase().includes(filters.search.toLowerCase());
-
+                         student.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+                         student.studentId.toLowerCase().includes(filters.search.toLowerCase());
+    
     const matchesStatus = filters.status === 'all' || student.status === filters.status;
     const matchesCourse = filters.course === 'all' || student.courses.some(c => c.id === filters.course);
     const matchesClass = filters.class === 'all' || student.classes.some(c => c.id === filters.class);
-    const matchesPerformance = filters.performance === 'all' ||
-      (filters.performance === 'excellent' && student.averageScore >= 8.0) ||
-      (filters.performance === 'good' && student.averageScore >= 6.5 && student.averageScore < 8.0) ||
-      (filters.performance === 'average' && student.averageScore >= 5.0 && student.averageScore < 6.5) ||
-      (filters.performance === 'weak' && student.averageScore >= 4.0 && student.averageScore < 5.0) ||
-      (filters.performance === 'poor' && student.averageScore < 4.0);
-
+    const matchesPerformance = filters.performance === 'all' || 
+      (filters.performance === 'excellent' && student.averageScore >= 9.0) ||
+      (filters.performance === 'good' && student.averageScore >= 8.0 && student.averageScore < 9.0) ||
+      (filters.performance === 'average' && student.averageScore >= 7.0 && student.averageScore < 8.0) ||
+      (filters.performance === 'poor' && student.averageScore < 7.0);
+    
     const matchesRisk = filters.riskLevel === 'all' || student.riskLevel === filters.riskLevel;
 
     return matchesSearch && matchesStatus && matchesCourse && matchesClass && matchesPerformance && matchesRisk;
@@ -100,7 +98,7 @@ const StudentTracking = () => {
 
   return (
     <div className="space-y-6">
-      <StudentTrackingHeader
+      <StudentTrackingHeader 
         totalStudents={students.length}
         filteredCount={filteredStudents.length}
         onExport={handleExportData}
@@ -108,30 +106,20 @@ const StudentTracking = () => {
         onViewModeChange={setViewMode}
       />
 
-      <StudentFilters
+      <StudentFilters 
         filters={filters}
         onFilterChange={handleFilterChange}
         students={students}
       />
 
-      {viewMode === 'grid' && (
-        <StudentGrid
+      {viewMode === 'grid' ? (
+        <StudentGrid 
           students={filteredStudents}
           onStudentSelect={handleStudentSelect}
           loading={loading}
         />
-      )}
-
-      {viewMode === 'list' && (
-        <StudentList
-          students={filteredStudents}
-          onStudentSelect={handleStudentSelect}
-          loading={loading}
-        />
-      )}
-
-      {viewMode === 'analytics' && (
-        <StudentAnalytics
+      ) : (
+        <StudentAnalytics 
           students={filteredStudents}
           allStudents={students}
         />

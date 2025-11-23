@@ -4,7 +4,6 @@ import ClassCard from './components/ClassCard';
 import ClassList from './components/ClassList';
 import ClassFilters from './components/ClassFilters';
 import ClassStats from './components/ClassStats';
-import StudentPerformanceDistribution from './components/StudentPerformanceDistribution';
 import { mockClassData } from '../../data/mockData';
 
 const ClassManagement = () => {
@@ -44,11 +43,26 @@ const ClassManagement = () => {
   const applyFilters = () => {
     let filtered = classes.filter(classItem => {
       const matchesSearch = classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        classItem.course.toLowerCase().includes(searchTerm.toLowerCase());
-
+                           classItem.course.toLowerCase().includes(searchTerm.toLowerCase());
+      
       const matchesStatus = filters.status === 'all' || classItem.status === filters.status;
       const matchesCourse = filters.course === 'all' || classItem.courseId === filters.course;
-
+      
+      // Lọc theo thời gian thực tế
+      let matchesSchedule = true;
+      if (filters.schedule !== 'all') {
+        const schedule = classItem.schedule.toLowerCase();
+        if (filters.schedule === 'morning') {
+          matchesSchedule = schedule.includes('8:00') || schedule.includes('9:00') || schedule.includes('10:00');
+        } else if (filters.schedule === 'afternoon') {
+          matchesSchedule = schedule.includes('13:') || schedule.includes('14:') || schedule.includes('15:') || schedule.includes('16:');
+        } else if (filters.schedule === 'evening') {
+          matchesSchedule = schedule.includes('18:') || schedule.includes('19:') || schedule.includes('20:');
+        } else if (filters.schedule === 'weekend') {
+          matchesSchedule = schedule.includes('7') || schedule.includes('chủ nhật');
+        }
+      }
+      
       // Lọc theo tiến độ hoàn thành (%)
       let matchesCompletion = true;
       if (filters.performance !== 'all') {
@@ -69,7 +83,7 @@ const ClassManagement = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesCourse && matchesCompletion;
+      return matchesSearch && matchesStatus && matchesCourse && matchesSchedule && matchesCompletion;
     });
 
     setFilteredClasses(filtered);
@@ -144,34 +158,36 @@ const ClassManagement = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
-                  ? 'bg-primary-100 text-primary-600'
+              className={`p-2 rounded-lg transition-colors ${
+                viewMode === 'grid' 
+                  ? 'bg-primary-100 text-primary-600' 
                   : 'text-gray-500 hover:bg-gray-100'
-                }`}
+              }`}
             >
               <Grid className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
-                  ? 'bg-primary-100 text-primary-600'
+              className={`p-2 rounded-lg transition-colors ${
+                viewMode === 'list' 
+                  ? 'bg-primary-100 text-primary-600' 
                   : 'text-gray-500 hover:bg-gray-100'
-                }`}
+              }`}
             >
               <List className="h-4 w-4" />
             </button>
           </div>
 
           <div className="flex items-center space-x-2">
-            <button
+            <button 
               onClick={handleRefresh}
               className="btn-secondary flex items-center space-x-2"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Làm mới</span>
             </button>
-
-            <button
+            
+            <button 
               onClick={handleExport}
               className="btn-primary flex items-center space-x-2"
             >
@@ -185,12 +201,9 @@ const ClassManagement = () => {
       {/* Stats Overview */}
       <ClassStats data={mockClassData.stats} />
 
-      {/* Student Performance Distribution */}
-      <StudentPerformanceDistribution classDetails={mockClassData.classDetails} />
-
       {/* Filters */}
-      <ClassFilters
-        filters={filters}
+      <ClassFilters 
+        filters={filters} 
         onFilterChange={handleFilterChange}
         totalClasses={filteredClasses.length}
       />
@@ -201,7 +214,7 @@ const ClassManagement = () => {
           <div className="text-center py-12">
             <div className="mx-auto h-24 w-24 text-gray-300 mb-4">
               <svg fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">

@@ -52,29 +52,14 @@ const PerformanceChart = ({ data }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-50 rounded-lg">
             <LineChart className="text-blue-600" size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Xu hướng học tập theo thời gian</h2>
-            <p className="text-sm text-gray-600">Theo dõi sự thay đổi của điểm số, tỷ lệ hoàn thành và mức độ tương tác</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Info Box */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-start space-x-2">
-          <span className="text-blue-600 font-bold">ℹ️</span>
-          <div className="text-sm text-blue-800">
-            <div className="font-semibold mb-1">Cách đọc biểu đồ:</div>
-            <div className="space-y-1">
-              <div>• <span className="font-medium">Trục ngang (X):</span> Thời gian theo tháng</div>
-              <div>• <span className="font-medium">Trục dọc (Y):</span> Giá trị từ 0-100 (điểm TB quy đổi theo thang 100, tỷ lệ % hoàn thành, mức độ tương tác quy đổi)</div>
-              <div>• <span className="font-medium">Xu hướng tăng:</span> Đường đi lên = Cải thiện, Đường đi xuống = Giảm sút</div>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">Biểu đồ hiệu suất theo thời gian</h2>
+            <p className="text-sm text-gray-600">Theo dõi xu hướng học tập</p>
           </div>
         </div>
       </div>
@@ -186,46 +171,27 @@ const PerformanceChart = ({ data }) => {
       </div>
 
       {/* Summary Stats */}
-      <div className="mt-6 pt-6 border-t border-gray-100">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Thống kê tổng hợp (từ {data[0]?.date} đến {data[data.length - 1]?.date})</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {metrics.map((metric) => {
-            const values = data.map(d => d[metric.key]);
-            const avg = values.reduce((a, b) => a + b, 0) / values.length;
-            const firstValue = values[0];
-            const lastValue = values[values.length - 1];
-            const trend = lastValue - firstValue;
-            const trendPercent = firstValue > 0 ? ((trend / firstValue) * 100).toFixed(1) : 0;
-            
-            return (
-              <div key={metric.key} className="border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-2">{metric.label} TB</p>
-                <p className="text-2xl font-bold mb-2" style={{ color: metric.color }}>
-                  {avg.toFixed(1)}
-                </p>
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Bắt đầu:</span>
-                    <span className="font-medium">{firstValue.toFixed(1)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Hiện tại:</span>
-                    <span className="font-medium">{lastValue.toFixed(1)}</span>
-                  </div>
-                  <div className={`flex items-center justify-between font-semibold ${
-                    trend > 0 ? 'text-green-600' : trend < 0 ? 'text-red-600' : 'text-gray-600'
-                  }`}>
-                    <span>Thay đổi:</span>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp size={12} className={trend < 0 ? 'rotate-180' : ''} />
-                      <span>{trend > 0 ? '+' : ''}{trend.toFixed(1)} ({trend > 0 ? '+' : ''}{trendPercent}%)</span>
-                    </div>
-                  </div>
-                </div>
+      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
+        {metrics.map((metric) => {
+          const values = data.map(d => d[metric.key]);
+          const avg = values.reduce((a, b) => a + b, 0) / values.length;
+          const trend = values[values.length - 1] - values[0];
+          
+          return (
+            <div key={metric.key} className="text-center">
+              <p className="text-sm text-gray-600 mb-1">{metric.label} TB</p>
+              <p className="text-2xl font-bold" style={{ color: metric.color }}>
+                {avg.toFixed(1)}
+              </p>
+              <div className={`flex items-center justify-center gap-1 text-xs mt-1 ${
+                trend > 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                <TrendingUp size={12} className={trend < 0 ? 'rotate-180' : ''} />
+                <span>{trend > 0 ? '+' : ''}{trend.toFixed(1)}</span>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

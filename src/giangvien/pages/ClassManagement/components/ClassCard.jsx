@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, MoreVertical } from 'lucide-react';
+import { Users, Clock, Calendar, TrendingUp, MapPin, MoreVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ClassCard = ({ classData }) => {
@@ -15,11 +15,10 @@ const ClassCard = ({ classData }) => {
   };
 
   const getPerformanceColor = (score) => {
-    if (score >= 8.0) return 'text-success-600';      // Giỏi
-    if (score >= 6.5) return 'text-primary-600';      // Khá
-    if (score >= 5.0) return 'text-warning-600';      // Trung bình
-    if (score >= 4.0) return 'text-orange-600';       // Yếu
-    return 'text-danger-600';                          // Kém
+    if (score >= 9.0) return 'text-success-600';
+    if (score >= 8.0) return 'text-primary-600';
+    if (score >= 7.0) return 'text-warning-600';
+    return 'text-danger-600';
   };
 
   const getCompletionColor = (rate) => {
@@ -59,6 +58,24 @@ const ClassCard = ({ classData }) => {
             <span className={`font-medium ${getPerformanceColor(classData.averageScore || 0)}`}>
               {(classData.averageScore || 0).toFixed(1)}
             </span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <Clock className="h-4 w-4" />
+            <span>{classData.schedule}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <MapPin className="h-4 w-4" />
+            <span>{classData.location}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Calendar className="h-4 w-4" />
+            <span>{classData.duration}</span>
           </div>
         </div>
       </div>

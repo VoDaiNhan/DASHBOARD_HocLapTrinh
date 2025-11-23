@@ -49,9 +49,9 @@ const ReportFilters = ({ onFilterChange }) => {
         
         <button
           onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 hover:shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
         >
-          <RotateCcw size={16} className="transition-transform hover:rotate-180 duration-500" />
+          <RotateCcw size={16} />
           <span>Đặt lại</span>
         </button>
       </div>
@@ -68,10 +68,10 @@ const ReportFilters = ({ onFilterChange }) => {
               <button
                 key={option.value}
                 onClick={() => handleDateRangeChange(option.value)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   dateRange === option.value
-                    ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-200'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 {option.label}
@@ -91,10 +91,10 @@ const ReportFilters = ({ onFilterChange }) => {
               <button
                 key={type.value}
                 onClick={() => handleReportTypeChange(type.value)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   reportType === type.value
-                    ? 'bg-blue-500 text-white shadow-md ring-2 ring-blue-200'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 {type.label}
@@ -148,10 +148,7 @@ const ReportFilters = ({ onFilterChange }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Khóa học
               </label>
-              <select 
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-blue-300 cursor-pointer"
-                onChange={(e) => onFilterChange?.({ course: e.target.value })}
-              >
+              <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Tất cả</option>
                 <option value="intro-prog">Nhập môn lập trình</option>
                 <option value="prog-technique">Kĩ thuật lập trình</option>
@@ -164,10 +161,7 @@ const ReportFilters = ({ onFilterChange }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Lớp học
               </label>
-              <select 
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-blue-300 cursor-pointer"
-                onChange={(e) => onFilterChange?.({ class: e.target.value })}
-              >
+              <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Tất cả</option>
                 <option value="22CT111">22CT111</option>
                 <option value="22CT112">22CT112</option>
@@ -179,10 +173,7 @@ const ReportFilters = ({ onFilterChange }) => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mức độ rủi ro
               </label>
-              <select 
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-blue-300 cursor-pointer"
-                onChange={(e) => onFilterChange?.({ riskLevel: e.target.value })}
-              >
+              <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Tất cả</option>
                 <option value="low">Thấp</option>
                 <option value="medium">Trung bình</option>

@@ -34,7 +34,7 @@ const AssignmentAnalytics = ({ analytics, assignmentId }) => {
         </div>
         <div className="card p-6 text-center">
           <div className="text-2xl font-bold text-success-600 mb-1">
-            {analytics.averageScore}/10
+            {analytics.averageScore}%
           </div>
           <div className="text-sm text-gray-600">Điểm trung bình</div>
         </div>

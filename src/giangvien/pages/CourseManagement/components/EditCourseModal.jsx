@@ -2,7 +2,6 @@ import { X, BookOpen, Clock, Users, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const EditCourseModal = ({ isOpen, onClose, onSave, course }) => {
-  const [teacherName, setTeacherName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     duration: '',
@@ -18,26 +17,12 @@ const EditCourseModal = ({ isOpen, onClose, onSave, course }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Lấy tên giảng viên từ sessionStorage
-    const userData = sessionStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      const name = user?.full_name || 'Giảng viên';
-      setTeacherName(name);
-    }
-  }, []);
-
-  useEffect(() => {
     if (course && isOpen) {
-      // Lấy tên giảng viên từ sessionStorage thay vì từ course
-      const userData = sessionStorage.getItem('user');
-      const instructorName = userData ? JSON.parse(userData)?.full_name || 'Giảng viên' : 'Giảng viên';
-      
       setFormData({
         name: course.name || '',
         duration: course.duration || '',
         description: course.description || '',
-        instructor: instructorName,
+        instructor: course.instructor || '',
         maxStudents: course.maxStudents || '',
         startDate: course.startDate || '',
         endDate: course.endDate || '',
@@ -142,10 +127,9 @@ const EditCourseModal = ({ isOpen, onClose, onSave, course }) => {
                     type="text"
                     value={formData.instructor}
                     onChange={(e) => handleChange('instructor', e.target.value)}
-                    placeholder="Tên giảng viên"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50"
+                    placeholder="Ví dụ: TS. Nguyễn Văn An"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     required
-                    readOnly
                   />
                 </div>
               </div>

@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Calendar, TrendingUp, X, Users } from 'lucide-react';
-import { mockStudentTrackingData } from '../../../data/mockData';
+import { Calendar, TrendingUp } from 'lucide-react';
 
 const PerformanceChart = ({ data }) => {
   const [timeRange, setTimeRange] = useState('7days');
-  const [showModal, setShowModal] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState(null);
   
   if (!data) return null;
 
@@ -123,167 +120,25 @@ const PerformanceChart = ({ data }) => {
       </div>
 
       <div className="mt-6 grid grid-cols-3 gap-4">
-        <button
-          onClick={() => {
-            setSelectedMetric({
-              id: 'averageScore',
-              title: 'Điểm TB tháng này',
-              value: data && data.length > 0 ? data[data.length - 1].averageScore.toFixed(1) : '0',
-              color: 'primary',
-              description: 'Điểm trung bình của tất cả sinh viên trong tháng này'
-            });
-            setShowModal(true);
-          }}
-          className="text-center p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors cursor-pointer"
-        >
+        <div className="text-center p-3 bg-primary-50 rounded-lg">
           <p className="text-2xl font-bold text-primary-600">
             {data && data.length > 0 ? data[data.length - 1].averageScore.toFixed(1) : '0'}/10
           </p>
           <p className="text-sm text-gray-600">Điểm TB tháng này</p>
-        </button>
-        <button
-          onClick={() => {
-            setSelectedMetric({
-              id: 'completionRate',
-              title: 'Tỷ lệ hoàn thành',
-              value: data && data.length > 0 ? Math.round(data[data.length - 1].completionRate) : '0',
-              color: 'success',
-              description: 'Tỷ lệ hoàn thành bài tập và khóa học của sinh viên'
-            });
-            setShowModal(true);
-          }}
-          className="text-center p-3 bg-success-50 rounded-lg hover:bg-success-100 transition-colors cursor-pointer"
-        >
+        </div>
+        <div className="text-center p-3 bg-success-50 rounded-lg">
           <p className="text-2xl font-bold text-success-600">
             {data && data.length > 0 ? Math.round(data[data.length - 1].completionRate) : '0'}%
           </p>
           <p className="text-sm text-gray-600">Tỷ lệ hoàn thành</p>
-        </button>
-        <button
-          onClick={() => {
-            setSelectedMetric({
-              id: 'engagement',
-              title: 'Mức độ tham gia',
-              value: data && data.length > 0 ? data[data.length - 1].engagement.toFixed(1) : '0',
-              color: 'warning',
-              description: 'Mức độ tham gia và tương tác của sinh viên trong lớp học'
-            });
-            setShowModal(true);
-          }}
-          className="text-center p-3 bg-warning-50 rounded-lg hover:bg-warning-100 transition-colors cursor-pointer"
-        >
+        </div>
+        <div className="text-center p-3 bg-warning-50 rounded-lg">
           <p className="text-2xl font-bold text-warning-600">
             {data && data.length > 0 ? data[data.length - 1].engagement.toFixed(1) : '0'}/10
           </p>
           <p className="text-sm text-gray-600">Mức độ tham gia</p>
-        </button>
-      </div>
-
-      {/* Modal chi tiết */}
-      {showModal && selectedMetric && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {selectedMetric.title}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedMetric.description}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-              <div className="mb-6 grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Giá trị hiện tại</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {selectedMetric.value}{selectedMetric.id === 'completionRate' ? '%' : '/10'}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Tổng sinh viên</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {mockStudentTrackingData?.students?.length || 0}
-                  </p>
-                </div>
-              </div>
-
-              {/* Danh sách sinh viên */}
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                  Danh sách sinh viên
-                </h4>
-                <div className="space-y-3">
-                  {(mockStudentTrackingData?.students || [])
-                    .sort((a, b) => {
-                      if (selectedMetric.id === 'averageScore') return b.averageScore - a.averageScore;
-                      if (selectedMetric.id === 'completionRate') return b.completionRate - a.completionRate;
-                      return 0;
-                    })
-                    .map((student, index) => (
-                      <div 
-                        key={student.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center space-x-4 flex-1">
-                          <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                            <span className="text-primary-600 font-semibold">{index + 1}</span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">{student.name}</p>
-                            <p className="text-sm text-gray-600">{student.studentId} • {student.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-6">
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">Điểm TB</p>
-                            <p className="text-lg font-bold text-gray-900">{student.averageScore.toFixed(1)}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">Hoàn thành</p>
-                            <p className="text-lg font-bold text-gray-900">{student.completionRate}%</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-600">Trạng thái</p>
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              student.status === 'active' 
-                                ? 'bg-success-100 text-success-700'
-                                : student.status === 'at_risk'
-                                ? 'bg-danger-100 text-danger-700'
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {student.status === 'active' ? 'Đang học' : student.status === 'at_risk' ? 'Có nguy cơ' : 'Hoàn thành'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end p-6 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -47,8 +47,7 @@ const CourseManagement = () => {
     // Calculate stats
     const totalCourses = courseData.length;
     const activeCourses = courseData.filter(c => c.status === 'active').length;
-    // Tổng sinh viên thực tế trong lớp (không phải tổng enrolledStudents vì sinh viên học nhiều môn)
-    const totalStudents = mockDashboardData.kpiMetrics.totalStudents || 10;
+    const totalStudents = courseData.reduce((sum, c) => sum + c.enrolledStudents, 0);
     const avgScore = courseData.reduce((sum, c) => sum + c.averageScore, 0) / totalCourses;
 
     setStats({

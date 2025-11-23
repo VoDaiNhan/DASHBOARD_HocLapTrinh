@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, ExternalLink } from 'lucide-react';
+import { Users, Clock, Calendar, TrendingUp, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ClassList = ({ classes }) => {
@@ -15,11 +15,10 @@ const ClassList = ({ classes }) => {
   };
 
   const getPerformanceColor = (score) => {
-    if (score >= 8.0) return 'text-success-600';      // Giỏi
-    if (score >= 6.5) return 'text-primary-600';      // Khá
-    if (score >= 5.0) return 'text-warning-600';      // Trung bình
-    if (score >= 4.0) return 'text-orange-600';       // Yếu
-    return 'text-danger-600';                          // Kém
+    if (score >= 9.0) return 'text-success-600';
+    if (score >= 8.0) return 'text-primary-600';
+    if (score >= 7.0) return 'text-warning-600';
+    return 'text-danger-600';
   };
 
   const getCompletionColor = (rate) => {
@@ -45,6 +44,9 @@ const ClassList = ({ classes }) => {
                 Sinh viên
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Lịch học
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tiến độ
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -64,6 +66,10 @@ const ClassList = ({ classes }) => {
                       {classItem.name}
                     </div>
                     <div className="text-sm text-gray-500">{classItem.course}</div>
+                    <div className="flex items-center mt-1 text-xs text-gray-500">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {classItem.location}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -75,6 +81,18 @@ const ClassList = ({ classes }) => {
                   <div className="flex items-center">
                     <Users className="h-4 w-4 text-gray-400 mr-2" />
                     <span className="text-sm text-gray-900">{classItem.enrolledStudents}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      {classItem.schedule}
+                    </div>
+                    <div className="flex items-center mt-1 text-xs text-gray-500">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {classItem.duration}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

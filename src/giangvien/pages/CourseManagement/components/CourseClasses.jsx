@@ -1,19 +1,7 @@
 import { Users, Award, TrendingUp, MapPin, Calendar, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 
 const CourseClasses = ({ classes }) => {
-  const [teacherName, setTeacherName] = useState('');
-
-  useEffect(() => {
-    // Lấy tên giảng viên từ sessionStorage (đã lưu khi đăng nhập)
-    const userData = sessionStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      setTeacherName(user?.full_name || 'Giảng viên');
-    }
-  }, []);
-
   const getCompletionColor = (rate) => {
     if (rate >= 80) return { bg: 'bg-green-100', text: 'text-green-700', bar: 'bg-green-500' };
     if (rate >= 60) return { bg: 'bg-yellow-100', text: 'text-yellow-700', bar: 'bg-yellow-500' };
@@ -57,13 +45,39 @@ const CourseClasses = ({ classes }) => {
                       <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                         {cls.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Giảng viên: {teacherName}
-                      </p>
+                      {cls.instructor && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          Giảng viên: {cls.instructor}
+                        </p>
+                      )}
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
                       {cls.status === 'active' ? 'Đang học' : cls.status}
                     </span>
+                  </div>
+
+                  {/* Class Info Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    {cls.schedule && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar size={16} />
+                        <span>{cls.schedule}</span>
+                      </div>
+                    )}
+                    {cls.location && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin size={16} />
+                        <span>{cls.location}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users size={16} />
+                      <span>{cls.enrolledStudents || 0} sinh viên</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Award size={16} />
+                      <span>Điểm TB: {cls.averageScore?.toFixed(1) || 'N/A'}</span>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}

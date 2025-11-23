@@ -1,12 +1,12 @@
 import React from 'react';
 import { Users, Download, Grid, BarChart3, Filter } from 'lucide-react';
 
-const StudentTrackingHeader = ({
-  totalStudents,
-  filteredCount,
-  onExport,
-  viewMode,
-  onViewModeChange
+const StudentTrackingHeader = ({ 
+  totalStudents, 
+  filteredCount, 
+  onExport, 
+  viewMode, 
+  onViewModeChange 
 }) => {
   return (
     <div className="space-y-6">
@@ -22,30 +22,22 @@ const StudentTrackingHeader = ({
           <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
             <button
               onClick={() => onViewModeChange('grid')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'grid'
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'grid'
                   ? 'bg-primary-100 text-primary-700'
                   : 'text-gray-600 hover:text-gray-900'
-                }`}
+              }`}
             >
               <Grid className="h-4 w-4" />
-              <span>Lưới</span>
-            </button>
-            <button
-              onClick={() => onViewModeChange('list')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'list'
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-600 hover:text-gray-900'
-                }`}
-            >
-              <Users className="h-4 w-4" />
               <span>Danh sách</span>
             </button>
             <button
               onClick={() => onViewModeChange('analytics')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'analytics'
+              className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                viewMode === 'analytics'
                   ? 'bg-primary-100 text-primary-700'
                   : 'text-gray-600 hover:text-gray-900'
-                }`}
+              }`}
             >
               <BarChart3 className="h-4 w-4" />
               <span>Phân tích</span>
