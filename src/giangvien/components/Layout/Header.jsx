@@ -137,7 +137,7 @@ const Header = ({ onMenuClick }) => {
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.full_name || 'Giảng viên'}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || 'Email'}</p>
             </div>
-            <div className="h-8 w-8 bg-primary-600 rounded-full flex items-center justify-center">
+            <div className="h-8 w-8 bg-primary-500 rounded-full flex items-center justify-center">
               <User className="h-4 w-4 text-white" />
             </div>
             </button>

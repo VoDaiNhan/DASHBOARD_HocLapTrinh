@@ -1,64 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, Check, CheckCheck, Trash2, Clock, BookOpen, FileText, Users, AlertCircle } from 'lucide-react';
+import { Bell, X, Check, CheckCheck, Trash2, Clock, BookOpen, FileText, Users, AlertCircle, Info } from 'lucide-react';
+import { mockDashboardData } from '../giangvien/data/mockData';
 
 const NotificationPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'assignment',
-      title: 'Bài tập mới được giao',
-      message: 'Bài tập "HTML/CSS Nâng cao" đã được giao cho lớp Web K18',
-      time: '5 phút trước',
-      read: false,
-      icon: 'assignment'
-    },
-    {
-      id: 2,
-      type: 'submission',
-      title: 'Sinh viên nộp bài',
-      message: 'Nguyễn Văn A đã nộp bài tập "JavaScript Cơ bản"',
-      time: '15 phút trước',
-      read: false,
-      icon: 'file'
-    },
-    {
-      id: 3,
-      type: 'deadline',
-      title: 'Sắp đến hạn',
-      message: 'Bài tập "React Components" sẽ hết hạn trong 2 giờ nữa',
-      time: '1 giờ trước',
-      read: false,
-      icon: 'clock'
-    },
-    {
-      id: 4,
-      type: 'course',
-      title: 'Khóa học mới',
-      message: 'Khóa học "Node.js Backend" đã được thêm vào hệ thống',
-      time: '2 giờ trước',
-      read: true,
-      icon: 'course'
-    },
-    {
-      id: 5,
-      type: 'student',
-      title: 'Sinh viên mới',
-      message: '3 sinh viên mới đã đăng ký vào lớp Web K18',
-      time: '3 giờ trước',
-      read: true,
-      icon: 'users'
-    },
-    {
-      id: 6,
-      type: 'warning',
-      title: 'Cảnh báo tiến độ',
-      message: 'Sinh viên Trần Thị B chưa nộp 3 bài tập gần đây',
-      time: '5 giờ trước',
-      read: true,
-      icon: 'warning'
-    }
-  ]);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [notifications, setNotifications] = useState(mockDashboardData.notifications);
 
   const panelRef = useRef(null);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -74,20 +21,26 @@ const NotificationPanel = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getIcon = (iconType) => {
-    switch (iconType) {
-      case 'assignment':
-        return <FileText className="w-5 h-5" />;
-      case 'file':
-        return <FileText className="w-5 h-5" />;
-      case 'clock':
-        return <Clock className="w-5 h-5" />;
-      case 'course':
-        return <BookOpen className="w-5 h-5" />;
-      case 'users':
-        return <Users className="w-5 h-5" />;
+  const formatTime = (timestamp) => {
+    const now = new Date();
+    const diff = Math.floor((now - new Date(timestamp)) / 1000); // seconds
+    
+    if (diff < 60) return 'Vừa xong';
+    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+    return `${Math.floor(diff / 86400)} ngày trước`;
+  };
+
+  const getIcon = (type) => {
+    switch (type) {
       case 'warning':
         return <AlertCircle className="w-5 h-5" />;
+      case 'success':
+        return <Check className="w-5 h-5" />;
+      case 'reminder':
+        return <Clock className="w-5 h-5" />;
+      case 'info':
+        return <Info className="w-5 h-5" />;
       default:
         return <Bell className="w-5 h-5" />;
     }
@@ -95,18 +48,14 @@ const NotificationPanel = () => {
 
   const getIconColor = (type) => {
     switch (type) {
-      case 'assignment':
-        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'submission':
-        return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
-      case 'deadline':
-        return 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400';
-      case 'course':
-        return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'student':
-        return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400';
       case 'warning':
         return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+      case 'success':
+        return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+      case 'reminder':
+        return 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'info':
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
       default:
         return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
     }
@@ -193,14 +142,15 @@ const NotificationPanel = () => {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                    className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${
                       !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                     }`}
+                    onClick={() => setSelectedNotification(notification)}
                   >
                     <div className="flex gap-3">
                       {/* Icon */}
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getIconColor(notification.type)}`}>
-                        {getIcon(notification.icon)}
+                        {getIcon(notification.type)}
                       </div>
 
                       {/* Content */}
@@ -222,9 +172,9 @@ const NotificationPanel = () => {
                         </p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-gray-500 dark:text-gray-500">
-                            {notification.time}
+                            {formatTime(notification.timestamp)}
                           </span>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             {!notification.read && (
                               <button
                                 onClick={() => markAsRead(notification.id)}
@@ -262,6 +212,115 @@ const NotificationPanel = () => {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Notification Detail Modal */}
+      {selectedNotification && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]" onClick={() => setSelectedNotification(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="flex items-start justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-start gap-4">
+                <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${getIconColor(selectedNotification.type)}`}>
+                  {getIcon(selectedNotification.type)}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {selectedNotification.title}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {formatTime(selectedNotification.timestamp)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Thông báo</h3>
+                <p className="text-gray-900 dark:text-gray-100">{selectedNotification.message}</p>
+              </div>
+
+              {selectedNotification.details && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Chi tiết</h3>
+                  <p className="text-gray-600 dark:text-gray-400">{selectedNotification.details}</p>
+                </div>
+              )}
+
+              {selectedNotification.relatedStudent && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sinh viên liên quan</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{selectedNotification.relatedStudent.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{selectedNotification.relatedStudent.studentId}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedNotification.relatedCourse && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Khóa học liên quan</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-accent-100 dark:bg-accent-900/30 rounded-full flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{selectedNotification.relatedCourse.name}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedNotification.relatedAssignment && (
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Bài tập liên quan</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{selectedNotification.relatedAssignment.title}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              {!selectedNotification.read && (
+                <button
+                  onClick={() => {
+                    markAsRead(selectedNotification.id);
+                    setSelectedNotification(null);
+                  }}
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Đánh dấu đã đọc
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

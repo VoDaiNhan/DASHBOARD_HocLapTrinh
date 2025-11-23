@@ -1,3 +1,17 @@
+// Danh sách 10 sinh viên chung cho tất cả các lớp
+const ALL_STUDENTS = [
+  { id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 },
+  { id: 2, name: 'Trần Thị Hương', studentId: '122000002', email: 'huong.tt@student.edu.vn', phone: '0901234568', status: 'active', completionRate: 85, averageScore: 8.0, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.2 },
+  { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 60, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.2 },
+  { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 },
+  { id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.4 },
+  { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.6 },
+  { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 },
+  { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.4 },
+  { id: 9, name: 'Lý Minh Tuấn', studentId: '122000009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 4.5, completedAssignments: 7, totalAssignments: 10, scoreChange: -0.6 },
+  { id: 10, name: 'Ngô Thị Thu', studentId: '122000010', email: 'thu.nt@student.edu.vn', phone: '0901234576', status: 'active', completionRate: 91, averageScore: 8.6, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.4 }
+];
+
 export const mockDashboardData = {
   kpiMetrics: {
     totalStudents: 10,
@@ -157,46 +171,83 @@ export const mockDashboardData = {
       id: 1,
       type: 'warning',
       priority: 'high',
-      title: 'Sinh viên có nguy cơ bỏ học',
-      message: '15 sinh viên trong khóa "Nhập môn lập trình" có tỷ lệ hoàn thành dưới 30%',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: false
+      title: 'Cảnh báo tiến độ',
+      message: 'Sinh viên Lê Hoàng Nam (122000003) chưa nộp 3 bài tập gần đây',
+      timestamp: new Date(Date.now() - 5 * 60 * 1000),
+      read: false,
+      relatedStudent: { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003' },
+      relatedCourse: { id: 'intro-prog', name: 'Nhập môn lập trình' },
+      details: 'Sinh viên Lê Hoàng Nam đang có nguy cơ bỏ học cao với tỷ lệ hoàn thành chỉ 60%. Cần can thiệp ngay để hỗ trợ sinh viên.'
     },
     {
       id: 2,
-      type: 'info',
+      type: 'success',
       priority: 'medium',
-      title: 'Báo cáo tiến độ tuần',
-      message: 'Báo cáo tiến độ học tập tuần này đã sẵn sàng để xem',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      read: false
+      title: 'Sinh viên nộp bài',
+      message: 'Nguyễn Văn Minh đã nộp bài tập "Hàm và thủ tục" cho lớp 22CT111',
+      timestamp: new Date(Date.now() - 15 * 60 * 1000),
+      read: false,
+      relatedStudent: { id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001' },
+      relatedCourse: { id: 'intro-prog', name: 'Nhập môn lập trình' },
+      relatedAssignment: { id: 3, title: 'Bài tập 3: Hàm và thủ tục' },
+      details: 'Sinh viên đã nộp bài đúng hạn. Bài làm cần được chấm điểm.'
     },
     {
       id: 3,
-      type: 'success',
-      priority: 'low',
-      title: 'Khóa học hoàn thành',
-      message: 'Khóa "Kĩ thuật lập trình" đã hoàn thành với 98% sinh viên đạt yêu cầu',
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      read: true
+      type: 'reminder',
+      priority: 'high',
+      title: 'Sắp đến hạn',
+      message: 'Bài tập "Cấu trúc điều khiển" sẽ hết hạn trong 2 giờ nữa',
+      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      read: false,
+      relatedCourse: { id: 'intro-prog', name: 'Nhập môn lập trình' },
+      relatedAssignment: { id: 2, title: 'Bài tập 2: Cấu trúc điều khiển' },
+      details: 'Hiện có 1/3 sinh viên trong lớp 22CT111 chưa nộp bài. Cần nhắc nhở sinh viên.'
     },
     {
       id: 4,
-      type: 'reminder',
+      type: 'info',
       priority: 'medium',
-      title: 'Deadline nộp bài tập',
-      message: 'Nhắc nhở: Bài tập lớn môn "Cấu trúc dữ liệu và giải thuật" sẽ hết hạn trong 3 ngày',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      read: false
+      title: 'Khóa học mới',
+      message: 'Khóa học "Lập trình hướng đối tượng" đã được thêm vào hệ thống',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      read: false,
+      relatedCourse: { id: 'oop', name: 'Lập trình hướng đối tượng' },
+      details: 'Khóa học mới đã được tạo với 10 sinh viên đăng ký. Bạn có thể bắt đầu tạo bài tập và tài liệu.'
     },
     {
       id: 5,
-      type: 'info',
+      type: 'success',
       priority: 'low',
-      title: 'Cập nhật hệ thống',
-      message: 'Hệ thống sẽ được bảo trì vào 2:00 AM ngày mai',
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
-      read: true
+      title: 'Sinh viên mới',
+      message: '3 sinh viên mới đã đăng ký vào lớp 22CT112',
+      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      read: false,
+      relatedCourse: { id: 'intro-prog', name: 'Nhập môn lập trình' },
+      details: 'Các sinh viên mới: Trần Thị Hương, Vũ Đức Thành, Đặng Văn Hùng đã được thêm vào lớp.'
+    },
+    {
+      id: 6,
+      type: 'warning',
+      priority: 'high',
+      title: 'Tiến độ chậm',
+      message: 'Lớp 22CT113 có tỷ lệ hoàn thành thấp (72%) trong khóa "Cấu trúc dữ liệu và giải thuật"',
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      read: true,
+      relatedCourse: { id: 'data-struct-algo', name: 'Cấu trúc dữ liệu và giải thuật' },
+      details: 'Lớp 22CT113 đang gặp khó khăn với nội dung khóa học. Cần tổ chức buổi học bổ sung.'
+    },
+    {
+      id: 7,
+      type: 'success',
+      priority: 'low',
+      title: 'Bài tập được giao',
+      message: 'Bài tập "HTML/CSS Nâng cao" đã được giao cho lớp 22CT111',
+      timestamp: new Date(Date.now() - 5 * 60 * 1000),
+      read: false,
+      relatedCourse: { id: 'intro-prog', name: 'Nhập môn lập trình' },
+      relatedAssignment: { id: 1, title: 'Bài tập 1: Biến và Kiểu dữ liệu' },
+      details: 'Bài tập mới đã được tạo và giao cho 3 sinh viên trong lớp 22CT111.'
     }
   ],
   
@@ -619,6 +670,8 @@ export const mockAssignmentData = {
 };
 
 export const mockStudentTrackingData = {
+  version: '1.0.1', // Version để force reload cache
+  lastUpdated: new Date().toISOString(),
   students: [
     {
       id: 1,
@@ -989,7 +1042,7 @@ export const mockClassData = {
       name: '22CT111',
       course: 'Nhập môn lập trình',
       courseId: 'intro-prog',
-      enrolledStudents: 3,
+      enrolledStudents: 10,
       schedule: 'Thứ 2, 4 - 8:00-11:00',
       location: 'Phòng Lab 301',
       duration: '12 tuần',
@@ -1004,7 +1057,7 @@ export const mockClassData = {
       name: '22CT111',
       course: 'Kĩ thuật lập trình',
       courseId: 'prog-technique',
-      enrolledStudents: 3,
+      enrolledStudents: 10,
       schedule: 'Thứ 3, 5 - 8:00-11:00',
       location: 'Phòng Lab 301',
       duration: '12 tuần',
@@ -1019,7 +1072,7 @@ export const mockClassData = {
       name: '22CT111',
       course: 'Lập trình hướng đối tượng',
       courseId: 'oop',
-      enrolledStudents: 3,
+      enrolledStudents: 10,
       schedule: 'Thứ 6 - 8:00-11:00',
       location: 'Phòng Lab 301',
       duration: '12 tuần',
@@ -1034,7 +1087,7 @@ export const mockClassData = {
       name: '22CT111',
       course: 'Cấu trúc dữ liệu và giải thuật',
       courseId: 'data-struct-algo',
-      enrolledStudents: 3,
+      enrolledStudents: 10,
       schedule: 'Thứ 7 - 8:00-11:00',
       location: 'Phòng Lab 301',
       duration: '12 tuần',
@@ -1170,12 +1223,19 @@ export const mockClassData = {
   
   // Dữ liệu chi tiết cho từng lớp học (key là classId)
   classDetails: {
-    // Lớp 1-4: 22CT111 (3 sinh viên)
+    // Lớp 1: 22CT111 - Nhập môn lập trình (10 sinh viên)
     1: {
       students: [
         { id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 },
+        { id: 2, name: 'Trần Thị Hương', studentId: '122000002', email: 'huong.tt@student.edu.vn', phone: '0901234568', status: 'active', completionRate: 85, averageScore: 8.0, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.2 },
+        { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 60, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.2 },
         { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 },
-        { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }
+        { id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.4 },
+        { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.6 },
+        { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 },
+        { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.4 },
+        { id: 9, name: 'Trương Minh Quân', studentId: '122000009', email: 'quan.tm@student.edu.vn', phone: '0901234575', status: 'active', completionRate: 82, averageScore: 7.9, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.3 },
+        { id: 10, name: 'Lý Minh Tuấn', studentId: '122000010', email: 'tuan.lm@student.edu.vn', phone: '0901234576', status: 'at_risk', completionRate: 55, averageScore: 5.8, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.3 }
       ],
     assignments: [
         { id: 1, title: 'Bài tập 1: Biến và Kiểu dữ liệu', description: 'Làm quen với các kiểu dữ liệu cơ bản', status: 'completed', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 3, averageScore: 7.8 },
@@ -1198,9 +1258,16 @@ export const mockClassData = {
     },
     2: { 
       students: [
-        { id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 }, 
-        { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 }, 
-        { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }
+        { id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 },
+        { id: 2, name: 'Trần Thị Hương', studentId: '122000002', email: 'huong.tt@student.edu.vn', phone: '0901234568', status: 'active', completionRate: 85, averageScore: 8.0, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.2 },
+        { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 60, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.2 },
+        { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 },
+        { id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.4 },
+        { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.6 },
+        { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 },
+        { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.4 },
+        { id: 9, name: 'Trương Minh Quân', studentId: '122000009', email: 'quan.tm@student.edu.vn', phone: '0901234575', status: 'active', completionRate: 82, averageScore: 7.9, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.3 },
+        { id: 10, name: 'Lý Minh Tuấn', studentId: '122000010', email: 'tuan.lm@student.edu.vn', phone: '0901234576', status: 'at_risk', completionRate: 55, averageScore: 5.8, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.3 }
       ], 
       assignments: [
         { id: 1, title: 'Bài tập 1: Con trỏ cơ bản', description: 'Làm việc với con trỏ', status: 'completed', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 3, averageScore: 7.6 }
@@ -1220,18 +1287,13 @@ export const mockClassData = {
         { title: 'Buổi 12: Bài tập nâng cao', description: 'Đồ án cuối kỳ', type: 'lab', date: '17/11/2024', time: '8:00 - 11:00', location: 'Phòng Lab 301', status: 'upcoming', attendanceRate: 0, attendedStudents: 0, absentStudents: 0, lateStudents: 0, materials: [] }
       ] 
     },
-    3: { students: [{ id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 }, { id: 2, name: 'Trần Thị Hương', studentId: '122000002', email: 'huong.tt@student.edu.vn', phone: '0901234568', status: 'active', completionRate: 85, averageScore: 8.0, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.2 }, { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }], assignments: [{ id: 1, title: 'Bài tập 1: Lớp và đối tượng', description: 'Tạo class cơ bản', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.5 }], schedule: [{ title: 'Buổi 1: OOP cơ bản', description: 'Giới thiệu OOP', type: 'lecture', date: '04/11/2024', time: '8:00 - 11:00', location: 'Phòng Lab 301', status: 'completed', attendanceRate: 9.0, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    4: { students: [{ id: 1, name: 'Nguyễn Văn Minh', studentId: '122000001', email: 'minh.nv@student.edu.vn', phone: '0901234567', status: 'active', completionRate: 90, averageScore: 8.5, completedAssignments: 8, totalAssignments: 10, scoreChange: 0.5 }, { id: 2, name: 'Trần Thị Hương', studentId: '122000002', email: 'huong.tt@student.edu.vn', phone: '0901234568', status: 'active', completionRate: 85, averageScore: 8.0, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.2 }, { id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }], assignments: [{ id: 1, title: 'Bài tập 1: Danh sách liên kết', description: 'Cài đặt linked list', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.3 }], schedule: [{ title: 'Buổi 1: Linked List', description: 'Giới thiệu danh sách liên kết', type: 'lecture', date: '04/11/2024', time: '8:00 - 11:00', location: 'Phòng Lab 301', status: 'completed', attendanceRate: 8.8, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    5: { students: [{ id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.3 }, { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 }, { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }, { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.4 }], assignments: [{ id: 1, title: 'Bài tập 1: HTML/CSS cơ bản', description: 'Tạo trang web đầu tiên', status: 'completed', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 4, totalStudents: 4, averageScore: 7.6 }], schedule: [{ title: 'Buổi 1: HTML cơ bản', description: 'Giới thiệu HTML', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 9.1, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    6: { students: [{ id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.3 }, { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 }, { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }, { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.4 }], assignments: [{ id: 1, title: 'Bài tập 1: Functions', description: 'Làm việc với functions', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 4, averageScore: 7.5 }], schedule: [{ title: 'Buổi 1: Functions', description: 'Giới thiệu functions', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 8.9, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    7: { students: [{ id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.3 }, { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 }, { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }, { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.4 }], assignments: [{ id: 1, title: 'Bài tập 1: Classes', description: 'Tạo classes', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 4, averageScore: 7.4 }], schedule: [{ title: 'Buổi 1: Classes', description: 'Giới thiệu classes', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 8.7, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    3: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Lớp và đối tượng', description: 'Tạo class cơ bản', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.5 }], schedule: [{ title: 'Buổi 1: OOP cơ bản', description: 'Giới thiệu OOP', type: 'lecture', date: '04/11/2024', time: '8:00 - 11:00', location: 'Phòng Lab 301', status: 'completed', attendanceRate: 9.0, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    4: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Danh sách liên kết', description: 'Cài đặt linked list', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.3 }], schedule: [{ title: 'Buổi 1: Linked List', description: 'Giới thiệu danh sách liên kết', type: 'lecture', date: '04/11/2024', time: '8:00 - 11:00', location: 'Phòng Lab 301', status: 'completed', attendanceRate: 8.8, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    5: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: HTML/CSS cơ bản', description: 'Tạo trang web đầu tiên', status: 'completed', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 4, totalStudents: 4, averageScore: 7.6 }], schedule: [{ title: 'Buổi 1: HTML cơ bản', description: 'Giới thiệu HTML', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 9.1, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    6: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Functions', description: 'Làm việc với functions', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 4, averageScore: 7.5 }], schedule: [{ title: 'Buổi 1: Functions', description: 'Giới thiệu functions', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 8.9, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    7: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Classes', description: 'Tạo classes', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 4, averageScore: 7.4 }], schedule: [{ title: 'Buổi 1: Classes', description: 'Giới thiệu classes', type: 'lecture', date: '04/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'completed', attendanceRate: 8.7, attendedStudents: 4, absentStudents: 0, lateStudents: 0, materials: [] }] },
     8: { 
-      students: [
-        { id: 5, name: 'Vũ Đức Thành', studentId: '122000005', email: 'thanh.vd@student.edu.vn', phone: '0901234571', status: 'active', completionRate: 95, averageScore: 9.0, completedAssignments: 9, totalAssignments: 10, scoreChange: 0.3 }, 
-        { id: 4, name: 'Phạm Thị Lan', studentId: '122000004', email: 'lan.pt@student.edu.vn', phone: '0901234570', status: 'active', completionRate: 78, averageScore: 7.5, completedAssignments: 6, totalAssignments: 10, scoreChange: 0.2 }, 
-        { id: 7, name: 'Đặng Văn Hùng', studentId: '122000007', email: 'hung.dv@student.edu.vn', phone: '0901234573', status: 'active', completionRate: 72, averageScore: 7.2, completedAssignments: 5, totalAssignments: 10, scoreChange: -0.1 }, 
-        { id: 8, name: 'Bùi Thị Ngọc', studentId: '122000008', email: 'ngoc.bt@student.edu.vn', phone: '0901234574', status: 'active', completionRate: 89, averageScore: 8.4, completedAssignments: 7, totalAssignments: 10, scoreChange: 0.4 }
-      ], 
+      students: ALL_STUDENTS, 
       assignments: [
         { id: 1, title: 'Bài tập 1: Stack & Queue', description: 'Cài đặt stack và queue', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 3, totalStudents: 4, averageScore: 7.2 }
       ], 
@@ -1250,9 +1312,9 @@ export const mockClassData = {
         { title: 'Buổi 12: Ôn tập và thi cuối kỳ', description: 'Tổng kết và đánh giá', type: 'exam', date: '17/11/2024', time: '13:30 - 16:30', location: 'Phòng Lab 302', status: 'upcoming', attendanceRate: 0, attendedStudents: 0, absentStudents: 0, lateStudents: 0, materials: [] }
       ] 
     },
-    9: { students: [{ id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }, { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.1 }, { id: 9, name: 'Lý Minh Tuấn', studentId: '122000009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 5.5, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.6 }], assignments: [{ id: 1, title: 'Bài tập 1: Cơ bản', description: 'Bài tập cơ bản', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.4 }], schedule: [{ title: 'Buổi 1: Cơ bản', description: 'Giới thiệu', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 8.3, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    10: { students: [{ id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }, { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.1 }, { id: 9, name: 'Lý Minh Tuấn', studentId: '122000009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 5.5, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.6 }], assignments: [{ id: 1, title: 'Bài tập 1: Advanced', description: 'Bài tập nâng cao', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.2 }], schedule: [{ title: 'Buổi 1: Advanced', description: 'Nội dung nâng cao', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 8.1, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    11: { students: [{ id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }, { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.1 }, { id: 9, name: 'Lý Minh Tuấn', studentId: '122000009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 5.5, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.6 }], assignments: [{ id: 1, title: 'Bài tập 1: OOP', description: 'Bài tập OOP', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.0 }], schedule: [{ title: 'Buổi 1: OOP', description: 'Lập trình OOP', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 7.9, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
-    12: { students: [{ id: 3, name: 'Lê Hoàng Nam', studentId: '122000003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }, { id: 6, name: 'Hoàng Thị Mai', studentId: '122000006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.1 }, { id: 9, name: 'Lý Minh Tuấn', studentId: '122000009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 5.5, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.6 }], assignments: [{ id: 1, title: 'Bài tập 1: Algorithms', description: 'Bài tập thuật toán', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 6.9 }], schedule: [{ title: 'Buổi 1: Algorithms', description: 'Giới thiệu thuật toán', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 7.7, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] }
+    9: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Cơ bản', description: 'Bài tập cơ bản', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.4 }], schedule: [{ title: 'Buổi 1: Cơ bản', description: 'Giới thiệu', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 8.3, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    10: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Advanced', description: 'Bài tập nâng cao', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.2 }], schedule: [{ title: 'Buổi 1: Advanced', description: 'Nội dung nâng cao', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 8.1, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    11: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: OOP', description: 'Bài tập OOP', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 7.0 }], schedule: [{ title: 'Buổi 1: OOP', description: 'Lập trình OOP', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 7.9, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] },
+    12: { students: ALL_STUDENTS, assignments: [{ id: 1, title: 'Bài tập 1: Algorithms', description: 'Bài tập thuật toán', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 6.9 }], schedule: [{ title: 'Buổi 1: Algorithms', description: 'Giới thiệu thuật toán', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 7.7, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] }
   }
 };

@@ -7,7 +7,7 @@ const StudentPerformanceDistribution = ({ classDetails }) => {
     const [showModal, setShowModal] = useState(false);
 
     const stats = useMemo(() => {
-        if (!classDetails) return null;
+        if (!classDetails || !classDetails.students) return null;
 
         const distribution = {
             excellent: { label: 'Giỏi (≥ 8.0)', count: 0, color: '#10B981', min: 8.0, max: 10, students: [] },
@@ -18,32 +18,40 @@ const StudentPerformanceDistribution = ({ classDetails }) => {
         };
 
         let totalStudents = 0;
+        
+        // Tạo một Set để theo dõi sinh viên đã được thêm (dựa trên studentId)
+        const addedStudents = new Set();
 
-        Object.values(classDetails).forEach(classDetail => {
-            if (classDetail.students) {
-                classDetail.students.forEach(student => {
-                    const score = student.averageScore || 0;
-                    totalStudents++;
+        // Chỉ lấy sinh viên từ lớp hiện tại
+        if (classDetails.students) {
+            classDetails.students.forEach(student => {
+                // Kiểm tra xem sinh viên đã được thêm chưa
+                if (addedStudents.has(student.studentId)) {
+                    return; // Bỏ qua nếu đã thêm rồi
+                }
+                
+                addedStudents.add(student.studentId);
+                const score = student.averageScore || 0;
+                totalStudents++;
 
-                    if (score >= 8.0) {
-                        distribution.excellent.count++;
-                        distribution.excellent.students.push(student);
-                    } else if (score >= 6.5) {
-                        distribution.good.count++;
-                        distribution.good.students.push(student);
-                    } else if (score >= 5.0) {
-                        distribution.average.count++;
-                        distribution.average.students.push(student);
-                    } else if (score >= 4.0) {
-                        distribution.weak.count++;
-                        distribution.weak.students.push(student);
-                    } else {
-                        distribution.poor.count++;
-                        distribution.poor.students.push(student);
-                    }
-                });
-            }
-        });
+                if (score >= 8.0) {
+                    distribution.excellent.count++;
+                    distribution.excellent.students.push(student);
+                } else if (score >= 6.5) {
+                    distribution.good.count++;
+                    distribution.good.students.push(student);
+                } else if (score >= 5.0) {
+                    distribution.average.count++;
+                    distribution.average.students.push(student);
+                } else if (score >= 4.0) {
+                    distribution.weak.count++;
+                    distribution.weak.students.push(student);
+                } else {
+                    distribution.poor.count++;
+                    distribution.poor.students.push(student);
+                }
+            });
+        }
 
         return { distribution, totalStudents };
     }, [classDetails]);

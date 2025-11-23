@@ -104,7 +104,7 @@ const AssignmentManagement = () => {
         </div>
         <Link
           to="/assignments/create"
-          className="btn-primary flex items-center space-x-2"
+          className="btn-primary flex items-center space-x-2 !text-white"
         >
           <Plus className="h-4 w-4" />
           <span>Tạo Bài Tập Mới</span>

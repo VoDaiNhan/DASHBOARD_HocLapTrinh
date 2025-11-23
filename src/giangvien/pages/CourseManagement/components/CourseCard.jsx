@@ -31,10 +31,10 @@ const CourseCard = ({ course }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 overflow-hidden group h-full flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white flex-shrink-0">
+      <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white flex-shrink-0">
         <div className="flex items-start justify-between mb-4 min-h-[80px]">
           <div className="flex-1">
-            <h3 className="text-xl font-bold mb-2 group-hover:text-blue-100 transition-colors line-clamp-2">
+            <h3 className="text-xl font-bold mb-2 !text-white group-hover:scale-105 transition-transform line-clamp-2">
               {course.name}
             </h3>
             <div className="flex items-center gap-2 text-blue-100 text-sm">
@@ -51,7 +51,7 @@ const CourseCard = ({ course }) => {
             <span className="text-blue-100">Tỷ lệ hoàn thành</span>
             <span className="font-semibold">{course.completionRate}%</span>
           </div>
-          <div className="w-full bg-blue-400/30 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-primary-400/30 rounded-full h-2 overflow-hidden">
             <div
               className="bg-white h-full rounded-full transition-all duration-500"
               style={{ width: `${course.completionRate}%` }}
@@ -104,7 +104,7 @@ const CourseCard = ({ course }) => {
         <div className="mt-auto">
           <Link
             to={`/courses/${course.id}`}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 rounded-lg font-medium transition-colors group"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-primary-50 text-gray-700 hover:text-primary-600 rounded-lg font-medium transition-colors group"
           >
             <span>Xem chi tiết</span>
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
