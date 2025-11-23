@@ -6,11 +6,11 @@ const Feedback = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'passed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-100 text-success-800';
       case 'partial':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning-100 text-warning-800';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-danger-100 text-danger-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -32,15 +32,15 @@ const Feedback = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Lỗi & Phản hồi</h1>
-        <p className="text-gray-600 dark:text-gray-400">Phân tích lỗi và gợi ý cải thiện</p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Lỗi & Phản hồi</h1>
+        <p className="text-gray-600">Phân tích lỗi và gợi ý cải thiện</p>
       </div>
 
       {/* Error Statistics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Thống kê Lỗi</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Thống kê Lỗi</h2>
           <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -67,7 +67,7 @@ const Feedback = () => {
 
         {/* Bar Chart */}
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Biểu đồ Số lượng Lỗi</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Biểu đồ Số lượng Lỗi</h2>
           <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={errorStats}>
@@ -76,12 +76,9 @@ const Feedback = () => {
                 <YAxis stroke="#6b7280" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: '2px solid #6366f1',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid #3f51b5',
+                    borderRadius: '8px',
                     padding: '12px 16px',
                     fontWeight: '600'
                   }}
@@ -91,11 +88,11 @@ const Feedback = () => {
                     fontWeight: '700'
                   }}
                   labelStyle={{
-                    color: '#6366f1',
+                    color: '#3f51b5',
                     fontWeight: '700',
                     marginBottom: '4px'
                   }}
-                  cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
+                  cursor={{ fill: 'rgba(63, 81, 181, 0.1)' }}
                 />
                 <Bar dataKey="count" name="Số lỗi">
                   {errorStats.map((entry, index) => (
@@ -110,20 +107,20 @@ const Feedback = () => {
 
       {/* Recent Submissions */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Danh sách Bài nộp Gần đây</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Danh sách Bài nộp Gần đây</h2>
         <div className="space-y-4">
           {submissions.map((submission) => (
-            <div key={submission.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800/50">
+            <div key={submission.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" style={{ backgroundColor: '#FFFFFF' }}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-gray-800 dark:text-white mb-1">{submission.assignmentName}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Nộp lúc: {submission.submittedAt}</p>
+                  <h3 className="font-bold text-gray-800 mb-1">{submission.assignmentName}</h3>
+                  <p className="text-sm text-gray-600">Nộp lúc: {submission.submittedAt}</p>
                 </div>
                 <div className="text-right">
                   <span className={`badge ${getStatusColor(submission.status)}`}>
                     {getStatusLabel(submission.status)}
                   </span>
-                  <p className="text-lg font-bold text-gray-800 dark:text-white mt-2">
+                  <p className="text-lg font-bold text-gray-800 mt-2">
                     {submission.score} điểm
                   </p>
                 </div>
@@ -132,17 +129,17 @@ const Feedback = () => {
               {/* Test Results */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Test Cases</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm font-medium text-gray-700">Test Cases</span>
+                  <span className="text-sm text-gray-600">
                     {submission.testsPassed}/{submission.testsTotal} passed
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full ${
                       submission.testsPassed === submission.testsTotal
-                        ? 'bg-green-500'
-                        : 'bg-yellow-500'
+                        ? 'bg-success-500'
+                        : 'bg-warning-500'
                     }`}
                     style={{ width: `${(submission.testsPassed / submission.testsTotal) * 100}%` }}
                   ></div>
@@ -152,15 +149,15 @@ const Feedback = () => {
               {/* Errors and Suggestions */}
               {submission.errors.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-800 dark:text-white text-sm">Lỗi & Gợi ý sửa:</h4>
+                  <h4 className="font-semibold text-gray-800 text-sm">Lỗi & Gợi ý sửa:</h4>
                   {submission.errors.map((error, idx) => (
-                    <div key={idx} className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-400 p-3 rounded-r">
+                    <div key={idx} className="bg-danger-50 border-l-4 border-danger-500 p-3 rounded-r">
                       <div className="flex items-start space-x-2">
-                        <span className="text-red-600 dark:text-red-400 font-medium text-sm">{error.type}:</span>
+                        <span className="text-danger-600 font-medium text-sm">{error.type}:</span>
                         <div className="flex-1">
-                          <p className="text-sm text-gray-800 dark:text-gray-300 mb-2">{error.description}</p>
-                          <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-400 p-2 rounded-r">
-                            <p className="text-xs text-green-800 dark:text-green-300">
+                          <p className="text-sm text-gray-800 mb-2">{error.description}</p>
+                          <div className="bg-primary-50 border-l-4 border-primary-500 p-2 rounded-r">
+                            <p className="text-xs text-primary-800">
                               💡 <strong>Gợi ý:</strong> {error.suggestion}
                             </p>
                           </div>
@@ -172,8 +169,8 @@ const Feedback = () => {
               )}
 
               {submission.errors.length === 0 && (
-                <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-400 p-3 rounded-r">
-                  <p className="text-sm text-green-800 dark:text-green-300 flex items-center">
+                <div className="bg-success-50 border-l-4 border-success-500 p-3 rounded-r">
+                  <p className="text-sm text-success-800 flex items-center">
                     <span className="mr-2">🎉</span>
                     Tuyệt vời! Bài làm của bạn hoàn hảo, không có lỗi nào.
                   </p>
@@ -185,9 +182,9 @@ const Feedback = () => {
       </div>
 
       {/* Common Errors Tips */}
-      <div className="card bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400">
-        <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-3">💡 Mẹo tránh lỗi thường gặp</h2>
-        <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+      <div className="card bg-primary-50 border-l-4 border-primary-500">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">💡 Mẹo tránh lỗi thường gặp</h2>
+        <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start">
             <span className="mr-2">•</span>
             <span><strong>Syntax Error:</strong> Luôn kiểm tra dấu ngoặc, dấu chấm phẩy và cú pháp trước khi chạy code.</span>

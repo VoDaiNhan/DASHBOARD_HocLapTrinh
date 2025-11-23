@@ -91,7 +91,7 @@ const SidebarControl = ({ mode, onModeChange }) => {
             >
               <span>{item.label}</span>
               {mode === item.value && (
-                <Check className="h-4 w-4 text-primary-600" />
+                <Check className="h-4 w-4 text-primary-500" />
               )}
             </button>
           ))}

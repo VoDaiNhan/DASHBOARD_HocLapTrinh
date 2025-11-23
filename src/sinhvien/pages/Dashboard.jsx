@@ -1,267 +1,106 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import KPICard from '../components/KPICard';
-import AlertCard from '../components/AlertCard';
-import CountUp from '../components/CountUp';
-import { studentInfo, alerts, generateProgressData, sampleProgressData } from '../data/data';
+import { generateProgressData, competencyByCourse, competencyAssessment, courseExercises } from '../data/data';
 
   const Dashboard = ({ setCurrentPage }) => {
+  const [userName, setUserName] = useState('');
   const [enrolledCourses, setEnrolledCourses] = useState([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('enrolledCourses');
-    if (saved) {
-      setEnrolledCourses(JSON.parse(saved));
+    const savedUser = sessionStorage.getItem('user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setUserName(user.full_name || '');
+    }
+
+    const savedCourses = sessionStorage.getItem('enrolledCourses');
+    if (savedCourses) {
+      setEnrolledCourses(JSON.parse(savedCourses));
     }
   }, []);
 
-  // Tạo dữ liệu tiến độ có ý nghĩa
+  // Tạo dữ liệu cho biểu đồ tiến độ
   const progressData = enrolledCourses.length > 0 
     ? generateProgressData(enrolledCourses) 
-    : sampleProgressData;
+    : [];
 
-  // Calculate KPI data from enrolled courses
-  const totalAssignments = enrolledCourses.reduce((sum, c) => sum + c.assignments.total, 0);
-  const completedAssignments = enrolledCourses.reduce((sum, c) => sum + c.assignments.completed, 0);
-  const avgProgress = enrolledCourses.length > 0 
-    ? Math.round(enrolledCourses.reduce((sum, c) => sum + c.progress, 0) / enrolledCourses.length)
-    : 0;
-  const avgGrade = enrolledCourses.length > 0
-    ? (enrolledCourses.reduce((sum, c) => sum + c.grade, 0) / enrolledCourses.length).toFixed(1)
-    : 0;
-  const studyHoursPerWeek = enrolledCourses.length * 3; // Estimate 3 hours per course per week
+  // Màu sắc cho từng khóa học (để phân biệt các đường trên biểu đồ)
+  const courseColors = [
+    '#3f51b5', // Primary Blue
+    '#ff9800', // Accent Orange
+    '#22c55e', // Success Green
+    '#ef4444', // Danger Red
+    '#8b5cf6', // Purple
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#f59e0b'  // Warning Amber
+  ];
+
+  // Hàm xác định mức độ dựa trên điểm số
+  const getLevel = (score) => {
+    if (score >= 90) return { level: 'Giỏi', color: 'bg-success-500', textColor: 'text-success-700' };
+    if (score >= 80) return { level: 'Khá', color: 'bg-primary-500', textColor: 'text-primary-700' };
+    if (score >= 60) return { level: 'Trung bình', color: 'bg-warning-500', textColor: 'text-warning-700' };
+    return { level: 'Yếu', color: 'bg-danger-500', textColor: 'text-danger-700' };
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Tổng quan Dashboard</h1>
-        <p className="text-gray-600">Theo dõi tiến độ học tập và các chỉ số quan trọng</p>
+      {/* Tiêu đề chào mừng */}
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-bold text-primary-500 dark:text-primary-400">
+          Chào mừng sinh viên {userName || 'Sinh viên'} quay lại dashboard!
+        </h1>
       </div>
 
-      {enrolledCourses.length === 0 ? (
-        <>
-          {/* Welcome Hero Section */}
-          <div className="card text-center py-12 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-5" style={{ 
-              backgroundImage: 'radial-gradient(circle, #6366f1 1px, transparent 1px)',
-              backgroundSize: '30px 30px'
-            }}></div>
-            <div className="relative z-10">
-              <div className="text-7xl mb-4 animate-bounce">🎓</div>
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-3">
-                Chào mừng đến với Student Learning Dashboard!
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
-                Hệ thống quản lý tiến độ học tập thông minh giúp bạn theo dõi khóa học, 
-                bài tập, kỹ năng và phát triển toàn diện
-              </p>
-              <button 
-                onClick={() => setCurrentPage('courses')}
-                className="btn-primary text-lg px-8 py-3"
-              >
-                📖 Khám phá Khóa học ngay
-              </button>
-            </div>
-          </div>
-
-          {/* Features Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">📚</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Khóa học đa dạng</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Hơn 8 khóa học chất lượng từ cơ bản đến nâng cao
-              </p>
-            </div>
-
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">📊</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Theo dõi tiến độ</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Biểu đồ trực quan giúp bạn nắm rõ tiến độ học tập
-              </p>
-            </div>
-
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">💡</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Gợi ý thông minh</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Bài tập và lộ trình được cá nhân hóa theo trình độ
-              </p>
-            </div>
-
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">🐛</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Phân tích lỗi</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Phản hồi chi tiết và gợi ý cách sửa lỗi
-              </p>
-            </div>
-
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">💬</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Kỹ năng mềm</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Đánh giá và phát triển kỹ năng làm việc nhóm
-              </p>
-            </div>
-
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-5xl mb-3">🏆</div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Thành tích</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Nhận badges và theo dõi thành tích học tập
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Start Guide */}
-          <div className="card">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center">
-              <span className="mr-3">🚀</span> Hướng dẫn Bắt đầu
+      {/* Hàng 1: Khung môn học + Biểu đồ tiến độ */}
+      {enrolledCourses.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Khung hiển thị các môn đã đăng ký */}
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-700"
+            style={{ height: '500px', overflowY: 'auto' }}
+          >
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              Các môn đã đăng ký
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="relative">
-                <div className="absolute -left-2 top-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold">
-                  1
+            <div className="space-y-6">
+              {enrolledCourses.map((course) => (
+                <div key={course.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0 last:pb-0">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+                      {course.name}
+                    </h3>
+                    <span className="text-2xl font-bold text-gray-800 dark:text-white">
+                      {course.progress || 0}%
+                    </span>
                 </div>
-                <div className="pl-8">
-                  <h4 className="font-bold text-gray-800 dark:text-white mb-2">Đăng ký khóa học</h4>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-2">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        course.progress === 100 ? 'bg-success-500' :
+                        course.progress >= 50 ? 'bg-primary-500' : 'bg-warning-500'
+                      }`}
+                      style={{ width: `${course.progress || 0}%` }}
+                    ></div>
+                </div>
+                  {course.code && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Truy cập trang "Khóa học" và chọn các môn học phù hợp với bạn
+                      {course.code}
                   </p>
+                  )}
                 </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -left-2 top-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold">
-                  2
-                </div>
-                <div className="pl-8">
-                  <h4 className="font-bold text-gray-800 dark:text-white mb-2">Làm bài tập</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Hoàn thành các bài tập được gợi ý để nâng cao kỹ năng
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -left-2 top-0 w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold">
-                  3
-                </div>
-                <div className="pl-8">
-                  <h4 className="font-bold text-gray-800 dark:text-white mb-2">Theo dõi tiến độ</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Xem thống kê, biểu đồ và cải thiện kết quả học tập
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Stats Preview */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                <CountUp end={8} duration={2000} suffix="+" />
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Khóa học chất lượng</div>
-            </div>
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-                <CountUp end={40} duration={2500} suffix="+" />
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Bài tập thực hành</div>
-            </div>
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-                24/7
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Hỗ trợ học tập</div>
-            </div>
-            <div className="card text-center hover:scale-105 transition-transform">
-              <div className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-2">
-                <CountUp end={100} duration={2500} suffix="%" />
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Miễn phí sử dụng</div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <KPICard
-              title="Tiến độ học tập"
-              value={`${avgProgress}%`}
-              subtitle="Trung bình các khóa học"
-              icon="📈"
-              color="blue"
-            />
-            <KPICard
-              title="Bài tập"
-              value={`${completedAssignments}/${totalAssignments}`}
-              subtitle="Đã nộp / Tổng số"
-              icon="📝"
-              color="green"
-            />
-            <KPICard
-              title="Điểm trung bình"
-              value={avgGrade}
-              subtitle={`Từ ${enrolledCourses.length} khóa học`}
-              icon="⭐"
-              color="purple"
-            />
-            <KPICard
-              title="Giờ học / tuần"
-              value={studyHoursPerWeek}
-              subtitle="Giờ học ước tính"
-              icon="⏰"
-              color="orange"
-            />
-          </div>
-        </>
-      )}
-
-      {/* Biểu đồ tiến độ */}
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">📊 Biểu đồ Tiến độ Học tập</h2>
-          {enrolledCourses.length > 0 && (
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                {progressData[progressData.length - 1]?.completedExercises || 0}
-              </span>
-              <span className="mx-1">/</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-300">
-                {progressData[progressData.length - 1]?.totalExercises || 0}
-              </span>
-              <span className="ml-1">bài tập hoàn thành</span>
-            </div>
-          )}
-        </div>
-        
-        {enrolledCourses.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">📈</div>
-            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Chưa có dữ liệu tiến độ
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Đăng ký khóa học để theo dõi tiến độ học tập của bạn
-            </p>
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6">
-              <h4 className="font-semibold text-gray-800 dark:text-white mb-2">📊 Biểu đồ sẽ hiển thị:</h4>
-              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                <li>• Tiến độ hoàn thành bài tập theo tuần</li>
-                <li>• So sánh với mục tiêu học tập</li>
-                <li>• Xu hướng học tập và cải thiện</li>
-                <li>• Dự đoán khả năng hoàn thành khóa học</li>
-              </ul>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full h-80">
+          {/* Biểu đồ tiến độ học tập */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md" style={{ height: '500px' }}>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
+              📊 Biểu đồ Tiến độ Học tập
+            </h2>
+            {progressData.length > 0 ? (
+              <div className="w-full h-[420px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={progressData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
@@ -280,118 +119,204 @@ import { studentInfo, alerts, generateProgressData, sampleProgressData } from '.
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: '2px solid #6366f1',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
-                    padding: '12px 16px',
-                    fontWeight: '600'
-                  }}
-                  itemStyle={{
-                    color: '#1f2937',
-                    fontSize: '14px',
-                    fontWeight: '700'
-                  }}
-                  labelStyle={{
-                    color: '#6366f1',
-                    fontWeight: '700',
-                    fontSize: '16px'
+                        border: '1px solid #3f51b5',
+                        borderRadius: '8px',
                   }}
                   formatter={(value, name) => {
-                    if (name === 'progress') return [`${value}%`, 'Tiến độ thực tế'];
                     if (name === 'target') return [`${value}%`, 'Mục tiêu'];
-                    return [value, name];
+                        // Tìm tên khóa học từ enrolledCourses
+                        const course = enrolledCourses.find(c => {
+                          const courseKey = c.name.replace(/[^a-zA-Z0-9]/g, '_');
+                          return courseKey === name;
+                        });
+                        return [`${value}%`, course?.name || name];
                   }}
                 />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="progress" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 6 }}
-                  name="Tiến độ thực tế"
-                />
+                    {/* Đường Mục tiêu - Render đầu tiên để hiển thị đầu tiên trong legend */}
                 <Line 
                   type="monotone" 
                   dataKey="target" 
-                  stroke="#10b981" 
+                      stroke="#ff9800" 
                   strokeWidth={2}
                   strokeDasharray="5 5"
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 5 }}
-                  name="Mục tiêu"
+                      dot={{ fill: '#ff9800', strokeWidth: 2, r: 5 }}
+                      name="Mục tiêu (theo tuần)"
+                    />
+                    {/* Đường cho từng khóa học - Render sau */}
+                    {enrolledCourses.map((course, index) => {
+                      const courseKey = course.name.replace(/[^a-zA-Z0-9]/g, '_');
+                      const color = courseColors[index % courseColors.length];
+                      return (
+                        <Line
+                          key={course.id}
+                          type="monotone"
+                          dataKey={courseKey}
+                          stroke={color}
+                          strokeWidth={3}
+                          dot={{ fill: color, strokeWidth: 2, r: 6 }}
+                          name={course.name}
+                        />
+                      );
+                    })}
+                    <Legend 
+                      content={({ payload }) => {
+                        if (!payload || !payload.length) return null;
+                        // Sắp xếp: Mục tiêu đứng đầu, sau đó là các khóa học
+                        const sortedPayload = [...payload].sort((a, b) => {
+                          if (a.dataKey === 'target') return -1;
+                          if (b.dataKey === 'target') return 1;
+                          return 0;
+                        });
+                        return (
+                          <div className="flex flex-wrap justify-center gap-4 mt-4">
+                            {sortedPayload.map((entry, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                {entry.dataKey === 'target' ? (
+                                  <svg width="16" height="4" className="flex-shrink-0">
+                                    <line 
+                                      x1="0" 
+                                      y1="2" 
+                                      x2="16" 
+                                      y2="2" 
+                                      stroke="#ff9800" 
+                                      strokeWidth="2" 
+                                      strokeDasharray="4 4"
+                                    />
+                                  </svg>
+                                ) : (
+                                  <div 
+                                    className="w-4 h-1 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                )}
+                                <span className="text-sm" style={{ color: entry.color }}>
+                                  {entry.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }}
                 />
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        )}
-        
-        {/* Thông tin insight */}
-        {enrolledCourses.length > 0 && progressData.length > 0 && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-              <div className="text-sm font-semibold text-blue-800 dark:text-blue-200">🎯 Hiệu suất</div>
-              <div className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                {Math.round((progressData[progressData.length - 1]?.progress || 0) / (progressData[progressData.length - 1]?.target || 1) * 100)}%
               </div>
-              <div className="text-xs text-blue-600 dark:text-blue-300">so với mục tiêu</div>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-              <div className="text-sm font-semibold text-green-800 dark:text-green-200">📈 Xu hướng</div>
-              <div className="text-lg font-bold text-green-900 dark:text-green-100">
-                {progressData[progressData.length - 1]?.progress > progressData[progressData.length - 2]?.progress ? 'Tăng' : 'Ổn định'}
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Chưa có dữ liệu tiến độ
               </div>
-              <div className="text-xs text-green-600 dark:text-green-300">tuần này</div>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
-              <div className="text-sm font-semibold text-purple-800 dark:text-purple-200">⏱️ Dự kiến</div>
-              <div className="text-lg font-bold text-purple-900 dark:text-purple-100">
-                {Math.max(0, Math.round((100 - (progressData[progressData.length - 1]?.progress || 0)) / 10))} tuần
-              </div>
-              <div className="text-xs text-purple-600 dark:text-purple-300">để hoàn thành</div>
+            )}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Cảnh báo và Khóa học */}
+      {/* Hàng 2: Phân loại năng lực theo từng môn */}
       {enrolledCourses.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Cảnh báo & Thông báo</h2>
-            <div className="space-y-3">
-              {alerts.slice(0, 4).map((alert) => (
-                <AlertCard key={alert.id} alert={alert} />
-              ))}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
+            📊 Phân loại năng lực theo từng môn
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {enrolledCourses.map((course) => {
+              const competencies = competencyByCourse[course.id] || {};
+              return (
+                <div key={course.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <h3 className="font-semibold text-lg text-gray-800 dark:text-white mb-4">
+                    {course.name}
+                  </h3>
+                  <div className="space-y-4">
+                    {Object.entries(competencies).map(([name, score]) => {
+                      const levelInfo = getLevel(score);
+                      return (
+                        <div key={name}>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {name}
+                            </span>
+                            <span className={`text-sm font-bold ${levelInfo.textColor}`}>
+                              {score}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${levelInfo.color}`}
+                              style={{ width: `${score}%` }}
+                            ></div>
+                          </div>
+                          <span className={`text-xs ${levelInfo.textColor} font-semibold`}>
+                            {levelInfo.level}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
             </div>
+              );
+            })}
           </div>
+        </div>
+      )}
 
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Khóa học của tôi</h2>
-            <div className="space-y-3">
-              {enrolledCourses.map((course) => (
-                <div key={course.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{course.name}</h3>
-                    <span className="text-sm font-bold text-primary-600">{course.progress}%</span>
+      {/* Hàng 3: Đánh giá tổng hợp theo tiêu chí/năng lực */}
+      {enrolledCourses.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">
+            🎯 Đánh giá tổng hợp theo tiêu chí/năng lực
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(competencyAssessment).map(([key, assessment]) => {
+              const levelInfo = getLevel(assessment.score);
+              return (
+                <div
+                  key={key}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 dark:text-white text-sm">
+                      {key}
+                    </h3>
+                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                      levelInfo.level === 'Giỏi' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                      levelInfo.level === 'Khá' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                      levelInfo.level === 'Trung bình' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                      'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                    }`}>
+                      {assessment.level}
+                    </span>
                   </div>
-                  <div className="bg-gray-200 rounded-full h-2 mb-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        course.progress === 100 ? 'bg-green-500' :
-                        course.progress >= 50 ? 'bg-blue-500' : 'bg-yellow-500'
-                      }`}
-                      style={{ width: `${course.progress}%` }}
+                    <div className="mb-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Tỉ lệ đạt</span>
+                        <span className="text-lg font-bold text-primary-500 dark:text-primary-400">
+                          {assessment.score}%
+                        </span>
+                      </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full ${levelInfo.color}`}
+                        style={{ width: `${assessment.score}%` }}
                     ></div>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    {course.code} • {course.assignments.completed}/{course.assignments.total} bài tập
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    {assessment.description}
                   </p>
+                  <div className="text-xs text-gray-500 dark:text-gray-500">
+                    <span className="font-semibold">Môn học:</span> {assessment.courses.join(', ')}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
+      )}
+
+      {/* Thông báo khi chưa có khóa học */}
+      {enrolledCourses.length === 0 && (
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <p className="text-gray-600 dark:text-gray-400">
+            Chưa có khóa học nào được đăng ký
+          </p>
         </div>
       )}
     </div>
@@ -399,4 +324,3 @@ import { studentInfo, alerts, generateProgressData, sampleProgressData } from '.
 };
 
 export default Dashboard;
-

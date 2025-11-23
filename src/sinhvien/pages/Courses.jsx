@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { availableCourses } from '../data/data';
+import React, { useState, useEffect, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { availableCourses, generateProgressData } from '../data/data';
 import Toast from '../components/Toast';
 
 const Courses = () => {
-  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState(() => {
+    // Khởi tạo state từ sessionStorage ngay từ đầu
+    const saved = sessionStorage.getItem('enrolledCourses');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [showEnrollModal, setShowEnrollModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const isFirstRender = useRef(true);
 
-  // Load enrolled courses from localStorage
+  // Save to sessionStorage whenever enrolledCourses changes (bỏ qua lần render đầu tiên)
   useEffect(() => {
-    const saved = localStorage.getItem('enrolledCourses');
-    if (saved) {
-      setEnrolledCourses(JSON.parse(saved));
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-  }, []);
-
-  // Save to localStorage whenever enrolledCourses changes
-  useEffect(() => {
-    localStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
+    sessionStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
   }, [enrolledCourses]);
 
   const isEnrolled = (courseId) => {
@@ -87,10 +88,22 @@ const Courses = () => {
     return true;
   });
 
-  const coursesForChart = enrolledCourses.map(c => ({
-    name: c.code,
-    progress: c.progress
-  }));
+  // Tạo dữ liệu cho biểu đồ tiến độ (mỗi khóa học 1 đường)
+  const progressData = enrolledCourses.length > 0 
+    ? generateProgressData(enrolledCourses) 
+    : [];
+
+  // Màu sắc cho từng khóa học
+  const courseColors = [
+    '#3f51b5', // Primary Blue
+    '#ff9800', // Accent Orange
+    '#22c55e', // Success Green
+    '#ef4444', // Danger Red
+    '#8b5cf6', // Purple
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#f59e0b'  // Warning Amber
+  ];
 
   return (
     <div className="space-y-6">
@@ -175,47 +188,108 @@ const Courses = () => {
       </div>
 
       {/* Progress Chart */}
-      {coursesForChart.length > 0 && (
+      {progressData.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Tiến độ các Khóa học Đã Đăng ký</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Tiến độ các Khóa học Đã Đăng ký</h2>
           <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={coursesForChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+              <LineChart data={progressData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-gray-600" />
+                <XAxis 
+                  dataKey="week" 
+                  stroke="#6b7280" 
+                  className="dark:stroke-gray-400"
+                  fontSize={12}
+                />
+                <YAxis 
+                  stroke="#6b7280" 
+                  className="dark:stroke-gray-400"
+                  fontSize={12}
+                  domain={[0, 100]}
+                />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    border: '2px solid #6366f1',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(99, 102, 241, 0.4)',
-                    padding: '12px 16px',
-                    fontWeight: '600'
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid #6366f1',
+                    borderRadius: '8px',
                   }}
-                  itemStyle={{
-                    color: '#1f2937',
-                    fontSize: '14px',
-                    fontWeight: '700'
+                  formatter={(value, name) => {
+                    if (name === 'target') return [`${value}%`, 'Mục tiêu'];
+                    // Tìm tên khóa học từ enrolledCourses
+                    const course = enrolledCourses.find(c => {
+                      const courseKey = c.name.replace(/[^a-zA-Z0-9]/g, '_');
+                      return courseKey === name;
+                    });
+                    return [`${value}%`, course?.name || name];
                   }}
-                  labelStyle={{
-                    color: '#6366f1',
-                    fontWeight: '700',
-                    marginBottom: '4px'
-                  }}
-                  cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                 />
-                <Bar dataKey="progress" name="Tiến độ (%)">
-                  {coursesForChart.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={entry.progress >= 70 ? '#22c55e' : entry.progress >= 40 ? '#eab308' : '#3b82f6'} 
+                {/* Đường Mục tiêu - Render đầu tiên để hiển thị đầu tiên trong legend */}
+                <Line 
+                  type="monotone" 
+                  dataKey="target" 
+                  stroke="#ff9800" 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={{ fill: '#ff9800', strokeWidth: 2, r: 5 }}
+                  name="Mục tiêu (theo tuần)"
+                />
+                {/* Đường cho từng khóa học - Render sau */}
+                {enrolledCourses.map((course, index) => {
+                  const courseKey = course.name.replace(/[^a-zA-Z0-9]/g, '_');
+                  const color = courseColors[index % courseColors.length];
+                  return (
+                    <Line
+                      key={course.id}
+                      type="monotone"
+                      dataKey={courseKey}
+                      stroke={color}
+                      strokeWidth={3}
+                      dot={{ fill: color, strokeWidth: 2, r: 6 }}
+                      name={course.name}
                     />
+                  );
+                })}
+                <Legend 
+                  content={({ payload }) => {
+                    if (!payload || !payload.length) return null;
+                    // Sắp xếp: Mục tiêu đứng đầu, sau đó là các khóa học
+                    const sortedPayload = [...payload].sort((a, b) => {
+                      if (a.dataKey === 'target') return -1;
+                      if (b.dataKey === 'target') return 1;
+                      return 0;
+                    });
+                    return (
+                      <div className="flex flex-wrap justify-center gap-4 mt-4">
+                        {sortedPayload.map((entry, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                                {entry.dataKey === 'target' ? (
+                                  <svg width="16" height="4" className="flex-shrink-0">
+                                    <line 
+                                      x1="0" 
+                                      y1="2" 
+                                      x2="16" 
+                                      y2="2" 
+                                      stroke="#ff9800" 
+                                      strokeWidth="2" 
+                                      strokeDasharray="4 4"
+                                    />
+                                  </svg>
+                                ) : (
+                              <div 
+                                className="w-4 h-1 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                            )}
+                            <span className="text-sm" style={{ color: entry.color }}>
+                              {entry.value}
+                            </span>
+                          </div>
                   ))}
-                </Bar>
-              </BarChart>
+                      </div>
+                    );
+                  }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -332,7 +406,7 @@ const Courses = () => {
                 ) : (
                   <button
                     onClick={() => handleEnroll(course)}
-                    className="flex-1 btn-primary text-sm"
+                    className="flex-1 btn-accent text-sm"
                   >
                     ✅ Đăng ký ngay
                   </button>
@@ -359,7 +433,7 @@ const Courses = () => {
           }}
         >
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-t-lg">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-t-lg">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4 flex-1">
                   <div className="text-5xl">{selectedCourse.thumbnail}</div>
@@ -390,7 +464,7 @@ const Courses = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' }}>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{selectedCourse.credits}</div>
+                  <div className="text-2xl font-bold text-primary-500 dark:text-primary-400">{selectedCourse.credits}</div>
                   <div className="text-xs font-semibold text-blue-700 dark:text-gray-400 mt-1">Tín chỉ</div>
                 </div>
                 <div className="text-center p-4 rounded-lg border-2 border-green-200 dark:border-green-800" style={{ background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)' }}>
@@ -481,7 +555,7 @@ const Courses = () => {
                     setSelectedCourse(null);
                     handleEnroll(availableCourses.find(c => c.id === selectedCourse.id));
                   }}
-                  className="btn-primary"
+                  className="btn-accent"
                 >
                   ✅ Đăng ký khóa học
                 </button>
@@ -537,7 +611,7 @@ const Courses = () => {
               </button>
               <button
                 onClick={confirmEnroll}
-                className="btn-primary"
+                  className="btn-accent"
               >
                 ✅ Xác nhận đăng ký
               </button>
