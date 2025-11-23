@@ -8,7 +8,11 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Search
+  Search,
+  Calendar,
+  BookOpen,
+  ShieldCheck,
+  Gauge
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { coursePerformanceData } from '../../../data/coursePerformanceData';
@@ -48,7 +52,6 @@ const STATUS_LEVELS = [
     Icon: AlertCircle
   }
 ];
-
 const COMPLETION_OPTIONS = [
   { value: 'all', label: 'Tất cả' },
   { value: '85-100', label: '85% - 100% (Xuất sắc)' },
@@ -56,7 +59,6 @@ const COMPLETION_OPTIONS = [
   { value: '50-70', label: '50% - 70% (Trung bình)' },
   { value: '0-50', label: '0% - 50% (Cần cải thiện)' }
 ];
-
 const calculateStatus = (proficiencyRate, strugglingRate, avgMastery) => {
   for (const level of STATUS_LEVELS) {
     if (
@@ -239,6 +241,31 @@ const CoursePerformanceTable = ({
   const labelClass = isDarkMode ? 'text-gray-300' : 'text-gray-700';
   const textClass = isDarkMode ? 'text-white' : 'text-gray-900';
 
+  const selectBase =
+    'border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+  const selectTone = isDarkMode
+    ? 'bg-gray-700 border-gray-600 text-white'
+    : 'bg-white border-gray-300 text-gray-900';
+  const iconBoxTone = isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-600';
+
+  const optionStyle = (value, selectedValue, isFuture = false) => ({
+    backgroundColor: value === selectedValue ? '#e8eaf6' : 'white',
+    color: isFuture ? '#dc2626' : '#111827'
+  });
+
+  const FilterSelect = ({ icon: Icon, children, className = '', ...rest }) => (
+    <div className="flex items-center gap-2 min-w-[190px]">
+      {Icon && (
+        <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${iconBoxTone}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+      )}
+      <select className={`${selectBase} ${selectTone} ${className}`} {...rest}>
+        {children}
+      </select>
+    </div>
+  );
+
   return (
     <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow`}>
       <div className="p-6 border-b border-gray-200 dark:border-gray-700 space-y-4">
@@ -257,65 +284,73 @@ const CoursePerformanceTable = ({
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
             />
           </div>
-          <select
+          <FilterSelect
+            icon={Calendar}
             value={filters.semester}
             onChange={(event) => handleFilterChange('semester', event.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
           >
             {semesterOptions.map((option) => (
-              <option key={option} value={option === 'Tất cả' ? 'all' : option}>
+              <option
+                key={option}
+                value={option === 'Tất cả' ? 'all' : option}
+                style={optionStyle(option === 'Tất cả' ? 'all' : option, filters.semester)}
+              >
                 {option}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <select
+          <FilterSelect
+            icon={BookOpen}
             value={filters.subject}
             onChange={(event) => handleFilterChange('subject', event.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
           >
             <option value="all">Môn</option>
             {COURSE_DEFINITIONS.map((course) => (
-              <option key={course.key} value={course.key}>
+              <option
+                key={course.key}
+                value={course.key}
+                style={optionStyle(course.key, filters.subject)}
+              >
                 {course.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select
+          <FilterSelect
+            icon={ShieldCheck}
             value={filters.status}
             onChange={(event) => handleFilterChange('status', event.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
           >
             <option value="all">Trạng thái</option>
             {['Tốt', 'Khá', 'Trung bình', 'Tệ'].map((status) => (
-              <option key={status} value={status}>
+              <option
+                key={status}
+                value={status}
+                style={optionStyle(status, filters.status)}
+              >
                 {status}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select
+          <FilterSelect
+            icon={Gauge}
             value={completionRange}
             onChange={(event) => onCompletionRangeChange?.(event.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
           >
             {COMPLETION_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option
+                key={option.value}
+                value={option.value}
+                style={optionStyle(option.value, completionRange)}
+              >
                 {option.label}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
       </div>
 

@@ -6,6 +6,9 @@ import ProgressOverview from './components/ProgressOverview';
 import NotificationPanel from './components/NotificationPanel';
 import PerformanceChart from './components/PerformanceChart';
 import IndustryAnalysis from './components/IndustryAnalysis';
+import CourseCompletionTrend from './components/CourseCompletionTrend';
+import StudentRatingTrend from './components/StudentRatingTrend';
+import SkillCompletionTrend from './components/SkillCompletionTrend';
 import { mockDashboardData } from '../../data/mockData';
 
 const Dashboard = () => {
@@ -90,6 +93,9 @@ const Dashboard = () => {
           onCompletionRangeChange={setCompletionRange}
           onFilterChange={handleIndustryFilterChange}
         />
+        <CourseCompletionTrend />
+        <StudentRatingTrend />
+        <SkillCompletionTrend />
       </div>
       
       {/* Chỉ số tổng quan nhanh (KPI Cards) */}
