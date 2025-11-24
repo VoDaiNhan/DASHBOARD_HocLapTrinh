@@ -11,6 +11,8 @@ import StudentRatingTrend from './components/StudentRatingTrend';
 import SkillCompletionTrend from './components/SkillCompletionTrend';
 import { mockDashboardData } from '../../data/mockData';
 
+const CONFIG_STORAGE_KEY = 'dashboardCardConfigs';
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +24,7 @@ const Dashboard = () => {
   });
   const [searchText, setSearchText] = useState('');
   const [completionRange, setCompletionRange] = useState('all');
+  const [cardConfigs, setCardConfigs] = useState([]);
 
   useEffect(() => {
     // Simulate API call
@@ -40,6 +43,17 @@ const Dashboard = () => {
 
     loadDashboardData();
   }, [filters]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
+    if (saved) {
+      try {
+        setCardConfigs(JSON.parse(saved));
+      } catch {
+        setCardConfigs([]);
+      }
+    }
+  }, []);
 
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({
@@ -92,10 +106,28 @@ const Dashboard = () => {
           onSearchChange={setSearchText}
           onCompletionRangeChange={setCompletionRange}
           onFilterChange={handleIndustryFilterChange}
+          showLectureCard={cardConfigs.find((c) => c.type === 'lectureEffectiveness' && c.enabled)}
+          lectureTitle={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.title}
+          lectureNote={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.description}
         />
-        <CourseCompletionTrend />
-        <StudentRatingTrend />
-        <SkillCompletionTrend />
+        {cardConfigs.find((c) => c.type === 'courseCompletion' && c.enabled) && (
+          <CourseCompletionTrend
+            title={cardConfigs.find((c) => c.type === 'courseCompletion')?.title}
+            description={cardConfigs.find((c) => c.type === 'courseCompletion')?.description}
+          />
+        )}
+        {cardConfigs.find((c) => c.type === 'studentRating' && c.enabled) && (
+          <StudentRatingTrend
+            title={cardConfigs.find((c) => c.type === 'studentRating')?.title}
+            description={cardConfigs.find((c) => c.type === 'studentRating')?.description}
+          />
+        )}
+        {cardConfigs.find((c) => c.type === 'skillTrend' && c.enabled) && (
+          <SkillCompletionTrend
+            title={cardConfigs.find((c) => c.type === 'skillTrend')?.title}
+            description={cardConfigs.find((c) => c.type === 'skillTrend')?.description}
+          />
+        )}
       </div>
       
       {/* Chỉ số tổng quan nhanh (KPI Cards) */}

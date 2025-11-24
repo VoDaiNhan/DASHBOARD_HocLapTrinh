@@ -24,15 +24,14 @@ const SKILL_MAP = {
   oop: ['Class & Object', 'Inheritance', 'Polymorphism', 'Exception', 'Collections']
 };
 
-// Mock completion % per year for each course + skill
 const COMPLETION_BY_SKILL = {
   intro: {
     'If / Else': { 2022: 72, 2023: 78, 2024: 82, 2025: 85 },
-    'Vòng lặp For/While': { 2022: 68, 2023: 74, 2024: 79, 2025: 83 },
-    'Hàm & Tham số': { 2022: 65, 2023: 71, 2024: 76, 2025: 81 },
-    'Mảng 1 chiều': { 2022: 60, 2023: 68, 2024: 74, 2025: 78 },
-    'Xử lý Chuỗi': { 2022: 58, 2023: 64, 2024: 70, 2025: 75 },
-    'Debug cơ bản': { 2022: 62, 2023: 69, 2024: 73, 2025: 77 }
+    'Vong lap For/While': { 2022: 68, 2023: 74, 2024: 79, 2025: 83 },
+    'Ham & Tham so': { 2022: 65, 2023: 71, 2024: 76, 2025: 81 },
+    'Mang 1 chieu': { 2022: 60, 2023: 68, 2024: 74, 2025: 78 },
+    'Xu ly Chuoi': { 2022: 58, 2023: 64, 2024: 70, 2025: 75 },
+    'Debug co ban': { 2022: 62, 2023: 69, 2024: 73, 2025: 77 }
   },
   tech: {
     'Con trỏ & Bộ nhớ động': { 2022: 55, 2023: 62, 2024: 70, 2025: 75 },
@@ -61,7 +60,7 @@ const COMPLETION_BY_SKILL = {
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
-const SkillCompletionTrend = () => {
+const SkillCompletionTrend = ({ title, description }) => {
   const [selectedCourse, setSelectedCourse] = useState(COURSE_OPTIONS[0].value);
   const [selectedSkill, setSelectedSkill] = useState(SKILL_MAP[COURSE_OPTIONS[0].value][0]);
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
@@ -88,9 +87,9 @@ const SkillCompletionTrend = () => {
     if (value === null || value === undefined) return null;
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
-        <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
+          <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
         <p className="text-sm text-gray-700">
-          Hoàn thành: <span className="font-semibold">{value}%</span>
+          Hoan thanh: <span className="font-semibold">{value}%</span>
         </p>
       </div>
     );
@@ -117,8 +116,8 @@ const SkillCompletionTrend = () => {
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Tập kỹ năng</h3>
-            <p className="text-sm text-gray-600">Mức độ hoàn thành kỹ năng theo 4 năm</p>
+            <h3 className="text-lg font-semibold text-gray-900">{title || 'Tập kỹ năng'}</h3>
+            <p className="text-sm text-gray-600">{description || 'Mức độ hoàn thành kỹ năng theo 4 năm'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">

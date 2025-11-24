@@ -16,10 +16,16 @@ export const studentInfo = {
 
 // Hàm tạo dữ liệu tiến độ dựa trên khóa học đã đăng ký
 // Mỗi khóa học sẽ có 1 đường riêng trên biểu đồ
-export const generateProgressData = (enrolledCourses) => {
+// Tiến độ được tính từ bài học đã hoàn thành (nếu có) hoặc từ bài tập (fallback)
+export const generateProgressData = (enrolledCourses, courseLessons = {}) => {
   if (!enrolledCourses || enrolledCourses.length === 0) {
     return [];
   }
+
+  // Lấy danh sách bài học đã hoàn thành từ sessionStorage
+  const savedCompletedLessons = typeof window !== 'undefined' 
+    ? JSON.parse(sessionStorage.getItem('completedLessons') || '[]')
+    : [];
 
   const weeklyTargets = [
     { week: "Tuần 1", target: 12.5 },
@@ -32,7 +38,38 @@ export const generateProgressData = (enrolledCourses) => {
     { week: "Tuần 8", target: 100 }
   ];
   
+  // Tính tiến độ thực tế cho từng khóa học
+  const courseProgressMap = {};
+  enrolledCourses.forEach((course) => {
+    let actualProgress = 0;
+    
+    // Ưu tiên tính từ bài học đã hoàn thành
+    const lessons = courseLessons[course.id] || [];
+    if (lessons.length > 0) {
+      const completedLessons = lessons.filter(l => savedCompletedLessons.includes(l.id));
+      actualProgress = Math.min(100, Math.round((completedLessons.length / lessons.length) * 100));
+    } else {
+      // Fallback: tính từ bài tập nếu không có bài học
+      const courseExs = courseExercises[course.id] || [];
+      const totalExercises = courseExs.length;
+      const completedExercises = courseExs.filter(ex => ex.completed).length;
+      actualProgress = totalExercises > 0 
+        ? Math.min(100, Math.round((completedExercises / totalExercises) * 100))
+        : 0;
+    }
+    
+    // Sử dụng tiến độ từ course.progress nếu có (được cập nhật từ trang bài học)
+    // Đây là nguồn dữ liệu chính xác nhất
+    if (course.progress !== undefined && course.progress !== null) {
+      actualProgress = course.progress;
+    }
+    
+    courseProgressMap[course.id] = actualProgress;
+  });
+
   // Tính tiến độ cho từng khóa học riêng biệt
+  // Hiển thị tiến độ thực tế từ bài học đã hoàn thành
+  // Bỏ logic tính tuần, chỉ hiển thị tiến độ thực tế
   return weeklyTargets.map((targetItem, weekIndex) => {
     const dataPoint = {
       week: targetItem.week,
@@ -41,17 +78,12 @@ export const generateProgressData = (enrolledCourses) => {
 
     // Tính tiến độ cho từng khóa học
     enrolledCourses.forEach((course) => {
-      const courseExs = courseExercises[course.id] || [];
-      const totalExercises = courseExs.length;
-      const completedExercises = courseExs.filter(ex => ex.completed).length;
-    
-      // Tính phần trăm hoàn thành thực tế
-      const actualProgress = totalExercises > 0 
-        ? Math.min(100, Math.round((completedExercises / totalExercises) * 100))
-        : 0;
+      const actualProgress = courseProgressMap[course.id] || 0;
       
-      // Phân bổ tiến độ theo tuần (giả định tiến độ tăng đều)
-      const weeklyProgress = Math.min(100, Math.round(((weekIndex + 1) / weeklyTargets.length) * actualProgress));
+      // Hiển thị tiến độ thực tế ở tất cả các tuần
+      // User học tới đâu thì tiến độ tới đó, không phân bổ theo tuần
+      // Hiển thị tiến độ thực tế ở tất cả các tuần từ tuần 1
+      let weeklyProgress = actualProgress;
     
       // Sử dụng tên khóa học làm key (loại bỏ ký tự đặc biệt để làm key hợp lệ)
       const courseKey = course.name.replace(/[^a-zA-Z0-9]/g, '_');
@@ -826,5 +858,841 @@ export const weeklyTargets = [
   { week: "Tuần 6", target: 75 },
   { week: "Tuần 7", target: 87.5 },
   { week: "Tuần 8", target: 100 }
+];
+
+// DT060: Gợi ý kết bạn dựa trên năng lực và sở thích
+export const friendSuggestions = [
+  {
+    id: 1,
+    name: "Trần Văn B",
+    mssv: "SV2023002",
+    avatar: "https://ui-avatars.com/api/?name=Tran+Van+B&background=667eea&color=fff&size=128",
+    matchingScore: 92,
+    commonCourses: ["Nhập môn Lập trình", "Kỹ thuật Lập trình"],
+    similarSkills: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"],
+    level: "Intermediate",
+    averageScore: 8.5,
+    interests: ["Web Development", "Algorithms"],
+    isFriend: false
+  },
+  {
+    id: 2,
+    name: "Lê Thị C",
+    mssv: "SV2023003",
+    avatar: "https://ui-avatars.com/api/?name=Le+Thi+C&background=f093fb&color=fff&size=128",
+    matchingScore: 88,
+    commonCourses: ["Cấu trúc Dữ liệu & Giải thuật", "Lập trình Hướng đối tượng"],
+    similarSkills: ["Thuật toán & Cấu trúc dữ liệu", "Code quality"],
+    level: "Advanced",
+    averageScore: 9.0,
+    interests: ["Data Structures", "OOP"],
+    isFriend: false
+  },
+  {
+    id: 3,
+    name: "Phạm Văn D",
+    mssv: "SV2023004",
+    avatar: "https://ui-avatars.com/api/?name=Pham+Van+D&background=4facfe&color=fff&size=128",
+    matchingScore: 85,
+    commonCourses: ["Nhập môn Lập trình", "Lập trình Hướng đối tượng"],
+    similarSkills: ["Kỹ năng lập trình cơ bản", "Lập trình hướng đối tượng"],
+    level: "Intermediate",
+    averageScore: 8.2,
+    interests: ["OOP", "Design Patterns"],
+    isFriend: false
+  },
+  {
+    id: 4,
+    name: "Hoàng Thị E",
+    mssv: "SV2023005",
+    avatar: "https://ui-avatars.com/api/?name=Hoang+Thi+E&background=fa709a&color=fff&size=128",
+    matchingScore: 90,
+    commonCourses: ["Kỹ thuật Lập trình", "Cấu trúc Dữ liệu & Giải thuật"],
+    similarSkills: ["Giải quyết vấn đề", "Code quality"],
+    level: "Advanced",
+    averageScore: 8.8,
+    interests: ["Algorithms", "Problem Solving"],
+    isFriend: false
+  },
+  {
+    id: 5,
+    name: "Nguyễn Văn F",
+    mssv: "SV2023006",
+    avatar: "https://ui-avatars.com/api/?name=Nguyen+Van+F&background=30cfd0&color=fff&size=128",
+    matchingScore: 87,
+    commonCourses: ["Nhập môn Lập trình", "Kỹ thuật Lập trình", "Lập trình Hướng đối tượng"],
+    similarSkills: ["Kỹ năng lập trình cơ bản", "Giải quyết vấn đề"],
+    level: "Intermediate",
+    averageScore: 8.3,
+    interests: ["Web Development", "OOP"],
+    isFriend: false
+  }
+];
+
+// DT056: Nhóm học tập - Mỗi khóa học có 2 nhóm
+export const studyGroups = [
+  // Khóa học 1: Nhập môn Lập trình - 2 nhóm
+  {
+    id: 1,
+    name: "Nhóm Lập trình Cơ bản",
+    courseId: 1,
+    courseName: "Nhập môn Lập trình",
+    members: [
+      { id: 1, name: "Nguyễn Văn An", mssv: "SV2023001", role: "Leader" },
+      { id: 2, name: "Trần Văn B", mssv: "SV2023002", role: "Member" },
+      { id: 3, name: "Lê Thị C", mssv: "SV2023003", role: "Member" }
+    ],
+    progress: 75,
+    assignments: { completed: 3, total: 5 },
+    nextMeeting: "2025-11-25T14:00:00",
+    status: "active"
+  },
+  {
+    id: 2,
+    name: "Nhóm Code Master",
+    courseId: 1,
+    courseName: "Nhập môn Lập trình",
+    members: [
+      { id: 4, name: "Phạm Văn D", mssv: "SV2023004", role: "Leader" },
+      { id: 5, name: "Hoàng Thị E", mssv: "SV2023005", role: "Member" },
+      { id: 6, name: "Vũ Văn F", mssv: "SV2023006", role: "Member" }
+    ],
+    progress: 60,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-26T10:00:00",
+    status: "active"
+  },
+  // Khóa học 2: Kỹ thuật Lập trình - 2 nhóm
+  {
+    id: 3,
+    name: "Nhóm Kỹ thuật Nâng cao",
+    courseId: 2,
+    courseName: "Kỹ thuật Lập trình",
+    members: [
+      { id: 1, name: "Nguyễn Văn An", mssv: "SV2023001", role: "Member" },
+      { id: 7, name: "Đỗ Thị G", mssv: "SV2023007", role: "Leader" },
+      { id: 8, name: "Bùi Văn H", mssv: "SV2023008", role: "Member" }
+    ],
+    progress: 50,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-27T14:00:00",
+    status: "active"
+  },
+  {
+    id: 4,
+    name: "Nhóm Tech Pro",
+    courseId: 2,
+    courseName: "Kỹ thuật Lập trình",
+    members: [
+      { id: 2, name: "Trần Văn B", mssv: "SV2023002", role: "Leader" },
+      { id: 9, name: "Lý Thị I", mssv: "SV2023009", role: "Member" },
+      { id: 10, name: "Ngô Văn K", mssv: "SV2023010", role: "Member" }
+    ],
+    progress: 40,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-28T16:00:00",
+    status: "active"
+  },
+  // Khóa học 3: Cấu trúc Dữ liệu & Giải thuật - 2 nhóm
+  {
+    id: 5,
+    name: "Nhóm Algorithms",
+    courseId: 3,
+    courseName: "Cấu trúc Dữ liệu & Giải thuật",
+    members: [
+      { id: 1, name: "Nguyễn Văn An", mssv: "SV2023001", role: "Member" },
+      { id: 2, name: "Trần Văn B", mssv: "SV2023002", role: "Member" },
+      { id: 5, name: "Hoàng Thị E", mssv: "SV2023005", role: "Leader" }
+    ],
+    progress: 50,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-27T09:00:00",
+    status: "active"
+  },
+  {
+    id: 6,
+    name: "Nhóm Data Structure",
+    courseId: 3,
+    courseName: "Cấu trúc Dữ liệu & Giải thuật",
+    members: [
+      { id: 3, name: "Lê Thị C", mssv: "SV2023003", role: "Leader" },
+      { id: 11, name: "Phan Văn L", mssv: "SV2023011", role: "Member" },
+      { id: 12, name: "Trương Thị M", mssv: "SV2023012", role: "Member" }
+    ],
+    progress: 45,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-29T11:00:00",
+    status: "active"
+  },
+  // Khóa học 4: Lập trình Hướng đối tượng - 2 nhóm
+  {
+    id: 7,
+    name: "Nhóm OOP Study",
+    courseId: 4,
+    courseName: "Lập trình Hướng đối tượng",
+    members: [
+      { id: 1, name: "Nguyễn Văn An", mssv: "SV2023001", role: "Member" },
+      { id: 4, name: "Phạm Văn D", mssv: "SV2023004", role: "Leader" },
+      { id: 5, name: "Hoàng Thị E", mssv: "SV2023005", role: "Member" }
+    ],
+    progress: 60,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-26T16:00:00",
+    status: "active"
+  },
+  {
+    id: 8,
+    name: "Nhóm Object Master",
+    courseId: 4,
+    courseName: "Lập trình Hướng đối tượng",
+    members: [
+      { id: 6, name: "Vũ Văn F", mssv: "SV2023006", role: "Leader" },
+      { id: 13, name: "Đinh Văn N", mssv: "SV2023013", role: "Member" },
+      { id: 14, name: "Hoàng Thị O", mssv: "SV2023014", role: "Member" }
+    ],
+    progress: 55,
+    assignments: { completed: 2, total: 5 },
+    nextMeeting: "2025-11-30T13:00:00",
+    status: "active"
+  }
+];
+
+// Bài tập nhóm (Group Assignments)
+export const groupAssignments = {
+  1: [ // Nhóm Lập trình Cơ bản
+    {
+      id: 1001,
+      groupId: 1,
+      groupName: "Nhóm Lập trình Cơ bản",
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Dự án nhóm: Xây dựng ứng dụng Quản lý Thư viện",
+      description: "Làm việc nhóm để xây dựng ứng dụng quản lý thư viện sử dụng các kiến thức đã học về biến, hàm, vòng lặp, cấu trúc điều kiện.",
+      deadline: "2025-12-15T23:59:59",
+      status: "in-progress", // not-started, in-progress, submitted, graded
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "2 tuần",
+      skills: ["Lập trình cơ bản", "Làm việc nhóm", "Quản lý dự án"],
+      requirements: [
+        "Quản lý sách (thêm, sửa, xóa, tìm kiếm)",
+        "Quản lý độc giả",
+        "Quản lý mượn/trả sách",
+        "Báo cáo thống kê"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Frontend", progress: 60 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "Backend", progress: 50 },
+        { mssv: "SV2023003", name: "Lê Thị C", contribution: "Database", progress: 40 }
+      ]
+    },
+    {
+      id: 1002,
+      groupId: 1,
+      groupName: "Nhóm Lập trình Cơ bản",
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập nhóm: Tạo game Đoán số",
+      description: "Tạo game đoán số với các tính năng: chọn độ khó, đếm số lần đoán, hiển thị điểm.",
+      deadline: "2025-12-01T23:59:59",
+      status: "submitted",
+      submittedAt: "2025-11-20T14:30:00",
+      score: 85,
+      maxScore: 100,
+      level: "Easy",
+      estimatedTime: "1 tuần",
+      skills: ["Lập trình cơ bản", "Game logic"],
+      requirements: [
+        "Random số từ 1-100",
+        "Cho phép người chơi đoán",
+        "Hiển thị gợi ý (lớn hơn/nhỏ hơn)",
+        "Đếm số lần đoán"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Game logic", progress: 100 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "UI", progress: 100 },
+        { mssv: "SV2023003", name: "Lê Thị C", contribution: "Testing", progress: 100 }
+      ]
+    },
+    {
+      id: 1003,
+      groupId: 1,
+      groupName: "Nhóm Lập trình Cơ bản",
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập nhóm: Xây dựng hệ thống Quản lý Sinh viên",
+      description: "Xây dựng hệ thống quản lý thông tin sinh viên với các chức năng CRUD cơ bản.",
+      deadline: "2025-12-20T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "3 tuần",
+      skills: ["Lập trình cơ bản", "Xử lý dữ liệu", "File I/O"],
+      requirements: [
+        "Thêm/sửa/xóa sinh viên",
+        "Tìm kiếm sinh viên",
+        "Lưu dữ liệu vào file",
+        "Thống kê số lượng sinh viên"
+      ],
+      members: []
+    },
+    {
+      id: 1004,
+      groupId: 1,
+      groupName: "Nhóm Lập trình Cơ bản",
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập nhóm: Xây dựng Máy tính đơn giản",
+      description: "Tạo ứng dụng máy tính đơn giản với các phép toán cơ bản: cộng, trừ, nhân, chia.",
+      deadline: "2025-12-08T23:59:59",
+      status: "in-progress",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Easy",
+      estimatedTime: "1 tuần",
+      skills: ["Lập trình cơ bản", "Xử lý input", "Phép toán"],
+      requirements: [
+        "Nhập 2 số từ người dùng",
+        "Chọn phép toán (+, -, *, /)",
+        "Hiển thị kết quả",
+        "Xử lý lỗi chia cho 0"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Logic tính toán", progress: 70 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "UI", progress: 60 }
+      ]
+    },
+    {
+      id: 1005,
+      groupId: 1,
+      groupName: "Nhóm Lập trình Cơ bản",
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài tập nhóm: Xây dựng Chương trình Quản lý Danh bạ",
+      description: "Tạo chương trình quản lý danh bạ điện thoại với các chức năng thêm, sửa, xóa, tìm kiếm liên hệ.",
+      deadline: "2025-12-25T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "2 tuần",
+      skills: ["Lập trình cơ bản", "Quản lý dữ liệu", "Tìm kiếm"],
+      requirements: [
+        "Thêm liên hệ mới",
+        "Sửa thông tin liên hệ",
+        "Xóa liên hệ",
+        "Tìm kiếm theo tên hoặc số điện thoại",
+        "Hiển thị danh sách tất cả liên hệ"
+      ],
+      members: []
+    }
+  ],
+  2: [ // Nhóm OOP Study
+    {
+      id: 2001,
+      groupId: 2,
+      groupName: "Nhóm OOP Study",
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Dự án nhóm: Hệ thống Quản lý Ngân hàng",
+      description: "Xây dựng hệ thống quản lý ngân hàng sử dụng các nguyên lý OOP: Class, Inheritance, Polymorphism, Encapsulation.",
+      deadline: "2025-12-20T23:59:59",
+      status: "in-progress",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "3 tuần",
+      skills: ["OOP", "Inheritance", "Polymorphism", "Design Patterns"],
+      requirements: [
+        "Class Account, Customer, Transaction",
+        "Inheritance cho các loại tài khoản",
+        "Polymorphism cho các loại giao dịch",
+        "Encapsulation cho dữ liệu nhạy cảm"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Account classes", progress: 50 },
+        { mssv: "SV2023004", name: "Phạm Văn D", contribution: "Transaction system", progress: 40 },
+        { mssv: "SV2023005", name: "Hoàng Thị E", contribution: "UI/Testing", progress: 30 }
+      ]
+    },
+    {
+      id: 2002,
+      groupId: 2,
+      groupName: "Nhóm OOP Study",
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập nhóm: Xây dựng hệ thống Quản lý Thú cưng",
+      description: "Tạo hệ thống quản lý thú cưng với các class Animal, Dog, Cat sử dụng Inheritance.",
+      deadline: "2025-12-05T23:59:59",
+      status: "submitted",
+      submittedAt: "2025-11-18T10:00:00",
+      score: 90,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "1 tuần",
+      skills: ["OOP", "Inheritance"],
+      requirements: [
+        "Class Animal (base class)",
+        "Class Dog, Cat kế thừa Animal",
+        "Override methods",
+        "Polymorphism demo"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Base class", progress: 100 },
+        { mssv: "SV2023004", name: "Phạm Văn D", contribution: "Inheritance", progress: 100 },
+        { mssv: "SV2023005", name: "Hoàng Thị E", contribution: "Testing", progress: 100 }
+      ]
+    },
+    {
+      id: 2003,
+      groupId: 2,
+      groupName: "Nhóm OOP Study",
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập nhóm: Xây dựng hệ thống Quản lý Nhân viên",
+      description: "Tạo hệ thống quản lý nhân viên với các class Employee, Manager, Developer sử dụng Inheritance và Polymorphism.",
+      deadline: "2025-12-12T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "2 tuần",
+      skills: ["OOP", "Inheritance", "Polymorphism"],
+      requirements: [
+        "Class Employee (base class)",
+        "Class Manager, Developer kế thừa Employee",
+        "Override method calculateSalary()",
+        "Polymorphism trong danh sách nhân viên"
+      ],
+      members: []
+    },
+    {
+      id: 2004,
+      groupId: 2,
+      groupName: "Nhóm OOP Study",
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập nhóm: Xây dựng hệ thống Quản lý Thư viện với OOP",
+      description: "Xây dựng hệ thống quản lý thư viện sử dụng các nguyên lý OOP: Class Book, Member, Loan với Encapsulation.",
+      deadline: "2025-12-18T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "2 tuần",
+      skills: ["OOP", "Encapsulation", "Class Design"],
+      requirements: [
+        "Class Book với private fields",
+        "Class Member với Encapsulation",
+        "Class Loan quản lý mượn/trả",
+        "Getter/Setter methods"
+      ],
+      members: []
+    },
+    {
+      id: 2005,
+      groupId: 2,
+      groupName: "Nhóm OOP Study",
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài tập nhóm: Xây dựng Game với OOP",
+      description: "Tạo game đơn giản sử dụng các nguyên lý OOP: Class Player, Enemy, Weapon với Inheritance và Polymorphism.",
+      deadline: "2025-12-28T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "3 tuần",
+      skills: ["OOP", "Inheritance", "Polymorphism", "Game Design"],
+      requirements: [
+        "Class Player, Enemy (base classes)",
+        "Inheritance cho các loại Enemy",
+        "Polymorphism cho các loại Weapon",
+        "Game loop với OOP"
+      ],
+      members: []
+    }
+  ],
+  3: [ // Nhóm Algorithms
+    {
+      id: 3001,
+      groupId: 3,
+      groupName: "Nhóm Algorithms",
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Dự án nhóm: Implement các thuật toán Sắp xếp",
+      description: "Nhóm sẽ implement và so sánh hiệu suất của các thuật toán sắp xếp: Bubble Sort, Quick Sort, Merge Sort.",
+      deadline: "2025-12-10T23:59:59",
+      status: "in-progress",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "2 tuần",
+      skills: ["Algorithms", "Sorting", "Complexity Analysis"],
+      requirements: [
+        "Implement Bubble Sort",
+        "Implement Quick Sort",
+        "Implement Merge Sort",
+        "So sánh thời gian thực thi",
+        "Viết báo cáo phân tích"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Quick Sort", progress: 60 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "Merge Sort", progress: 50 },
+        { mssv: "SV2023005", name: "Hoàng Thị E", contribution: "Bubble Sort & Report", progress: 70 }
+      ]
+    },
+    {
+      id: 3002,
+      groupId: 3,
+      groupName: "Nhóm Algorithms",
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài tập nhóm: Implement các thuật toán Tìm kiếm",
+      description: "Nhóm sẽ implement và so sánh hiệu suất của các thuật toán tìm kiếm: Linear Search, Binary Search.",
+      deadline: "2025-12-15T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "1.5 tuần",
+      skills: ["Algorithms", "Searching", "Complexity Analysis"],
+      requirements: [
+        "Implement Linear Search",
+        "Implement Binary Search",
+        "So sánh thời gian thực thi",
+        "Viết báo cáo phân tích"
+      ],
+      members: []
+    },
+    {
+      id: 3003,
+      groupId: 3,
+      groupName: "Nhóm Algorithms",
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài tập nhóm: Xây dựng cấu trúc dữ liệu Stack và Queue",
+      description: "Implement cấu trúc dữ liệu Stack và Queue từ đầu, sau đó ứng dụng giải quyết các bài toán thực tế.",
+      deadline: "2025-12-05T23:59:59",
+      status: "submitted",
+      submittedAt: "2025-11-22T16:00:00",
+      score: 88,
+      maxScore: 100,
+      level: "Medium",
+      estimatedTime: "2 tuần",
+      skills: ["Data Structures", "Stack", "Queue", "Problem Solving"],
+      requirements: [
+        "Implement Stack với array",
+        "Implement Queue với array",
+        "Ứng dụng Stack: Kiểm tra dấu ngoặc",
+        "Ứng dụng Queue: Mô phỏng hàng đợi"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Stack implementation", progress: 100 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "Queue implementation", progress: 100 },
+        { mssv: "SV2023005", name: "Hoàng Thị E", contribution: "Applications & Testing", progress: 100 }
+      ]
+    },
+    {
+      id: 3004,
+      groupId: 3,
+      groupName: "Nhóm Algorithms",
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài tập nhóm: Implement Binary Tree và các phương pháp duyệt",
+      description: "Xây dựng cấu trúc dữ liệu Binary Tree và implement các phương pháp duyệt: Preorder, Inorder, Postorder.",
+      deadline: "2025-12-18T23:59:59",
+      status: "in-progress",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "2.5 tuần",
+      skills: ["Data Structures", "Trees", "Recursion", "Traversal"],
+      requirements: [
+        "Implement Binary Tree structure",
+        "Preorder traversal",
+        "Inorder traversal",
+        "Postorder traversal",
+        "Tìm kiếm trong tree"
+      ],
+      members: [
+        { mssv: "SV2023001", name: "Nguyễn Văn An", contribution: "Tree structure", progress: 50 },
+        { mssv: "SV2023002", name: "Trần Văn B", contribution: "Traversal methods", progress: 40 },
+        { mssv: "SV2023005", name: "Hoàng Thị E", contribution: "Search algorithm", progress: 30 }
+      ]
+    },
+    {
+      id: 3005,
+      groupId: 3,
+      groupName: "Nhóm Algorithms",
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài tập nhóm: Implement Graph và các thuật toán BFS, DFS",
+      description: "Xây dựng cấu trúc dữ liệu Graph và implement các thuật toán duyệt: Breadth-First Search (BFS) và Depth-First Search (DFS).",
+      deadline: "2025-12-30T23:59:59",
+      status: "not-started",
+      submittedAt: null,
+      score: null,
+      maxScore: 100,
+      level: "Hard",
+      estimatedTime: "3 tuần",
+      skills: ["Data Structures", "Graph", "BFS", "DFS", "Algorithms"],
+      requirements: [
+        "Implement Graph structure",
+        "Breadth-First Search (BFS)",
+        "Depth-First Search (DFS)",
+        "Tìm đường đi ngắn nhất",
+        "Viết báo cáo so sánh BFS vs DFS"
+      ],
+      members: []
+    }
+  ]
+};
+
+// Bài học theo khóa học (Course Lessons)
+export const courseLessons = {
+  1: [ // Nhập môn Lập trình
+    {
+      id: 1001,
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài 1: Giới thiệu về Lập trình",
+      description: "Tìm hiểu khái niệm cơ bản về lập trình, ngôn ngữ lập trình, và môi trường phát triển.",
+      duration: 45, // phút
+      type: "video", // video, reading, practice
+      status: "not-started", // not-started, in-progress, completed
+      completedAt: null,
+      videoUrl: null,
+      content: "Lập trình là quá trình viết mã để máy tính thực hiện các tác vụ cụ thể...",
+      order: 1
+    },
+    {
+      id: 1002,
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài 2: Biến và Kiểu dữ liệu",
+      description: "Học về biến, các kiểu dữ liệu cơ bản: số nguyên, số thực, chuỗi, boolean.",
+      duration: 60,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Biến là một vùng nhớ được đặt tên để lưu trữ dữ liệu...",
+      order: 2
+    },
+    {
+      id: 1003,
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài 3: Cấu trúc điều kiện (If-else)",
+      description: "Sử dụng cấu trúc if-else để điều khiển luồng chương trình.",
+      duration: 50,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Cấu trúc điều kiện cho phép chương trình thực hiện các hành động khác nhau...",
+      order: 3
+    },
+    {
+      id: 1004,
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài 4: Vòng lặp (For, While)",
+      description: "Sử dụng vòng lặp để lặp lại các thao tác trong chương trình.",
+      duration: 55,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Vòng lặp cho phép thực hiện một đoạn code nhiều lần...",
+      order: 4
+    },
+    {
+      id: 1005,
+      courseId: 1,
+      courseName: "Nhập môn Lập trình",
+      title: "Bài 5: Hàm và Thủ tục",
+      description: "Tạo và sử dụng hàm để tổ chức code tốt hơn.",
+      duration: 65,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Hàm là một khối code được đặt tên để thực hiện một tác vụ cụ thể...",
+      order: 5
+    }
+  ],
+  2: [ // Kỹ thuật Lập trình
+    {
+      id: 2001,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài 1: Xử lý Mảng một chiều",
+      description: "Làm việc với mảng: khai báo, truy cập phần tử, duyệt mảng.",
+      duration: 60,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Mảng là một tập hợp các phần tử cùng kiểu dữ liệu...",
+      order: 1
+    },
+    {
+      id: 2002,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài 2: Xử lý Mảng hai chiều",
+      description: "Làm việc với ma trận: khai báo, truy cập, xử lý ma trận.",
+      duration: 70,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Ma trận là mảng hai chiều, được sử dụng để biểu diễn dữ liệu dạng bảng...",
+      order: 2
+    },
+    {
+      id: 2003,
+      courseId: 2,
+      courseName: "Kỹ thuật Lập trình",
+      title: "Bài 3: Xử lý Chuỗi",
+      description: "Các thao tác với chuỗi: cắt, nối, tìm kiếm, thay thế.",
+      duration: 55,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Chuỗi là một dãy các ký tự được đặt trong dấu ngoặc kép...",
+      order: 3
+    }
+  ],
+  3: [ // Cấu trúc Dữ liệu & Giải thuật
+    {
+      id: 3001,
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài 1: Array và Linked List",
+      description: "Tìm hiểu về cấu trúc dữ liệu Array và Linked List, so sánh ưu nhược điểm.",
+      duration: 80,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Array và Linked List là hai cấu trúc dữ liệu cơ bản...",
+      order: 1
+    },
+    {
+      id: 3002,
+      courseId: 3,
+      courseName: "Cấu trúc Dữ liệu & Giải thuật",
+      title: "Bài 2: Stack và Queue",
+      description: "Cấu trúc dữ liệu Stack (LIFO) và Queue (FIFO), ứng dụng thực tế.",
+      duration: 75,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Stack là cấu trúc dữ liệu LIFO (Last In First Out)...",
+      order: 2
+    }
+  ],
+  4: [ // Lập trình Hướng đối tượng
+    {
+      id: 4001,
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài 1: Class và Object",
+      description: "Khái niệm Class và Object, cách tạo và sử dụng trong lập trình OOP.",
+      duration: 60,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Class là một blueprint để tạo ra các object...",
+      order: 1
+    },
+    {
+      id: 4002,
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài 2: Encapsulation",
+      description: "Nguyên lý đóng gói dữ liệu với access modifiers: public, private, protected.",
+      duration: 55,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Encapsulation là việc ẩn chi tiết triển khai và chỉ expose những gì cần thiết...",
+      order: 2
+    },
+    {
+      id: 4003,
+      courseId: 4,
+      courseName: "Lập trình Hướng đối tượng",
+      title: "Bài 3: Inheritance",
+      description: "Kế thừa trong OOP: cách tạo class con từ class cha.",
+      duration: 65,
+      type: "video",
+      status: "not-started",
+      completedAt: null,
+      videoUrl: null,
+      content: "Inheritance cho phép class con kế thừa các thuộc tính và phương thức từ class cha...",
+      order: 3
+    }
+  ]
+};
+
+// DT037: Cảnh báo đạo văn
+export const plagiarismWarnings = [
+  {
+    id: 1,
+    assignmentName: "Bài tập 12 - React Components",
+    submittedAt: "2025-10-25T14:30:00",
+    similarityScore: 15,
+    status: "safe", // safe, warning, high-risk
+    matchedSources: [
+      { source: "SV2023002 - Trần Văn B", similarity: 12 },
+      { source: "GitHub Repository", similarity: 3 }
+    ],
+    message: "Mức độ tương đồng thấp, an toàn"
+  },
+  {
+    id: 2,
+    assignmentName: "Bài tập 11 - JavaScript Advanced",
+    submittedAt: "2025-10-20T16:45:00",
+    similarityScore: 45,
+    status: "warning",
+    matchedSources: [
+      { source: "SV2023003 - Lê Thị C", similarity: 35 },
+      { source: "Stack Overflow", similarity: 10 }
+    ],
+    message: "Cảnh báo: Mức độ tương đồng trung bình. Vui lòng đảm bảo code là của bạn."
+  },
+  {
+    id: 3,
+    assignmentName: "Bài tập 10 - DOM Manipulation",
+    submittedAt: "2025-10-15T10:20:00",
+    similarityScore: 78,
+    status: "high-risk",
+    matchedSources: [
+      { source: "SV2023004 - Phạm Văn D", similarity: 65 },
+      { source: "GitHub Repository", similarity: 13 }
+    ],
+    message: "⚠️ Nguy cơ cao: Mức độ tương đồng rất cao. Cần kiểm tra lại."
+  }
 ];
 

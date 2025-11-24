@@ -17,7 +17,6 @@ const COURSE_OPTIONS = [
   { value: 'oop', label: 'Lập trình HĐT' }
 ];
 
-// Mock completion rates by year per course (0-100%)
 const COMPLETION_BY_YEAR = {
   intro: { 2019: 58, 2020: 62, 2021: 65, 2022: 45, 2023: 75, 2024: 30 },
   tech: { 2019: 55, 2020: 60, 2021: 61, 2022: 52, 2023: 68, 2024: 49 },
@@ -28,7 +27,7 @@ const COMPLETION_BY_YEAR = {
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
-const CourseCompletionTrend = () => {
+const CourseCompletionTrend = ({ title, description }) => {
   const [selectedCourse, setSelectedCourse] = useState(COURSE_OPTIONS[0].value);
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2019));
 
@@ -53,7 +52,7 @@ const CourseCompletionTrend = () => {
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
           <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
           <p className="text-sm text-gray-700">
-            Tỷ lệ hoàn thành: <span className="font-semibold">{value}%</span>
+            Ty le hoan thanh: <span className="font-semibold">{value}%</span>
           </p>
         </div>
       );
@@ -69,8 +68,12 @@ const CourseCompletionTrend = () => {
             <BookOpenCheck className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Tỷ lệ hoàn thành môn học</h3>
-            <p className="text-sm text-gray-600">Chọn môn và mốc năm (4 năm liên tiếp)</p>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {title || 'Tỷ lệ hoàn thành môn học'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {description || 'Chọn môn và mốc năm (4 năm liên tiếp)'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -123,7 +126,7 @@ const CourseCompletionTrend = () => {
             <Line
               type="monotone"
               dataKey="completion"
-              name="Tỷ lệ hoàn thành"
+              name="Ty le hoan thanh"
               stroke="#3f51b5"
               strokeWidth={3}
               dot={{ r: 5, strokeWidth: 2, fill: '#3f51b5', stroke: '#e0e7ff' }}

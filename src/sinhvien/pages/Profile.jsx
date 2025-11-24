@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { softSkills } from '../data/data';
 
 const Profile = () => {
   const [showReportPreview, setShowReportPreview] = useState(false);
@@ -308,6 +310,93 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* DT062: Dashboard kỹ năng mềm với Radar Chart */}
+      <div className="card">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">📊 Dashboard Kỹ năng Mềm</h2>
+          <div className="w-full h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={[
+                { 
+                  skill: 'Giao tiếp', 
+                  value: softSkills.communication * 20, 
+                  fullMark: 100 
+                },
+                { 
+                  skill: 'Làm việc nhóm', 
+                  value: softSkills.teamwork * 20, 
+                  fullMark: 100 
+                },
+                { 
+                  skill: 'Quản lý thời gian', 
+                  value: softSkills.timeManagement * 20, 
+                  fullMark: 100 
+                },
+                { 
+                  skill: 'Giải quyết vấn đề', 
+                  value: softSkills.problemSolving * 20, 
+                  fullMark: 100 
+                },
+                { 
+                  skill: 'Sáng tạo', 
+                  value: softSkills.creativity * 20, 
+                  fullMark: 100 
+                },
+                { 
+                  skill: 'Lãnh đạo', 
+                  value: softSkills.leadership * 20, 
+                  fullMark: 100 
+                }
+              ]}>
+                <PolarGrid stroke="#e5e7eb" />
+                <PolarAngleAxis 
+                  dataKey="skill" 
+                  tick={{ fill: '#4b5563', fontSize: 12, fontWeight: 600 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                />
+                <Radar
+                  name="Kỹ năng Mềm"
+                  dataKey="value"
+                  stroke="#3f51b5"
+                  fill="#3f51b5"
+                  fillOpacity={0.6}
+                  strokeWidth={2}
+                />
+                <Legend />
+                <Tooltip 
+                  formatter={(value) => [`${value}%`, 'Điểm số']}
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid #3f51b5',
+                    borderRadius: '8px',
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(softSkills).map(([skill, score]) => {
+              const skillLabels = {
+                communication: 'Giao tiếp',
+                teamwork: 'Làm việc nhóm',
+                timeManagement: 'Quản lý thời gian',
+                problemSolving: 'Giải quyết vấn đề',
+                creativity: 'Sáng tạo',
+                leadership: 'Lãnh đạo'
+              };
+              return (
+                <div key={skill} className="bg-gray-50 rounded-lg p-3 text-center">
+                  <div className="text-sm font-medium text-gray-700 mb-1">{skillLabels[skill]}</div>
+                  <div className="text-lg font-bold text-primary-500">{score.toFixed(1)}/5.0</div>
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
       {/* Report Preview Modal */}
       {showReportPreview && (
         <div 
@@ -375,13 +464,14 @@ const Profile = () => {
               </div>
 
               <div>
-                <h4 className="font-bold text-gray-900 mb-3">Thành tích đã đạt</h4>
+                <h4 className="font-bold text-gray-900 mb-3">Thống kê học tập</h4>
                 <div className="flex flex-wrap gap-2">
-                  {achievements.filter(a => a.earned).map(achievement => (
-                    <span key={achievement.id} className="bg-accent-50 border border-accent-300 px-3 py-1 rounded-full text-sm text-gray-800 font-semibold">
-                      {achievement.icon} {achievement.title}
+                  <span className="bg-accent-50 border border-accent-300 px-3 py-1 rounded-full text-sm text-gray-800 font-semibold">
+                    📝 {completedAssignments} bài tập hoàn thành
+                  </span>
+                  <span className="bg-primary-50 border border-primary-300 px-3 py-1 rounded-full text-sm text-gray-800 font-semibold">
+                    🎓 {enrolledCourses.length} khóa học
                     </span>
-                  ))}
                 </div>
               </div>
 

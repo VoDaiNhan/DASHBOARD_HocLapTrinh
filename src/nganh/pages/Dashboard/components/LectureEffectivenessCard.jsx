@@ -12,7 +12,8 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { coursePerformanceData } from '../../../data/coursePerformanceData';
 import { CLASS_OPTIONS, COURSE_DEFINITIONS } from './courseConstants';
 
-const LectureEffectivenessCard = () => {
+// Thẻ "Độ phù hợp bài giảng"
+const LectureEffectivenessCard = ({ title, note }) => {
   const { isDarkMode } = useTheme();
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedCourseKey, setSelectedCourseKey] = useState(COURSE_DEFINITIONS[0].key);
@@ -98,10 +99,13 @@ const LectureEffectivenessCard = () => {
               Phân tích hiệu quả bài giảng
             </p>
             <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Độ phù hợp giữa bài giảng và năng lực sinh viên
+              {title || 'Độ phù hợp bài giảng'}
             </h3>
             <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {classLabel} · {courseDefinition.name}
+              {note || 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.'}
+            </p>
+            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {classLabel} ở {courseDefinition.name}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -173,7 +177,7 @@ const LectureEffectivenessCard = () => {
         </div>
       </div>
 
-  <div className="h-80">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 40, left: 10, bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#d1d5db'} />

@@ -299,7 +299,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               onClick={onClose}
             >
               <Settings className="mr-3 h-5 w-5" />
-              {'C\u1EA5u h\u00ECnh Ng\u00E0nh'}
+              Cấu hình Ngành
             </Link>
             <button
               className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${

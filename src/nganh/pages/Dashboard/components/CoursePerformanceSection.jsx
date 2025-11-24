@@ -8,7 +8,10 @@ const CoursePerformanceSection = ({
   completionRange,
   onSearchChange,
   onCompletionRangeChange,
-  onFilterChange
+  onFilterChange,
+  showLectureCard = true,
+  lectureTitle,
+  lectureNote
 }) => {
   const { isDarkMode } = useTheme();
 
@@ -27,8 +30,7 @@ const CoursePerformanceSection = ({
         />
       </div>
 
-      <LectureEffectivenessCard />
-
+      {showLectureCard && <LectureEffectivenessCard title={lectureTitle} note={lectureNote} />}
     </div>
   );
 };

@@ -20,7 +20,6 @@ const LEVELS = [
   { key: 'yk', label: 'Yếu / Kém', color: '#eb4d4b' }
 ];
 
-// Mock phân bố xếp loại theo năm (tổng 100%)
 const RATING_DISTRIBUTION = {
   2022: { xs: 8, g: 15, kg: 20, k: 22, tbk: 18, tb: 12, yk: 5 },
   2023: { xs: 10, g: 18, kg: 21, k: 20, tbk: 16, tb: 10, yk: 5 },
@@ -31,7 +30,7 @@ const RATING_DISTRIBUTION = {
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
-const StudentRatingTrend = () => {
+const StudentRatingTrend = ({ title, description }) => {
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
 
   const chartData = useMemo(() => {
@@ -46,13 +45,10 @@ const StudentRatingTrend = () => {
     if (!active || !payload || !payload.length) return null;
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
-        <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
+          <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
         {payload.map((entry) => (
           <div key={entry.name} className="text-sm text-gray-700 flex items-center gap-2">
-            <span
-              className="inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: entry.fill }}
-            ></span>
+            <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }}></span>
             <span className="font-medium">{entry.name}:</span>
             <span>{entry.value}%</span>
           </div>
@@ -74,8 +70,12 @@ const StudentRatingTrend = () => {
             <BarChart3 className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Xếp loại học lực sinh viên</h3>
-            <p className="text-sm text-gray-600">Theo quy chuẩn 4 năm, xếp loại 7 mức</p>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {title || 'Xếp loại học lực sinh viên'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {description || 'Theo quy chuẩn 4 năm, xếp loại 7 mức'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

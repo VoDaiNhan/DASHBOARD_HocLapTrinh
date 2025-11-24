@@ -1,242 +1,466 @@
-import React, { useState } from 'react';
-import { Save, AlertTriangle, CheckCircle, RefreshCw, Bell, Eye } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Save, RotateCcw, Plus, Copy, Trash2 } from 'lucide-react';
+
+const STORAGE_KEY = 'dashboardCardConfigs';
+
+const buildDefaultCards = () => [
+  {
+    id: 'lecture-effectiveness',
+    type: 'lectureEffectiveness',
+    title: 'Độ phù hợp bài giảng',
+    description: 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.',
+    enabled: true,
+    filters: {
+      course: 'Nhập môn lập trình',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/lecture-effectiveness',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65
+  },
+  {
+    id: 'course-completion',
+    type: 'courseCompletion',
+    title: 'Tỷ lệ hoàn thành môn học',
+    description: 'Theo dõi xu hướng hoàn thành môn theo năm.',
+    enabled: true,
+    filters: {
+      course: 'Nhập môn lập trình',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/course-completion',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#3f51b5',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 70
+  },
+  {
+    id: 'student-rating',
+    type: 'studentRating',
+    title: 'Xếp loại học lực sinh viên',
+    description: 'Xếp loại 7 mức theo quy chuẩn 4 năm.',
+    enabled: true,
+    filters: {
+      course: 'Tất cả',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/student-rating',
+      manualJson: ''
+    },
+    chart: {
+      type: 'bar',
+      color: '#2563eb',
+      smooth: false,
+      showDots: false
+    },
+    threshold: 60
+  },
+  {
+    id: 'skill-trend',
+    type: 'skillTrend',
+    title: 'Tập kỹ năng',
+    description: 'Tiến độ hoàn thành kỹ năng theo 4 năm.',
+    enabled: true,
+    filters: {
+      course: 'Nhập môn lập trình',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/skill-trend',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65
+  }
+];
+
+const inputClass =
+  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+const label = 'block text-sm font-medium text-gray-700 mb-1';
+const groupTitle = 'text-lg font-semibold text-gray-900';
+const groupDesc = 'text-sm text-gray-600';
 
 const GeneralConfiguration = () => {
-  const [settings, setSettings] = useState({
-    studentRiskThreshold: 60,
-    studentScoreThreshold: 6.5,
-    classCompletionThreshold: 80,
-    classScoreThreshold: 7.0,
-    updateCycle: 'daily',
-    autoNotifications: true,
-    hideCompletedClasses: false
-  });
+  const [cards, setCards] = useState(buildDefaultCards());
+  const [activeTabs, setActiveTabs] = useState({});
+  const [message, setMessage] = useState('');
 
-  const handleChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Merge với defaults để tránh thiếu field
+        const defaults = buildDefaultCards();
+        const merged = parsed.map((c) => {
+          const def = defaults.find((d) => d.type === c.type) || defaults[0];
+          return { ...def, ...c, filters: { ...def.filters, ...c.filters }, dataSource: { ...def.dataSource, ...c.dataSource }, chart: { ...def.chart, ...c.chart } };
+        });
+        setCards(merged);
+      } catch {
+        setCards(buildDefaultCards());
+      }
+    }
+  }, []);
+
+  const persist = (next) => {
+    setCards(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
-  const handleSave = () => {
-    alert('Đã lưu cấu hình thành công!');
+  const updateCard = (id, updater) => {
+    persist(cards.map((c) => (c.id === id ? updater(c) : c)));
   };
+
+  const addCard = () => {
+    const newId = `card-${Date.now()}`;
+    const def = buildDefaultCards()[0];
+    persist([
+      ...cards,
+      {
+        ...def,
+        id: newId,
+        type: 'custom',
+        title: 'Card mới',
+        description: 'Mô tả ngắn',
+        dataSource: { mode: 'api', endpoint: '', manualJson: '' }
+      }
+    ]);
+  };
+
+  const duplicateCard = (id) => {
+    const src = cards.find((c) => c.id === id);
+    if (!src) return;
+    persist([...cards, { ...src, id: `${id}-copy-${Date.now()}`, title: `${src.title} (bản sao)` }]);
+  };
+
+  const removeCard = (id) => persist(cards.filter((c) => c.id !== id));
+  const resetDefaults = () => persist(buildDefaultCards());
+
+  const handleSaveAll = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    setMessage('Đã lưu cấu hình!');
+    setTimeout(() => setMessage(''), 2000);
+  };
+
+  const renderDataSource = (card) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label className={label}>Nguồn dữ liệu</label>
+        <div className="flex gap-3 text-sm text-gray-800">
+          {[
+            { value: 'api', label: 'API' },
+            { value: 'json', label: 'JSON thủ công' }
+          ].map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name={`ds-${card.id}`}
+                value={opt.value}
+                checked={card.dataSource.mode === opt.value}
+                onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, mode: e.target.value } }))}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+      {card.dataSource.mode === 'api' && (
+        <div className="md:col-span-2">
+          <label className={label}>API endpoint</label>
+          <input
+            className={inputClass}
+            placeholder="/api/card-config"
+            value={card.dataSource.endpoint}
+            onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, endpoint: e.target.value } }))}
+          />
+        </div>
+      )}
+      {card.dataSource.mode === 'json' && (
+        <div className="md:col-span-2">
+          <label className={label}>JSON thủ công</label>
+          <textarea
+            className={inputClass}
+            rows={3}
+            placeholder='{"2022": 75, "2023": 80}'
+            value={card.dataSource.manualJson}
+            onChange={(e) =>
+              updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, manualJson: e.target.value } }))
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const TAB_KEYS = [
+    { key: 'display', label: 'Thông tin hiển thị' },
+    { key: 'filters', label: 'Bộ lọc mặc định' },
+    { key: 'data', label: 'Nguồn dữ liệu' },
+    { key: 'chart', label: 'Kiểu biểu đồ' },
+    { key: 'threshold', label: 'Ngưỡng cảnh báo' }
+  ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Cấu hình chung</h2>
-        <p className="text-sm text-gray-600">Thiết lập các ngưỡng và chế độ hoạt động cho hệ thống</p>
-      </div>
-
-      {/* Ngưỡng cảnh báo rủi ro sinh viên */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle className="h-5 w-5 text-orange-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Ngưỡng cảnh báo rủi ro sinh viên</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tiến độ hoàn thành tối thiểu (%)
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={settings.studentRiskThreshold}
-                onChange={(e) => handleChange('studentRiskThreshold', parseInt(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-lg font-bold text-gray-900 w-16 text-right">
-                &lt;{settings.studentRiskThreshold}%
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Sinh viên có tiến độ dưới ngưỡng này sẽ được đánh dấu là có rủi ro
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Điểm trung bình tối thiểu
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
-                value={settings.studentScoreThreshold}
-                onChange={(e) => handleChange('studentScoreThreshold', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-lg font-bold text-gray-900 w-20 text-right">
-                &lt;{settings.studentScoreThreshold.toFixed(1)}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Sinh viên có điểm trung bình dưới ngưỡng này sẽ được đánh dấu là có rủi ro
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Ngưỡng "đạt yêu cầu" của lớp học */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Ngưỡng "đạt yêu cầu" của lớp học</h3>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tỷ lệ hoàn thành tối thiểu (%)
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={settings.classCompletionThreshold}
-                onChange={(e) => handleChange('classCompletionThreshold', parseInt(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-lg font-bold text-gray-900 w-16 text-right">
-                ≥{settings.classCompletionThreshold}%
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Lớp có tỷ lệ hoàn thành trên ngưỡng này được coi là đạt chuẩn
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Điểm trung bình tối thiểu
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.1"
-                value={settings.classScoreThreshold}
-                onChange={(e) => handleChange('classScoreThreshold', parseFloat(e.target.value))}
-                className="flex-1"
-              />
-              <span className="text-lg font-bold text-gray-900 w-20 text-right">
-                ≥{settings.classScoreThreshold.toFixed(1)}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Lớp có điểm trung bình trên ngưỡng này được coi là đạt chuẩn
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Chu kỳ cập nhật dữ liệu */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <RefreshCw className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Chu kỳ cập nhật dữ liệu</h3>
-        </div>
-        <div className="space-y-3">
-          {['daily', 'weekly', 'manual'].map((cycle) => {
-            const labels = {
-              daily: 'Hàng ngày',
-              weekly: 'Hàng tuần',
-              manual: 'Thủ công'
-            };
-            return (
-              <label key={cycle} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name="updateCycle"
-                  value={cycle}
-                  checked={settings.updateCycle === cycle}
-                  onChange={(e) => handleChange('updateCycle', e.target.value)}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">{labels[cycle]}</span>
-              </label>
-            );
-          })}
-          <p className="text-xs text-gray-500 mt-2">
-            Hệ thống sẽ tự động đồng bộ dữ liệu theo chu kỳ đã chọn
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Cấu hình Card Dashboard</h2>
+          <p className="text-sm text-gray-600">
+            Mỗi card trên Dashboard có một cấu hình tương ứng. Chỉ giữ các trường thật sự cần cho người quản lý ngành.
           </p>
         </div>
-      </div>
-
-      {/* Toggle switches */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Tùy chọn tự động</h3>
-        <div className="space-y-4">
-          {/* Thông báo tự động */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-purple-600" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Thông báo tự động</p>
-                <p className="text-xs text-gray-500">
-                  Gửi thông báo cho giảng viên khi có lớp/sinh viên rủi ro
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => handleChange('autoNotifications', !settings.autoNotifications)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.autoNotifications ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.autoNotifications ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Ẩn/hiện lớp đã kết thúc */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Eye className="h-5 w-5 text-gray-600" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Hiển thị lớp đã kết thúc</p>
-                <p className="text-xs text-gray-500">
-                  Ẩn hoặc hiện các lớp học đã hoàn thành trong danh sách
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => handleChange('hideCompletedClasses', !settings.hideCompletedClasses)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                !settings.hideCompletedClasses ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  !settings.hideCompletedClasses ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
+        <div className="flex gap-2">
+          <button
+            onClick={resetDefaults}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset mặc định
+          </button>
+          <button
+            onClick={addCard}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-green-600 text-white text-sm hover:bg-green-700"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm card mới
+          </button>
+          <button
+            onClick={handleSaveAll}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+          >
+            <Save className="h-4 w-4" />
+            Lưu tất cả
+          </button>
         </div>
       </div>
+      {message && <div className="text-green-700 text-sm font-medium">{message}</div>}
 
-      {/* Save button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          <Save className="h-5 w-5" />
-          Lưu cấu hình
-        </button>
-      </div>
+      {cards.map((card) => {
+        const activeTab = activeTabs[card.id] || 'display';
+        return (
+          <div key={card.id} className="bg-white rounded-xl border border-gray-200 p-6 space-y-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase text-gray-500">Card ID: {card.id}</p>
+                <h3 className="text-lg font-semibold text-gray-900">{card.title}</h3>
+                <p className="text-sm text-gray-600">{card.description}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-700">Bật</label>
+                <button
+                  onClick={() => updateCard(card.id, (c) => ({ ...c, enabled: !c.enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    card.enabled ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      card.enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <button
+                  onClick={() => duplicateCard(card.id)}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded border border-gray-300 hover:bg-gray-50"
+                >
+                  <Copy className="h-4 w-4" /> Sao chép
+                </button>
+                <button
+                  onClick={() => removeCard(card.id)}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded border border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" /> Xoá
+                </button>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+              {TAB_KEYS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTabs((prev) => ({ ...prev, [card.id]: tab.key }))}
+                  className={`px-3 py-1.5 text-sm rounded-t ${
+                    activeTab === tab.key
+                      ? 'bg-blue-50 text-blue-700 border border-gray-200 border-b-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Nội dung tab */}
+            {activeTab === 'display' && (
+              <div className="space-y-3">
+                <h4 className={groupTitle}>Thông tin hiển thị</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={label}>Tiêu đề</label>
+                    <input
+                      className={inputClass}
+                      value={card.title}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, title: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className={label}>Mô tả</label>
+                    <input
+                      className={inputClass}
+                      value={card.description}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, description: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'filters' && (
+              <div className="space-y-3">
+                <h4 className={groupTitle}>Bộ lọc mặc định</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={label}>Chọn môn (dropdown)</label>
+                    <input
+                      className={inputClass}
+                      value={card.filters.course}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, course: e.target.value } }))
+                      }
+                      placeholder="VD: Nhập môn lập trình"
+                    />
+                  </div>
+                  <div>
+                    <label className={label}>Năm bắt đầu</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={card.filters.startYear}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, startYear: Number(e.target.value) } }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className={label}>Năm kết thúc</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={card.filters.endYear}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, endYear: Number(e.target.value) } }))
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'data' && (
+              <div className="space-y-3">
+                <h4 className={groupTitle}>Nguồn dữ liệu</h4>
+                <p className={groupDesc}>Chọn API hoặc nhập JSON thủ công (chỉ một trong hai).</p>
+                {renderDataSource(card)}
+              </div>
+            )}
+
+            {activeTab === 'chart' && (
+              <div className="space-y-3">
+                <h4 className={groupTitle}>Kiểu biểu đồ</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={label}>Kiểu</label>
+                    <select
+                      className={inputClass}
+                      value={card.chart.type}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, type: e.target.value } }))}
+                    >
+                      <option value="line">Line</option>
+                      <option value="bar">Bar</option>
+                      <option value="area">Area</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={label}>Màu biểu đồ</label>
+                    <input
+                      type="color"
+                      className="h-10 w-full rounded border border-gray-300"
+                      value={card.chart.color}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, color: e.target.value } }))}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={card.chart.smooth}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, smooth: e.target.checked } }))}
+                    />
+                    <label className={label + ' mb-0'}>Đường mượt</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={card.chart.showDots}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, showDots: e.target.checked } }))}
+                    />
+                    <label className={label + ' mb-0'}>Hiện dots</label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'threshold' && (
+              <div className="space-y-3">
+                <h4 className={groupTitle}>Ngưỡng cảnh báo</h4>
+                <p className={groupDesc}>Nếu % thấp hơn ngưỡng, card sẽ hiển thị cảnh báo (VD: &lt; 70% → warning).</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                  <div>
+                    <label className={label}>% cảnh báo</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={card.threshold}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, threshold: Number(e.target.value) }))}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 export default GeneralConfiguration;
-
