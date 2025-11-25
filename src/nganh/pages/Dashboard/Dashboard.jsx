@@ -45,14 +45,27 @@ const Dashboard = () => {
   }, [filters]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
-    if (saved) {
-      try {
-        setCardConfigs(JSON.parse(saved));
-      } catch {
+    const loadConfig = () => {
+      const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
+      if (saved) {
+        try {
+          setCardConfigs(JSON.parse(saved));
+        } catch {
+          setCardConfigs([]);
+        }
+      } else {
         setCardConfigs([]);
       }
-    }
+    };
+
+    loadConfig();
+    const handleStorage = (e) => {
+      if (e.key === CONFIG_STORAGE_KEY) {
+        loadConfig();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   const handleFilterChange = (filterType, value) => {

@@ -6,9 +6,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer
 } from 'recharts';
 import { Layers, CalendarRange, BookOpen } from 'lucide-react';
+import SkillTrendSummary from './SkillTrendSummary';
 
 const COURSE_OPTIONS = [
   { value: 'intro', label: 'Nhập môn lập trình' },
@@ -24,14 +26,15 @@ const SKILL_MAP = {
   oop: ['Class & Object', 'Inheritance', 'Polymorphism', 'Exception', 'Collections']
 };
 
+// Mock completion % per year for each course + skill
 const COMPLETION_BY_SKILL = {
   intro: {
     'If / Else': { 2022: 72, 2023: 78, 2024: 82, 2025: 85 },
-    'Vong lap For/While': { 2022: 68, 2023: 74, 2024: 79, 2025: 83 },
-    'Ham & Tham so': { 2022: 65, 2023: 71, 2024: 76, 2025: 81 },
-    'Mang 1 chieu': { 2022: 60, 2023: 68, 2024: 74, 2025: 78 },
-    'Xu ly Chuoi': { 2022: 58, 2023: 64, 2024: 70, 2025: 75 },
-    'Debug co ban': { 2022: 62, 2023: 69, 2024: 73, 2025: 77 }
+    'Vòng lặp For/While': { 2022: 68, 2023: 74, 2024: 79, 2025: 83 },
+    'Hàm & Tham số': { 2022: 65, 2023: 71, 2024: 76, 2025: 81 },
+    'Mảng 1 chiều': { 2022: 60, 2023: 68, 2024: 74, 2025: 78 },
+    'Xử lý Chuỗi': { 2022: 58, 2023: 64, 2024: 70, 2025: 75 },
+    'Debug cơ bản': { 2022: 62, 2023: 69, 2024: 73, 2025: 77 }
   },
   tech: {
     'Con trỏ & Bộ nhớ động': { 2022: 55, 2023: 62, 2024: 70, 2025: 75 },
@@ -62,35 +65,57 @@ const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).f
 
 const SkillCompletionTrend = ({ title, description }) => {
   const [selectedCourse, setSelectedCourse] = useState(COURSE_OPTIONS[0].value);
-  const [selectedSkill, setSelectedSkill] = useState(SKILL_MAP[COURSE_OPTIONS[0].value][0]);
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
 
   useEffect(() => {
-    const nextSkills = SKILL_MAP[selectedCourse] || [];
-    if (!nextSkills.includes(selectedSkill)) {
-      setSelectedSkill(nextSkills[0]);
+    const skills = SKILL_MAP[selectedCourse] || [];
+    if (skills.length === 0) {
+      setStartYear(Math.max(currentYear - 3, 2022));
     }
-  }, [selectedCourse, selectedSkill]);
+  }, [selectedCourse]);
+
+  const yearKeys = useMemo(() => Array.from({ length: 4 }, (_, i) => startYear + i), [startYear]);
 
   const chartData = useMemo(() => {
-    const years = Array.from({ length: 4 }, (_, i) => startYear + i);
-    return years.map((year) => ({
-      year: `${year}`,
-      completion:
-        COMPLETION_BY_SKILL[selectedCourse]?.[selectedSkill]?.[year] ?? null
-    }));
-  }, [selectedCourse, selectedSkill, startYear]);
+    const skills = SKILL_MAP[selectedCourse] || [];
+    const years = yearKeys;
+    return years.map((year) => {
+      const point = { year: `${year}` };
+      skills.forEach((skill, idx) => {
+        point[`skill_${idx}`] = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[year] ?? null;
+      });
+      point.skillLabels = skills;
+      return point;
+    });
+  }, [selectedCourse, yearKeys]);
+
+  const summaryData = useMemo(() => {
+    const skills = SKILL_MAP[selectedCourse] || [];
+    return yearKeys.map((year) => {
+      const skillsObj = {};
+      skills.forEach((skill) => {
+        skillsObj[skill] = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[year] ?? 0;
+      });
+      return { year, skills: skillsObj };
+    });
+  }, [selectedCourse, yearKeys]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
-    const value = payload[0]?.value;
-    if (value === null || value === undefined) return null;
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
-          <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
-        <p className="text-sm text-gray-700">
-          Hoan thanh: <span className="font-semibold">{value}%</span>
-        </p>
+        <p className="text-sm font-medium text-gray-900 mb-2">Năm {label}</p>
+        {payload.map((item, idx) => {
+          const skillLabel = chartData.find((d) => d.year === label)?.skillLabels?.[idx] || `Kỹ năng ${idx + 1}`;
+          if (item.value === null || item.value === undefined) return null;
+          return (
+            <div key={item.dataKey} className="text-sm text-gray-700 flex items-center gap-2">
+              <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+              <span className="font-medium">{skillLabel}:</span>
+              <span>{item.value}%</span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -100,13 +125,7 @@ const SkillCompletionTrend = ({ title, description }) => {
     color: isFuture ? '#dc2626' : '#111827'
   });
 
-  const CustomDot = (props) => {
-    const { cx, cy, stroke, payload, value } = props;
-    if (value === null || value === undefined) return null;
-    const yearNum = parseInt(payload.year, 10);
-    const isFuture = yearNum > currentYear;
-    return <circle cx={cx} cy={cy} r={6} fill={isFuture ? '#ef4444' : stroke} stroke="white" strokeWidth={1.5} />;
-  };
+  const lineColors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#06b6d4', '#8b5cf6'];
 
   return (
     <div className="card p-6 mt-6">
@@ -117,7 +136,9 @@ const SkillCompletionTrend = ({ title, description }) => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{title || 'Tập kỹ năng'}</h3>
-            <p className="text-sm text-gray-600">{description || 'Mức độ hoàn thành kỹ năng theo 4 năm'}</p>
+            <p className="text-sm text-gray-600">
+              {description || 'Biểu đồ nhiều đường: mỗi kỹ năng một đường theo năm'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -131,20 +152,6 @@ const SkillCompletionTrend = ({ title, description }) => {
               {COURSE_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Kỹ năng</span>
-            <select
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              value={selectedSkill}
-              onChange={(e) => setSelectedSkill(e.target.value)}
-            >
-              {(SKILL_MAP[selectedCourse] || []).map((skill) => (
-                <option key={skill} value={skill}>
-                  {skill}
                 </option>
               ))}
             </select>
@@ -170,30 +177,39 @@ const SkillCompletionTrend = ({ title, description }) => {
         </div>
       </div>
 
-      <div className="h-72">
+      <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
+            <CartesianGrid strokeDasharray="2 4" stroke="#f1f5f9" />
             <XAxis dataKey="year" tick={{ fontSize: 12 }} stroke="#6b7280" />
             <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} stroke="#6b7280" />
             <Tooltip content={<CustomTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="completion"
-              stroke="#3f51b5"
-              strokeWidth={3}
-              dot={<CustomDot />}
-              activeDot={{ r: 7, stroke: '#3f51b5', strokeWidth: 2 }}
-              connectNulls
-              isAnimationActive
-            />
+            <Legend verticalAlign="bottom" align="center" height={32} />
+            {(SKILL_MAP[selectedCourse] || []).map((skill, idx) => (
+              <Line
+                key={skill}
+                type="monotone"
+                dataKey={`skill_${idx}`}
+                name={skill}
+                stroke={lineColors[idx % lineColors.length]}
+                strokeWidth={2.2}
+                dot={{ r: 3, strokeWidth: 1.5, fill: lineColors[idx % lineColors.length], stroke: '#ffffff' }}
+                activeDot={{ r: 5, stroke: lineColors[idx % lineColors.length], strokeWidth: 2 }}
+                connectNulls
+                isAnimationActive
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {!chartData || chartData.length === 0 ? (
         <div className="mt-4 text-sm text-gray-600">Không có dữ liệu cho giai đoạn này</div>
-      ) : null}
+      ) : (
+        <div className="mt-4">
+          <SkillTrendSummary data={summaryData} />
+        </div>
+      )}
     </div>
   );
 };
