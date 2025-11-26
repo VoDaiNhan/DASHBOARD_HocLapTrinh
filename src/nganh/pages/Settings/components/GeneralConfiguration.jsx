@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Save, RotateCcw, Plus, Copy, Trash2 } from 'lucide-react';
 
 const STORAGE_KEY = 'dashboardCardConfigs';
@@ -193,60 +193,9 @@ const GeneralConfiguration = () => {
     setTimeout(() => setMessage(''), 2000);
   };
 
-  const renderDataSource = (card) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label className={label}>Nguồn dữ liệu</label>
-        <div className="flex gap-3 text-sm text-gray-800">
-          {[
-            { value: 'api', label: 'API' },
-            { value: 'json', label: 'JSON thủ công' }
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`ds-${card.id}`}
-                value={opt.value}
-                checked={card.dataSource.mode === opt.value}
-                onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, mode: e.target.value } }))}
-              />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-      {card.dataSource.mode === 'api' && (
-        <div className="md:col-span-2">
-          <label className={label}>API endpoint</label>
-          <input
-            className={inputClass}
-            placeholder="/api/card-config"
-            value={card.dataSource.endpoint}
-            onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, endpoint: e.target.value } }))}
-          />
-        </div>
-      )}
-      {card.dataSource.mode === 'json' && (
-        <div className="md:col-span-2">
-          <label className={label}>JSON thủ công</label>
-          <textarea
-            className={inputClass}
-            rows={3}
-            placeholder='{"2022": 75, "2023": 80}'
-            value={card.dataSource.manualJson}
-            onChange={(e) =>
-              updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, manualJson: e.target.value } }))
-            }
-          />
-        </div>
-      )}
-    </div>
-  );
-
   const TAB_KEYS = [
     { key: 'display', label: 'Thông tin hiển thị' },
     { key: 'filters', label: 'Bộ lọc mặc định' },
-    { key: 'data', label: 'Nguồn dữ liệu' },
     { key: 'chart', label: 'Kiểu biểu đồ' },
     { key: 'threshold', label: 'Ngưỡng đánh giá' }
   ];
@@ -325,7 +274,6 @@ const GeneralConfiguration = () => {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
               {TAB_KEYS.map((tab) => (
                 <button
@@ -342,7 +290,6 @@ const GeneralConfiguration = () => {
               ))}
             </div>
 
-            {/* Nội dung tab */}
             {activeTab === 'display' && (
               <div className="space-y-3">
                 <h4 className={groupTitle}>Thông tin hiển thị</h4>
@@ -389,23 +336,6 @@ const GeneralConfiguration = () => {
                           </option>
                         ))}
                       </select>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const name = window.prompt('Nhập tên môn mới');
-                          const trimmed = (name || '').trim();
-                          if (!trimmed) return;
-                          updateCard(card.id, (c) => {
-                            const list = c.filters.courseList || [];
-                            if (list.includes(trimmed)) return c;
-                            const newList = [...list, trimmed];
-                            return { ...c, filters: { ...c.filters, courseList: newList, course: trimmed } };
-                          });
-                        }}
-                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-50"
-                      >
-                        + Thêm môn
-                      </button>
                     </div>
                     <p className="text-xs text-gray-500">
                       Danh sách môn dùng chung, thêm mới để ngành khác cũng chọn được.
@@ -490,14 +420,6 @@ const GeneralConfiguration = () => {
                     )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'data' && (
-              <div className="space-y-3">
-                <h4 className={groupTitle}>Nguồn dữ liệu</h4>
-                <p className={groupDesc}>Chọn API hoặc nhập JSON thủ công (chỉ một trong hai).</p>
-                {renderDataSource(card)}
               </div>
             )}
 

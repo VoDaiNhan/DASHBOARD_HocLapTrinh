@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -7,7 +7,9 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceArea,
+  Customized
 } from 'recharts';
 import { Layers, CalendarRange, BookOpen } from 'lucide-react';
 import SkillTrendSummary from './SkillTrendSummary';
@@ -63,9 +65,25 @@ const COMPLETION_BY_SKILL = {
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
+const SummaryItem = ({ label, value, tone = 'default' }) => {
+  const toneClass =
+    tone === 'up' ? 'text-green-600' : tone === 'down' ? 'text-red-600' : 'text-gray-800';
+  return (
+    <div className="p-3 rounded-lg border border-gray-200 bg-white shadow-sm">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`text-sm font-semibold ${toneClass}`}>{value}</p>
+    </div>
+  );
+};
+
 const SkillCompletionTrend = ({ title, description }) => {
   const [selectedCourse, setSelectedCourse] = useState(COURSE_OPTIONS[0].value);
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
+  const [hoveredSkill, setHoveredSkill] = useState(null);
+  const [hoveredYear, setHoveredYear] = useState(null);
+  const [showAverage, setShowAverage] = useState(true);
+  const [showDelta, setShowDelta] = useState(true);
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
 
   useEffect(() => {
     const skills = SKILL_MAP[selectedCourse] || [];
@@ -79,12 +97,26 @@ const SkillCompletionTrend = ({ title, description }) => {
   const chartData = useMemo(() => {
     const skills = SKILL_MAP[selectedCourse] || [];
     const years = yearKeys;
-    return years.map((year) => {
+    return years.map((year, idx) => {
       const point = { year: `${year}` };
-      skills.forEach((skill, idx) => {
-        point[`skill_${idx}`] = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[year] ?? null;
+      let sum = 0;
+      let count = 0;
+      skills.forEach((skill, skillIdx) => {
+        const value = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[year] ?? null;
+        const prevYear = years[idx - 1];
+        const prevVal =
+          prevYear !== undefined
+            ? COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[prevYear] ?? null
+            : null;
+        point[`skill_${skillIdx}`] = value;
+        point[`skill_${skillIdx}_delta`] =
+          value !== null && prevVal !== null ? Math.round((value - prevVal) * 10) / 10 : null;
+        if (value !== null) {
+          sum += value;
+          count += 1;
+        }
       });
-      point.skillLabels = skills;
+      point.avg = count ? Math.round((sum / count) * 10) / 10 : null;
       return point;
     });
   }, [selectedCourse, yearKeys]);
@@ -100,22 +132,59 @@ const SkillCompletionTrend = ({ title, description }) => {
     });
   }, [selectedCourse, yearKeys]);
 
+  const insights = useMemo(() => {
+    const skills = SKILL_MAP[selectedCourse] || [];
+    if (!skills.length) return null;
+    const firstYear = yearKeys[0];
+    const lastYear = yearKeys[yearKeys.length - 1];
+    const skillTrends = skills.map((skill) => {
+      const first = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[firstYear] ?? 0;
+      const last = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[lastYear] ?? 0;
+      return { skill, delta: Math.round((last - first) * 10) / 10, last };
+    });
+    const totalChange = skillTrends.reduce((s, t) => s + t.delta, 0);
+    const maxIncrease = skillTrends.reduce(
+      (best, cur) => (best === null || cur.delta > best.delta ? cur : best),
+      null
+    );
+    const maxDecrease = skillTrends.reduce(
+      (worst, cur) => (worst === null || cur.delta < worst.delta ? cur : worst),
+      null
+    );
+    const best = skillTrends.reduce((b, cur) => (b === null || cur.last > b.last ? cur : b), null);
+    const worst = skillTrends.reduce((w, cur) => (w === null || cur.last < w.last ? cur : w), null);
+    const avgTrend = skillTrends.length ? Math.round((totalChange / skillTrends.length) * 10) / 10 : 0;
+    return { avgTrend, totalChange, maxIncrease, maxDecrease, best, worst };
+  }, [selectedCourse, yearKeys]);
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
+    const point = payload[0].payload;
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
-        <p className="text-sm font-medium text-gray-900 mb-2">Năm {label}</p>
-        {payload.map((item, idx) => {
-          const skillLabel = chartData.find((d) => d.year === label)?.skillLabels?.[idx] || `Kỹ năng ${idx + 1}`;
-          if (item.value === null || item.value === undefined) return null;
-          return (
-            <div key={item.dataKey} className="text-sm text-gray-700 flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></span>
-              <span className="font-medium">{skillLabel}:</span>
-              <span>{item.value}%</span>
-            </div>
-          );
-        })}
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow w-64">
+        <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
+        {showAverage && (
+          <p className="text-xs text-gray-600 mb-2">Điểm TB kỹ năng: {point.avg ?? '-'}%</p>
+        )}
+        <div className="space-y-1 max-h-40 overflow-auto pr-1">
+          {payload.map((item, idx) => {
+            const skillLabel = chartData.find((d) => d.year === label)?.skillLabels?.[idx] || SKILL_MAP[selectedCourse]?.[idx];
+            if (item.value === null || item.value === undefined) return null;
+            const delta = point?.[`${item.dataKey}_delta`];
+            return (
+              <div key={item.dataKey} className="text-sm text-gray-700 flex items-center gap-2">
+                <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></span>
+                <span className="font-medium">{skillLabel}:</span>
+                <span className="font-semibold">{item.value}%</span>
+                {showDelta && (
+                  <span className={`text-xs ${delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                    {delta !== null && delta !== undefined ? `${delta >= 0 ? '+' : ''}${delta}%` : ''}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -125,7 +194,19 @@ const SkillCompletionTrend = ({ title, description }) => {
     color: isFuture ? '#dc2626' : '#111827'
   });
 
-  const lineColors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#06b6d4', '#8b5cf6'];
+  const HoverBackground = useCallback(
+    ({ xAxisMap }) => {
+      if (!highlightEnabled || !hoveredYear) return null;
+      const xAxis = xAxisMap?.[0];
+      const index = chartData.findIndex((d) => d.year === hoveredYear);
+      if (!xAxis || index === -1) return null;
+      const band = xAxis?.bandSize || 0;
+      const x = xAxis.scale(index) - band * 0.1;
+      const width = band * 1.2;
+      return <rect x={x} y={0} width={width} height="100%" fill="#e0f2fe" opacity={0.25} />;
+    },
+    [chartData, highlightEnabled, hoveredYear]
+  );
 
   return (
     <div className="card p-6 mt-6">
@@ -135,27 +216,31 @@ const SkillCompletionTrend = ({ title, description }) => {
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title || 'Tập kỹ năng'}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {title || 'Tập kỹ năng'}
+            </h3>
             <p className="text-sm text-gray-600">
-              {description || 'Biểu đồ nhiều đường: mỗi kỹ năng một đường theo năm'}
+              {description || 'Tiến độ hoàn thành kỹ năng theo 4 năm.'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-gray-500" />
+            <span className="text-sm text-gray-600">Môn</span>
             <select
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
             >
-              {COURSE_OPTIONS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              {COURSE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>
           </div>
+
           <div className="flex items-center gap-2">
             <CalendarRange className="h-4 w-4 text-gray-500" />
             <select
@@ -165,7 +250,11 @@ const SkillCompletionTrend = ({ title, description }) => {
             >
               {YEAR_OPTIONS.map((y) => {
                 const isFuture = y > currentYear;
-                const style = optionStyle(y, startYear, isFuture);
+                const isSelected = y === startYear;
+                const style = {
+                  color: isFuture ? '#dc2626' : '#111827',
+                  backgroundColor: isSelected ? '#e8eaf6' : 'white'
+                };
                 return (
                   <option key={y} value={y} style={style}>
                     {y} - {y + 3}
@@ -174,40 +263,123 @@ const SkillCompletionTrend = ({ title, description }) => {
               })}
             </select>
           </div>
+
+          <div className="flex items-center gap-3 text-sm text-gray-700">
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={showAverage} onChange={() => setShowAverage((v) => !v)} />
+              Hiển thị điểm TB
+            </label>
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={showDelta} onChange={() => setShowDelta((v) => !v)} />
+              Hiển thị biến động
+            </label>
+            <label className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={highlightEnabled}
+                onChange={() => setHighlightEnabled((v) => !v)}
+              />
+              Bật highlight
+            </label>
+          </div>
         </div>
       </div>
 
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="2 4" stroke="#f1f5f9" />
+          <LineChart
+            data={chartData}
+            margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
+            onMouseMove={(state) => {
+              if (state?.activeLabel) setHoveredYear(state.activeLabel);
+            }}
+            onMouseLeave={() => setHoveredYear(null)}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis dataKey="year" tick={{ fontSize: 12 }} stroke="#6b7280" />
-            <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} stroke="#6b7280" />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="#6b7280" tickFormatter={(v) => `${v}%`} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="bottom" align="center" height={32} />
-            {(SKILL_MAP[selectedCourse] || []).map((skill, idx) => (
-              <Line
-                key={skill}
-                type="monotone"
-                dataKey={`skill_${idx}`}
-                name={skill}
-                stroke={lineColors[idx % lineColors.length]}
-                strokeWidth={2.2}
-                dot={{ r: 3, strokeWidth: 1.5, fill: lineColors[idx % lineColors.length], stroke: '#ffffff' }}
-                activeDot={{ r: 5, stroke: lineColors[idx % lineColors.length], strokeWidth: 2 }}
-                connectNulls
-                isAnimationActive
-              />
-            ))}
+            <Legend verticalAlign="top" height={36} />
+            {highlightEnabled && (
+              <>
+                <ReferenceArea x1={hoveredYear} x2={hoveredYear} fill="#e0f2fe" fillOpacity={0.2} />
+                <Customized component={<HoverBackground />} />
+              </>
+            )}
+            {SKILL_MAP[selectedCourse]?.map((skill, idx) => {
+              const color = `hsl(${(idx * 55) % 360} 70% 50%)`;
+              const isFocused = !hoveredSkill || hoveredSkill === skill;
+              return (
+                <Line
+                  key={skill}
+                  type="monotone"
+                  dataKey={`skill_${idx}`}
+                  name={skill}
+                  strokeWidth={isFocused ? 4 : 2.5}
+                  stroke={color}
+                  dot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: color }}
+                  activeDot={{ r: 7, stroke: '#fff', strokeWidth: 2, fill: color }}
+                  connectNulls
+                  opacity={hoveredSkill && hoveredSkill !== skill ? 0.4 : 1}
+                  onMouseOver={() => setHoveredSkill(skill)}
+                  onMouseOut={() => setHoveredSkill(null)}
+                  isAnimationActive
+                  animationDuration={600}
+                />
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {!chartData || chartData.length === 0 ? (
-        <div className="mt-4 text-sm text-gray-600">Không có dữ liệu cho giai đoạn này</div>
-      ) : (
-        <div className="mt-4">
-          <SkillTrendSummary data={summaryData} />
+      <div className="mt-4">
+        <SkillTrendSummary data={summaryData} />
+      </div>
+
+      {insights && (
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <SummaryItem
+            label="Xu hướng chung (4 năm)"
+            value={`${insights.avgTrend >= 0 ? '+' : ''}${insights.avgTrend}%`}
+            tone={insights.avgTrend > 0 ? 'up' : insights.avgTrend < 0 ? 'down' : 'default'}
+          />
+          <SummaryItem
+            label="Thay đổi tổng"
+            value={`${insights.totalChange >= 0 ? '+' : ''}${insights.totalChange}%`}
+            tone={insights.totalChange > 0 ? 'up' : insights.totalChange < 0 ? 'down' : 'default'}
+          />
+          <SummaryItem
+            label="Tăng mạnh nhất"
+            value={
+              insights.maxIncrease
+                ? `${insights.maxIncrease.skill}: ${insights.maxIncrease.delta}%`
+                : '-'
+            }
+            tone="up"
+          />
+          <SummaryItem
+            label="Giảm mạnh nhất"
+            value={
+              insights.maxDecrease
+                ? `${insights.maxDecrease.skill}: ${insights.maxDecrease.delta}%`
+                : '-'
+            }
+            tone="down"
+          />
+          <SummaryItem
+            label="Kỹ năng tốt nhất"
+            value={
+              insights.best ? `${insights.best.skill}: ${insights.best.last}%` : '-'
+            }
+            tone="up"
+          />
+          <SummaryItem
+            label="Kỹ năng thấp nhất"
+            value={
+              insights.worst ? `${insights.worst.skill}: ${insights.worst.last}%` : '-'
+            }
+            tone="down"
+          />
         </div>
       )}
     </div>

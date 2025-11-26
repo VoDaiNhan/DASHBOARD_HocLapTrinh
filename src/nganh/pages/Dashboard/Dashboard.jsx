@@ -13,6 +13,122 @@ import { mockDashboardData } from '../../data/mockData';
 
 const CONFIG_STORAGE_KEY = 'dashboardCardConfigs';
 
+// Fallback defaults when localStorage is empty so the cards appear on first load
+const buildDefaultCards = () => [
+  {
+    id: 'lecture-effectiveness',
+    type: 'lectureEffectiveness',
+    title: 'Do phu hop bai giang',
+    description: 'Hien thi hieu qua giua bai giang va nang luc sinh vien.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/lecture-effectiveness',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'course-completion',
+    type: 'courseCompletion',
+    title: 'Ty le hoan thanh mon hoc',
+    description: 'Theo doi xu huong hoan thanh mon theo nam.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/course-completion',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#3f51b5',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 70,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'student-rating',
+    type: 'studentRating',
+    title: 'Xep loai hoc luc sinh vien',
+    description: 'Xep loai 7 muc theo quy chuan 4 nam.',
+    enabled: true,
+    filters: {
+      course: 'Tat ca',
+      courseList: ['Tat ca', 'Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/student-rating',
+      manualJson: ''
+    },
+    chart: {
+      type: 'bar',
+      color: '#2563eb',
+      smooth: false,
+      showDots: false
+    },
+    threshold: 60,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'skill-trend',
+    type: 'skillTrend',
+    title: 'Tap ky nang',
+    description: 'Tien do hoan thanh ky nang theo 4 nam.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/skill-trend',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
+  }
+];
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,10 +167,14 @@ const Dashboard = () => {
         try {
           setCardConfigs(JSON.parse(saved));
         } catch {
-          setCardConfigs([]);
+          const defaults = buildDefaultCards();
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(defaults));
+          setCardConfigs(defaults);
         }
       } else {
-        setCardConfigs([]);
+        const defaults = buildDefaultCards();
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(defaults));
+        setCardConfigs(defaults);
       }
     };
 
@@ -119,9 +239,9 @@ const Dashboard = () => {
           onSearchChange={setSearchText}
           onCompletionRangeChange={setCompletionRange}
           onFilterChange={handleIndustryFilterChange}
-          showLectureCard={cardConfigs.find((c) => c.type === 'lectureEffectiveness' && c.enabled)}
-          lectureTitle={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.title}
-          lectureNote={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.description}
+          showLectureCard={false}
+          lectureTitle={null}
+          lectureNote={null}
         />
         {cardConfigs.find((c) => c.type === 'courseCompletion' && c.enabled) && (
           <CourseCompletionTrend

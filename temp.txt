@@ -1,0 +1,177 @@
+import React, { useMemo, useState } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+import { BarChart3, CalendarRange } from 'lucide-react';
+
+const LEVELS = [
+  { key: 'xs', label: 'Xuat sac', color: '#4c8bf5' },
+  { key: 'g', label: 'Gioi', color: '#63b3f3' },
+  { key: 'kg', label: 'Kha gioi', color: '#f5a623' },
+  { key: 'k', label: 'Kha', color: '#f6b84f' },
+  { key: 'tbk', label: 'Trung binh kha', color: '#f8cc6b' },
+  { key: 'tb', label: 'Trung binh', color: '#fbd38d' },
+  { key: 'yk', label: 'Yeu / Kem', color: '#eb4d4b' }
+];
+
+const RATING_DISTRIBUTION = {
+  2022: { xs: 8, g: 15, kg: 20, k: 22, tbk: 18, tb: 12, yk: 5 },
+  2023: { xs: 10, g: 18, kg: 21, k: 20, tbk: 16, tb: 10, yk: 5 },
+  2024: { xs: 12, g: 20, kg: 22, k: 18, tbk: 14, tb: 9, yk: 5 },
+  2025: { xs: 14, g: 20, kg: 22, k: 17, tbk: 13, tb: 9, yk: 5 }
+};
+
+// Fake total students per year (có thể nối API sau)
+const TOTAL_STUDENTS = {
+  2022: 200,
+  2023: 205,
+  2024: 210,
+  2025: 215
+};
+
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
+
+const StudentRatingTrend = ({ title, description }) => {
+  const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
+  const [showCounts, setShowCounts] = useState(false); // false: %, true: số học sinh
+
+  const chartData = useMemo(() => {
+    const years = Array.from({ length: 4 }, (_, i) => startYear + i);
+    return years.map((year) => {
+      const total = TOTAL_STUDENTS[year] || 200;
+      const raw = RATING_DISTRIBUTION[year] || {};
+      const converted = {};
+      LEVELS.forEach(({ key }) => {
+        const pct = raw[key] || 0;
+        const count = Math.round((pct / 100) * total);
+        converted[key] = showCounts ? count : pct;
+        converted[`${key}_pct`] = pct;
+        converted[`${key}_count`] = count;
+      });
+      return {
+        year: `${year}`,
+        totalStudents: total,
+        ...converted
+      };
+    });
+  }, [startYear, showCounts]);
+
+  const maxTotal = useMemo(() => {
+    return chartData.reduce((max, row) => {
+      const sum = LEVELS.reduce((acc, lvl) => acc + (row[lvl.key] || 0), 0);
+      return Math.max(max, sum);
+    }, 0);
+  }, [chartData]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    const totalStudents = payload?.[0]?.payload?.totalStudents || 0;
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow">
+        <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
+        {totalStudents ? <p className="text-xs text-gray-500 mb-1">Tổng: {totalStudents} sinh viên</p> : null}
+        {payload.map((entry) => (
+          <div key={entry.name} className="text-sm text-gray-700 flex items-center gap-2">
+            <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }}></span>
+            <span className="font-medium">{entry.name}:</span>
+            <span>
+              {showCounts
+                ? `${entry.value} sv`
+                : `${entry.value}% (${Math.round((entry.value / 100) * totalStudents) || 0} sv)`}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const optionStyle = (value, selectedValue, isFuture = false) => ({
+    backgroundColor: value === selectedValue ? '#e8eaf6' : 'white',
+    color: isFuture ? '#dc2626' : '#111827'
+  });
+
+  return (
+    <div className="card p-6 mt-6">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {title || 'Xep loai hoc luc sinh vien'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {description || 'Theo quy chuan 4 nam, xep loai 7 muc'}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Hover để xem % + số SV. Click trực tiếp cột để đổi qua hiển thị số SV.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <CalendarRange className="h-4 w-4 text-gray-500" />
+          <select
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            value={startYear}
+            onChange={(e) => setStartYear(Number(e.target.value))}
+          >
+            {YEAR_OPTIONS.map((y) => {
+              const isFuture = y > currentYear;
+              const style = optionStyle(y, startYear, isFuture);
+              return (
+                <option key={y} value={y} style={style}>
+                  {y} - {y + 3}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      </div>
+
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }} barCategoryGap="20%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="year" tick={{ fontSize: 12 }} stroke="#6b7280" />
+            <YAxis
+              type="number"
+              domain={showCounts ? [0, Math.max(maxTotal, 1)] : [0, 100]}
+              tickFormatter={(v) => (showCounts ? v : `${v}%`)}
+              tick={{ fontSize: 11 }}
+              stroke="#6b7280"
+            />
+            <Tooltip content={<CustomTooltip />} />
+            {LEVELS.map((lvl, idx) => (
+              <Bar
+                key={lvl.key}
+                dataKey={lvl.key}
+                name={lvl.label}
+                stackId="rating"
+                fill={lvl.color}
+                radius={idx === LEVELS.length - 1 ? [6, 6, 0, 0] : 0}
+                isAnimationActive
+                onClick={() => setShowCounts((prev) => !prev)}
+                cursor="pointer"
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {!chartData || chartData.length === 0 ? (
+        <div className="mt-4 text-sm text-gray-600">Khong co du lieu cho giai doan nay</div>
+      ) : null}
+    </div>
+  );
+};
+
+export default StudentRatingTrend;
+
