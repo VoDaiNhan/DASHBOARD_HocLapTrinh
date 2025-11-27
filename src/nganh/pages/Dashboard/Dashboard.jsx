@@ -13,13 +13,40 @@ import { mockDashboardData } from '../../data/mockData';
 
 const CONFIG_STORAGE_KEY = 'dashboardCardConfigs';
 
+const CARD_TEXT_PATCHES = {
+  'lecture-effectiveness': {
+    title: 'Độ phù hợp bài giảng',
+    description: 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.',
+    oldTitles: ['Do phu hop bai giang'],
+    oldDescriptions: ['Hien thi hieu qua giua bai giang va nang luc sinh vien.']
+  },
+  'course-completion': {
+    title: 'Tỷ lệ hoàn thành môn học',
+    description: 'Theo dõi xu hướng hoàn thành môn theo năm.',
+    oldTitles: ['Ty le hoan thanh mon hoc'],
+    oldDescriptions: ['Theo doi xu huong hoan thanh mon theo nam.']
+  },
+  'student-rating': {
+    title: 'Xếp loại học lực sinh viên',
+    description: 'Xếp loại 7 mức theo quy chuẩn 4 năm.',
+    oldTitles: ['Xep loai hoc luc sinh vien'],
+    oldDescriptions: ['Xep loai 7 muc theo quy chuan 4 nam.']
+  },
+  'skill-trend': {
+    title: 'Tập kỹ năng',
+    description: 'Tiến độ hoàn thành kỹ năng theo 4 năm.',
+    oldTitles: ['Tap ky nang'],
+    oldDescriptions: ['Tien do hoan thanh ky nang theo 4 nam.']
+  }
+};
+
 // Fallback defaults when localStorage is empty so the cards appear on first load
 const buildDefaultCards = () => [
   {
     id: 'lecture-effectiveness',
     type: 'lectureEffectiveness',
     title: 'Độ phù hợp bài giảng',
-    description: 'Hien thi hieu qua giua bai giang va nang luc sinh vien.',
+    description: 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.',
     enabled: true,
     filters: {
       course: 'Nhap mon lap trinh',
@@ -47,7 +74,7 @@ const buildDefaultCards = () => [
     id: 'course-completion',
     type: 'courseCompletion',
     title: 'Tỷ lệ hoàn thành môn học',
-    description: 'Theo doi xu huong hoan thanh mon theo nam.',
+    description: 'Theo dõi xu hướng hoàn thành môn theo năm.',
     enabled: true,
     filters: {
       course: 'Nhap mon lap trinh',
@@ -75,7 +102,7 @@ const buildDefaultCards = () => [
     id: 'student-rating',
     type: 'studentRating',
     title: 'Xếp loại học lực sinh viên',
-    description: 'Xep loai 7 muc theo quy chuan 4 nam.',
+    description: 'Xếp loại 7 mức theo quy chuẩn 4 năm.',
     enabled: true,
     filters: {
       course: 'Tat ca',
@@ -103,7 +130,7 @@ const buildDefaultCards = () => [
     id: 'skill-trend',
     type: 'skillTrend',
     title: 'Tập kỹ năng',
-    description: 'Tien do hoan thanh ky nang theo 4 nam.',
+    description: 'Tiến độ hoàn thành kỹ năng theo 4 năm.',
     enabled: true,
     filters: {
       course: 'Nhap mon lap trinh',
@@ -128,6 +155,19 @@ const buildDefaultCards = () => [
     warning: 60
   }
 ];
+
+const applyCardTextPatches = (configs) =>
+  configs.map((cfg) => {
+    const patch = CARD_TEXT_PATCHES[cfg.id];
+    if (!patch) return cfg;
+    const needsTitleFix = !cfg.title || (patch.oldTitles || []).includes(cfg.title);
+    const needsDescFix = !cfg.description || (patch.oldDescriptions || []).includes(cfg.description);
+    return {
+      ...cfg,
+      ...(needsTitleFix ? { title: patch.title } : {}),
+      ...(needsDescFix ? { description: patch.description } : {})
+    };
+  });
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -165,7 +205,10 @@ const Dashboard = () => {
       const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
       if (saved) {
         try {
-          setCardConfigs(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          const patched = applyCardTextPatches(parsed);
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(patched));
+          setCardConfigs(patched);
         } catch {
           const defaults = buildDefaultCards();
           localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(defaults));
@@ -173,8 +216,9 @@ const Dashboard = () => {
         }
       } else {
         const defaults = buildDefaultCards();
-        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(defaults));
-        setCardConfigs(defaults);
+        const patched = applyCardTextPatches(defaults);
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(patched));
+        setCardConfigs(patched);
       }
     };
 
