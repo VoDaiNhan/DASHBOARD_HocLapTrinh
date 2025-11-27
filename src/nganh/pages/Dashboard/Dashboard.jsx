@@ -18,7 +18,7 @@ const buildDefaultCards = () => [
   {
     id: 'lecture-effectiveness',
     type: 'lectureEffectiveness',
-    title: 'Do phu hop bai giang',
+    title: 'Độ phù hợp bài giảng',
     description: 'Hien thi hieu qua giua bai giang va nang luc sinh vien.',
     enabled: true,
     filters: {
@@ -46,7 +46,7 @@ const buildDefaultCards = () => [
   {
     id: 'course-completion',
     type: 'courseCompletion',
-    title: 'Ty le hoan thanh mon hoc',
+    title: 'Tỷ lệ hoàn thành môn học',
     description: 'Theo doi xu huong hoan thanh mon theo nam.',
     enabled: true,
     filters: {
@@ -74,7 +74,7 @@ const buildDefaultCards = () => [
   {
     id: 'student-rating',
     type: 'studentRating',
-    title: 'Xep loai hoc luc sinh vien',
+    title: 'Xếp loại học lực sinh viên',
     description: 'Xep loai 7 muc theo quy chuan 4 nam.',
     enabled: true,
     filters: {
@@ -102,7 +102,7 @@ const buildDefaultCards = () => [
   {
     id: 'skill-trend',
     type: 'skillTrend',
-    title: 'Tap ky nang',
+    title: 'Tập kỹ năng',
     description: 'Tien do hoan thanh ky nang theo 4 nam.',
     enabled: true,
     filters: {

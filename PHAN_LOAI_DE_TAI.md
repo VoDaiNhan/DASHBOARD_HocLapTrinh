@@ -1,6 +1,6 @@
 # PHÂN LOẠI ĐỀ TÀI VÀ PHÂN TÍCH CHỈ SỐ - DASHBOARD SINH VIÊN
 
-## 📋 TỔNG QUAN
+## 📋 TỔNG QUAN (QUẢN LÝ GIẢNG VIÊN)
 
 Tài liệu này phân loại các đề tài theo từng trang và phân tích các chỉ số/metrics của từng đề tài trong Dashboard Sinh viên.
 

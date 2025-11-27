@@ -6,7 +6,6 @@ import {
   BookOpen,
   BarChart3,
   LogOut,
-  GraduationCap,
   UserCheck,
   Settings,
   Layers,
@@ -16,65 +15,6 @@ import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 import logo from '../../../assets/unnamed.jpg';
-
-const TeacherMenu = ({ isDarkMode, onClose, location }) => {
-  const [open, setOpen] = useState(true);
-  const searchParams = new URLSearchParams(location.search);
-  const currentView = searchParams.get('view') || 'overview';
-  const isActive = location.pathname.startsWith('/teachers');
-
-  const baseButton =
-    isDarkMode === true
-      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900';
-
-  const activeButton =
-    isDarkMode === true
-      ? 'bg-blue-900 text-blue-200 border-r-2 border-blue-500'
-      : 'bg-blue-50 text-blue-700 border-r-2 border-blue-600';
-
-  return (
-    <div>
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
-          isActive ? activeButton : baseButton
-        }`}
-      >
-        <span className="flex items-center">
-          <UserCheck
-            className={`mr-3 h-5 w-5 ${
-              isActive
-                ? isDarkMode
-                  ? 'text-blue-400'
-                  : 'text-blue-600'
-                : 'text-gray-400'
-            }`}
-          />
-          {'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn'}
-        </span>
-        <span className="text-xs">{open ? '-' : '+'}</span>
-      </button>
-      {open && (
-        <div className="mt-1 space-y-1 pl-8">
-          <Link
-            to="/teachers?view=overview"
-            onClick={onClose}
-            className={`block px-2 py-2 text-sm rounded-md ${
-              currentView === 'overview'
-                ? isDarkMode
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                : baseButton
-            }`}
-          >
-            {'T\u1ED5ng quan'}
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
@@ -184,7 +124,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     {
       name: 'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn',
-      type: 'teacher'
+      href: '/teachers',
+      icon: UserCheck,
+      current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')
     },
     {
       name: 'Ph\u00E2n t\u00EDch Sinh vi\u00EAn',
@@ -254,9 +196,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <ul className="space-y-2">
             {navigation.map((item) => (
               <li key={item.name}>
-                {item.type === 'teacher' ? (
-                  <TeacherMenu isDarkMode={isDarkMode} onClose={onClose} location={location} />
-                ) : item.type === 'class' ? (
+                {item.type === 'class' ? (
                   <ClassMenu isDarkMode={isDarkMode} onClose={onClose} location={location} />
                 ) : (
                   <Link

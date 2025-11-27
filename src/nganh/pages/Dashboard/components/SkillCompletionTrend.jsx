@@ -12,7 +12,6 @@ import {
   Customized
 } from 'recharts';
 import { Layers, CalendarRange, BookOpen } from 'lucide-react';
-import SkillTrendSummary from './SkillTrendSummary';
 
 const COURSE_OPTIONS = [
   { value: 'intro', label: 'Nhập môn lập trình' },
@@ -118,17 +117,6 @@ const SkillCompletionTrend = ({ title, description }) => {
       });
       point.avg = count ? Math.round((sum / count) * 10) / 10 : null;
       return point;
-    });
-  }, [selectedCourse, yearKeys]);
-
-  const summaryData = useMemo(() => {
-    const skills = SKILL_MAP[selectedCourse] || [];
-    return yearKeys.map((year) => {
-      const skillsObj = {};
-      skills.forEach((skill) => {
-        skillsObj[skill] = COMPLETION_BY_SKILL[selectedCourse]?.[skill]?.[year] ?? 0;
-      });
-      return { year, skills: skillsObj };
     });
   }, [selectedCourse, yearKeys]);
 
@@ -331,11 +319,6 @@ const SkillCompletionTrend = ({ title, description }) => {
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      <div className="mt-4">
-        <SkillTrendSummary data={summaryData} />
-      </div>
-
       {insights && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <SummaryItem
