@@ -66,7 +66,7 @@ export const generateProgressData = (enrolledCourses, courseLessons = {}) => {
     
     courseProgressMap[course.id] = actualProgress;
   });
-
+  
   // Tính tiến độ cho từng khóa học riêng biệt
   // Hiển thị tiến độ thực tế từ bài học đã hoàn thành
   // Bỏ logic tính tuần, chỉ hiển thị tiến độ thực tế
@@ -1695,4 +1695,49 @@ export const plagiarismWarnings = [
     message: "⚠️ Nguy cơ cao: Mức độ tương đồng rất cao. Cần kiểm tra lại."
   }
 ];
+
+// Helper function để tổ chức bài tập theo level (Level 1: Tân thủ, Level 2: Trung bình, Level 3: Nâng cao)
+// Level được xác định dựa trên độ khó: Easy = Level 1, Medium = Level 2, Hard = Level 3
+export const organizeExercisesByLevel = (courseId) => {
+  const exercises = courseExercises[courseId] || [];
+  
+  // Nhóm bài tập theo level
+  const levelMap = {
+    1: { name: 'Level 1: Tân thủ', exercises: [], levelNumber: 1 },
+    2: { name: 'Level 2: Trung bình', exercises: [], levelNumber: 2 },
+    3: { name: 'Level 3: Nâng cao', exercises: [], levelNumber: 3 }
+  };
+  
+  exercises.forEach(exercise => {
+    let level = 1; // Default
+    if (exercise.level === 'Easy') level = 1;
+    else if (exercise.level === 'Medium') level = 2;
+    else if (exercise.level === 'Hard') level = 3;
+    
+    if (levelMap[level]) {
+      levelMap[level].exercises.push(exercise);
+    }
+  });
+  
+  // Chỉ trả về các level có bài tập
+  return Object.values(levelMap).filter(level => level.exercises.length > 0);
+};
+
+// Tính tiến độ của user ở một level cụ thể
+// Dựa trên số bài tập đã hoàn thành trong level đó
+export const calculateLevelProgress = (courseId, levelNumber) => {
+  const levelData = organizeExercisesByLevel(courseId).find(l => l.levelNumber === levelNumber);
+  if (!levelData || levelData.exercises.length === 0) return 0;
+  
+  // Lấy danh sách bài tập đã hoàn thành từ sessionStorage hoặc từ state
+  const savedCompleted = typeof window !== 'undefined' 
+    ? JSON.parse(sessionStorage.getItem('completedExercises') || '[]')
+    : [];
+  
+  const completedCount = levelData.exercises.filter(ex => 
+    savedCompleted.includes(ex.id) || ex.completed
+  ).length;
+  
+  return Math.round((completedCount / levelData.exercises.length) * 100);
+};
 

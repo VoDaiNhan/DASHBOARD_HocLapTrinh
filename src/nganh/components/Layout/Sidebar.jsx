@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   X,
   Home,
@@ -6,75 +6,15 @@ import {
   BookOpen,
   BarChart3,
   LogOut,
-  GraduationCap,
   UserCheck,
   Settings,
   Layers,
   ChevronRight
 } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 import logo from '../../../assets/unnamed.jpg';
-
-const TeacherMenu = ({ isDarkMode, onClose, location }) => {
-  const [open, setOpen] = useState(true);
-  const searchParams = new URLSearchParams(location.search);
-  const currentView = searchParams.get('view') || 'overview';
-  const isActive = location.pathname.startsWith('/teachers');
-
-  const baseButton =
-    isDarkMode === true
-      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900';
-
-  const activeButton =
-    isDarkMode === true
-      ? 'bg-blue-900 text-blue-200 border-r-2 border-blue-500'
-      : 'bg-blue-50 text-blue-700 border-r-2 border-blue-600';
-
-  return (
-    <div>
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
-          isActive ? activeButton : baseButton
-        }`}
-      >
-        <span className="flex items-center">
-          <UserCheck
-            className={`mr-3 h-5 w-5 ${
-              isActive
-                ? isDarkMode
-                  ? 'text-blue-400'
-                  : 'text-blue-600'
-                : 'text-gray-400'
-            }`}
-          />
-          {'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn'}
-        </span>
-        <span className="text-xs">{open ? '-' : '+'}</span>
-      </button>
-      {open && (
-        <div className="mt-1 space-y-1 pl-8">
-          <Link
-            to="/teachers?view=overview"
-            onClick={onClose}
-            className={`block px-2 py-2 text-sm rounded-md ${
-              currentView === 'overview'
-                ? isDarkMode
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                : baseButton
-            }`}
-          >
-            {'T\u1ED5ng quan'}
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
@@ -169,37 +109,40 @@ const ClassMenu = ({ isDarkMode, onClose, location }) => {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isDarkMode } = useTheme();
 
   const navigation = [
     {
-      name: 'Trang Ch\u1EE7',
+      name: 'Trang Chủ',
       href: '/dashboard',
       icon: Home,
       current: location.pathname === '/' || location.pathname === '/dashboard'
     },
     {
-      name: 'Qu\u1EA3n L\u00FD L\u1EDBp',
+      name: 'Quản Lý Lớp',
       type: 'class'
     },
     {
-      name: 'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn',
-      type: 'teacher'
+      name: 'Quản Lý Giảng Viên',
+      href: '/teachers',
+      icon: UserCheck,
+      current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')
     },
     {
-      name: 'Ph\u00E2n t\u00EDch Sinh vi\u00EAn',
+      name: 'Phân tích Sinh viên',
       href: '/students',
       icon: Users,
       current: location.pathname === '/students' || location.pathname.startsWith('/students/')
     },
     {
-      name: 'Hi\u1EC7u su\u1EA5t Kh\u00F3a h\u1ECDc',
+      name: 'Hiệu suất Khóa học',
       href: '/courses',
       icon: BookOpen,
       current: location.pathname === '/courses' || location.pathname.startsWith('/courses/')
     },
     {
-      name: 'Ph\u00E2n T\u00EDch Ng\u00E0nh',
+      name: 'Phân Tích Ngành',
       href: '/reports',
       icon: BarChart3,
       current: location.pathname === '/reports'
@@ -215,6 +158,16 @@ const Sidebar = ({ isOpen, onClose }) => {
     isDarkMode === true
       ? 'bg-blue-900 text-blue-200 border-r-2 border-blue-500'
       : 'bg-blue-50 text-blue-700 border-r-2 border-blue-600';
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('dashboardType');
+    onClose?.();
+    // Điều hướng cứng để tháo toàn bộ state còn lại
+    window.location.replace('/login');
+  };
 
   return (
     <>
@@ -254,9 +207,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <ul className="space-y-2">
             {navigation.map((item) => (
               <li key={item.name}>
-                {item.type === 'teacher' ? (
-                  <TeacherMenu isDarkMode={isDarkMode} onClose={onClose} location={location} />
-                ) : item.type === 'class' ? (
+                {item.type === 'class' ? (
                   <ClassMenu isDarkMode={isDarkMode} onClose={onClose} location={location} />
                 ) : (
                   <Link
@@ -307,9 +258,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                   ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
               }`}
+              onClick={handleLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              {'\u0110\u0103ng Xu\u1EA5t'}
+              Đăng Xuất
             </button>
           </div>
         </div>

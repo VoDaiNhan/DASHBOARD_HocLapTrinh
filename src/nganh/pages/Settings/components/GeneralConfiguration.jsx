@@ -12,13 +12,10 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+      trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/lecture-effectiveness',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -26,7 +23,9 @@ const buildDefaultCards = () => [
       smooth: true,
       showDots: true
     },
-    threshold: 65
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
   },
   {
     id: 'course-completion',
@@ -36,13 +35,10 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+      trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/course-completion',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -50,7 +46,9 @@ const buildDefaultCards = () => [
       smooth: true,
       showDots: true
     },
-    threshold: 70
+    threshold: 70,
+    benchmark: 75,
+    warning: 60
   },
   {
     id: 'student-rating',
@@ -60,13 +58,10 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Tất cả',
+      courseList: ['Tất cả', 'Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+      trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/student-rating',
-      manualJson: ''
     },
     chart: {
       type: 'bar',
@@ -74,7 +69,9 @@ const buildDefaultCards = () => [
       smooth: false,
       showDots: false
     },
-    threshold: 60
+    threshold: 60,
+    benchmark: 75,
+    warning: 60
   },
   {
     id: 'skill-trend',
@@ -84,13 +81,10 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+      trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/skill-trend',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -98,7 +92,9 @@ const buildDefaultCards = () => [
       smooth: true,
       showDots: true
     },
-    threshold: 65
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
   }
 ];
 
@@ -107,6 +103,13 @@ const inputClass =
 const label = 'block text-sm font-medium text-gray-700 mb-1';
 const groupTitle = 'text-lg font-semibold text-gray-900';
 const groupDesc = 'text-sm text-gray-600';
+
+const TAB_KEYS = [
+  { key: 'display', label: 'Thông tin hiển thị' },
+  { key: 'filters', label: 'Bộ lọc mặc định' },
+  { key: 'chart', label: 'Kiểu biểu đồ' },
+  { key: 'threshold', label: 'Ngưỡng đánh giá' }
+];
 
 const GeneralConfiguration = () => {
   const [cards, setCards] = useState(buildDefaultCards());
@@ -118,11 +121,15 @@ const GeneralConfiguration = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Merge với defaults để tránh thiếu field
         const defaults = buildDefaultCards();
         const merged = parsed.map((c) => {
           const def = defaults.find((d) => d.type === c.type) || defaults[0];
-          return { ...def, ...c, filters: { ...def.filters, ...c.filters }, dataSource: { ...def.dataSource, ...c.dataSource }, chart: { ...def.chart, ...c.chart } };
+          return {
+            ...def,
+            ...c,
+            filters: { ...def.filters, ...(c.filters || {}) },
+            chart: { ...def.chart, ...(c.chart || {}) }
+          };
         });
         setCards(merged);
       } catch {
@@ -141,8 +148,8 @@ const GeneralConfiguration = () => {
   };
 
   const addCard = () => {
-    const newId = `card-${Date.now()}`;
     const def = buildDefaultCards()[0];
+    const newId = `card-${Date.now()}`;
     persist([
       ...cards,
       {
@@ -150,8 +157,7 @@ const GeneralConfiguration = () => {
         id: newId,
         type: 'custom',
         title: 'Card mới',
-        description: 'Mô tả ngắn',
-        dataSource: { mode: 'api', endpoint: '', manualJson: '' }
+        description: 'Mô tả ngắn'
       }
     ]);
   };
@@ -171,71 +177,13 @@ const GeneralConfiguration = () => {
     setTimeout(() => setMessage(''), 2000);
   };
 
-  const renderDataSource = (card) => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label className={label}>Nguồn dữ liệu</label>
-        <div className="flex gap-3 text-sm text-gray-800">
-          {[
-            { value: 'api', label: 'API' },
-            { value: 'json', label: 'JSON thủ công' }
-          ].map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`ds-${card.id}`}
-                value={opt.value}
-                checked={card.dataSource.mode === opt.value}
-                onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, mode: e.target.value } }))}
-              />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-      {card.dataSource.mode === 'api' && (
-        <div className="md:col-span-2">
-          <label className={label}>API endpoint</label>
-          <input
-            className={inputClass}
-            placeholder="/api/card-config"
-            value={card.dataSource.endpoint}
-            onChange={(e) => updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, endpoint: e.target.value } }))}
-          />
-        </div>
-      )}
-      {card.dataSource.mode === 'json' && (
-        <div className="md:col-span-2">
-          <label className={label}>JSON thủ công</label>
-          <textarea
-            className={inputClass}
-            rows={3}
-            placeholder='{"2022": 75, "2023": 80}'
-            value={card.dataSource.manualJson}
-            onChange={(e) =>
-              updateCard(card.id, (c) => ({ ...c, dataSource: { ...c.dataSource, manualJson: e.target.value } }))
-            }
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  const TAB_KEYS = [
-    { key: 'display', label: 'Thông tin hiển thị' },
-    { key: 'filters', label: 'Bộ lọc mặc định' },
-    { key: 'data', label: 'Nguồn dữ liệu' },
-    { key: 'chart', label: 'Kiểu biểu đồ' },
-    { key: 'threshold', label: 'Ngưỡng cảnh báo' }
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Cấu hình Card Dashboard</h2>
           <p className="text-sm text-gray-600">
-            Mỗi card trên Dashboard có một cấu hình tương ứng. Chỉ giữ các trường thật sự cần cho người quản lý ngành.
+            Giữ lại các trường thật sự cần cho người quản lý ngành. Đã ẩn phần nguồn dữ liệu cho vai trò này.
           </p>
         </div>
         <div className="flex gap-2">
@@ -298,12 +246,11 @@ const GeneralConfiguration = () => {
                   onClick={() => removeCard(card.id)}
                   className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded border border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  <Trash2 className="h-4 w-4" /> Xoá
+                  <Trash2 className="h-4 w-4" /> Xóa
                 </button>
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
               {TAB_KEYS.map((tab) => (
                 <button
@@ -320,7 +267,6 @@ const GeneralConfiguration = () => {
               ))}
             </div>
 
-            {/* Nội dung tab */}
             {activeTab === 'display' && (
               <div className="space-y-3">
                 <h4 className={groupTitle}>Thông tin hiển thị</h4>
@@ -331,6 +277,7 @@ const GeneralConfiguration = () => {
                       className={inputClass}
                       value={card.title}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, title: e.target.value }))}
+                      placeholder="Tỷ lệ hoàn thành môn học"
                     />
                   </div>
                   <div>
@@ -339,6 +286,7 @@ const GeneralConfiguration = () => {
                       className={inputClass}
                       value={card.description}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, description: e.target.value }))}
+                      placeholder="Theo dõi xu hướng hoàn thành môn theo năm"
                     />
                   </div>
                 </div>
@@ -346,51 +294,116 @@ const GeneralConfiguration = () => {
             )}
 
             {activeTab === 'filters' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h4 className={groupTitle}>Bộ lọc mặc định</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <p className={groupDesc}>Tự động lấy 4 năm gần nhất, có thể đổi chu kỳ đào tạo.</p>
+                <div className="space-y-4">
                   <div>
-                    <label className={label}>Chọn môn (dropdown)</label>
-                    <input
-                      className={inputClass}
-                      value={card.filters.course}
-                      onChange={(e) =>
-                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, course: e.target.value } }))
-                      }
-                      placeholder="VD: Nhập môn lập trình"
-                    />
+                    <label className={label}>Môn</label>
+                    <div className="flex items-center gap-3">
+                      <select
+                        className={`${inputClass} flex-1`}
+                        value={card.filters.course}
+                        onChange={(e) =>
+                          updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, course: e.target.value } }))
+                        }
+                      >
+                        {(card.filters.courseList || []).map((course) => (
+                          <option key={course} value={course}>
+                            {course}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Danh sách môn dùng chung; thêm mới để các ngành khác cũng chọn được.
+                    </p>
                   </div>
-                  <div>
-                    <label className={label}>Năm bắt đầu</label>
-                    <input
-                      type="number"
-                      className={inputClass}
-                      value={card.filters.startYear}
-                      onChange={(e) =>
-                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, startYear: Number(e.target.value) } }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className={label}>Năm kết thúc</label>
-                    <input
-                      type="number"
-                      className={inputClass}
-                      value={card.filters.endYear}
-                      onChange={(e) =>
-                        updateCard(card.id, (c) => ({ ...c, filters: { ...c.filters, endYear: Number(e.target.value) } }))
-                      }
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={label}>Chu kỳ đào tạo</label>
+                      <select
+                        className={inputClass}
+                        value={card.filters.trainingCycle || '4y'}
+                        onChange={(e) =>
+                          updateCard(card.id, (c) => ({
+                            ...c,
+                            filters: { ...c.filters, trainingCycle: e.target.value }
+                          }))
+                        }
+                      >
+                        <option value="3y">3 năm</option>
+                        <option value="4y">4 năm</option>
+                        <option value="5y">5 năm</option>
+                        <option value="custom">Tùy chỉnh</option>
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">4 năm là mặc định với chương trình đại học.</p>
+                    </div>
+
+                    {card.filters.trainingCycle === 'custom' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:col-span-1">
+                        <div>
+                          <label className={label}>Năm bắt đầu</label>
+                          <input
+                            type="number"
+                            className={inputClass}
+                            value={card.filters.startYear}
+                            onChange={(e) =>
+                              updateCard(card.id, (c) => ({
+                                ...c,
+                                filters: { ...c.filters, startYear: Number(e.target.value) }
+                              }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <label className={label}>Năm kết thúc</label>
+                          <input
+                            type="number"
+                            className={inputClass}
+                            value={card.filters.endYear}
+                            onChange={(e) =>
+                              updateCard(card.id, (c) => ({
+                                ...c,
+                                filters: { ...c.filters, endYear: Number(e.target.value) }
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className={label}>Khoảng năm hiển thị</label>
+                        <input
+                          className={inputClass}
+                          value={(() => {
+                            const now = new Date().getFullYear();
+                            const span =
+                              card.filters.trainingCycle === '3y'
+                                ? 3
+                                : card.filters.trainingCycle === '5y'
+                                  ? 5
+                                  : 4;
+                            const start = now - (span - 1);
+                            const end = now;
+                            return `${start} - ${end}`;
+                          })()}
+                          readOnly
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Tự động lấy{' '}
+                          {card.filters.trainingCycle === '3y'
+                            ? '3'
+                            : card.filters.trainingCycle === '5y'
+                              ? '5'
+                              : '4'}{' '}
+                          năm gần nhất.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {activeTab === 'data' && (
-              <div className="space-y-3">
-                <h4 className={groupTitle}>Nguồn dữ liệu</h4>
-                <p className={groupDesc}>Chọn API hoặc nhập JSON thủ công (chỉ một trong hai).</p>
-                {renderDataSource(card)}
               </div>
             )}
 
@@ -403,12 +416,16 @@ const GeneralConfiguration = () => {
                     <select
                       className={inputClass}
                       value={card.chart.type}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, type: e.target.value } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, type: e.target.value } }))
+                      }
                     >
                       <option value="line">Line</option>
                       <option value="bar">Bar</option>
                       <option value="area">Area</option>
+                      <option value="spline">Spline</option>
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">Line/Area cho xu hướng; Bar cho so sánh nhanh.</p>
                   </div>
                   <div>
                     <label className={label}>Màu biểu đồ</label>
@@ -416,14 +433,18 @@ const GeneralConfiguration = () => {
                       type="color"
                       className="h-10 w-full rounded border border-gray-300"
                       value={card.chart.color}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, color: e.target.value } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, color: e.target.value } }))
+                      }
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={card.chart.smooth}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, smooth: e.target.checked } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, smooth: e.target.checked } }))
+                      }
                     />
                     <label className={label + ' mb-0'}>Đường mượt</label>
                   </div>
@@ -431,27 +452,52 @@ const GeneralConfiguration = () => {
                     <input
                       type="checkbox"
                       checked={card.chart.showDots}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, showDots: e.target.checked } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, showDots: e.target.checked } }))
+                      }
                     />
-                    <label className={label + ' mb-0'}>Hiện dots</label>
+                    <label className={label + ' mb-0'}>Hiển thị điểm dữ liệu</label>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'threshold' && (
-              <div className="space-y-3">
-                <h4 className={groupTitle}>Ngưỡng cảnh báo</h4>
-                <p className={groupDesc}>Nếu % thấp hơn ngưỡng, card sẽ hiển thị cảnh báo (VD: &lt; 70% → warning).</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div className="space-y-4">
+                <h4 className={groupTitle}>Mức đề ra / Ngưỡng đánh giá</h4>
+                <p className={groupDesc}>Đặt mục tiêu, ngưỡng cảnh báo cho từng card.</p>
+                <div className="space-y-4">
                   <div>
-                    <label className={label}>% cảnh báo</label>
+                    <label className={label}>Mức đề ra (mục tiêu %)</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={card.benchmark ?? 75}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, benchmark: Number(e.target.value) }))}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Tỷ lệ mục tiêu khoa mong muốn.</p>
+                  </div>
+                  <div>
+                    <label className={label}>Mức dưới chuẩn (%)</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={card.warning ?? 60}
+                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, warning: Number(e.target.value) }))}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Nếu kết quả thấp hơn mức này sẽ cảnh báo mạnh.</p>
+                  </div>
+                  <div>
+                    <label className={label}>Ngưỡng chú ý (%)</label>
                     <input
                       type="number"
                       className={inputClass}
                       value={card.threshold}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, threshold: Number(e.target.value) }))}
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Nếu gần mức dưới chuẩn sẽ highlight nhẹ (vùng cảnh báo).
+                    </p>
                   </div>
                 </div>
               </div>

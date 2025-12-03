@@ -13,6 +13,162 @@ import { mockDashboardData } from '../../data/mockData';
 
 const CONFIG_STORAGE_KEY = 'dashboardCardConfigs';
 
+const CARD_TEXT_PATCHES = {
+  'lecture-effectiveness': {
+    title: 'Độ phù hợp bài giảng',
+    description: 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.',
+    oldTitles: ['Do phu hop bai giang'],
+    oldDescriptions: ['Hien thi hieu qua giua bai giang va nang luc sinh vien.']
+  },
+  'course-completion': {
+    title: 'Tỷ lệ hoàn thành môn học',
+    description: 'Theo dõi xu hướng hoàn thành môn theo năm.',
+    oldTitles: ['Ty le hoan thanh mon hoc'],
+    oldDescriptions: ['Theo doi xu huong hoan thanh mon theo nam.']
+  },
+  'student-rating': {
+    title: 'Xếp loại học lực sinh viên',
+    description: 'Xếp loại 7 mức theo quy chuẩn 4 năm.',
+    oldTitles: ['Xep loai hoc luc sinh vien'],
+    oldDescriptions: ['Xep loai 7 muc theo quy chuan 4 nam.']
+  },
+  'skill-trend': {
+    title: 'Tập kỹ năng',
+    description: 'Tiến độ hoàn thành kỹ năng theo 4 năm.',
+    oldTitles: ['Tap ky nang'],
+    oldDescriptions: ['Tien do hoan thanh ky nang theo 4 nam.']
+  }
+};
+
+// Fallback defaults when localStorage is empty so the cards appear on first load
+const buildDefaultCards = () => [
+  {
+    id: 'lecture-effectiveness',
+    type: 'lectureEffectiveness',
+    title: 'Độ phù hợp bài giảng',
+    description: 'Hiển thị hiệu quả giữa bài giảng và năng lực sinh viên.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/lecture-effectiveness',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'course-completion',
+    type: 'courseCompletion',
+    title: 'Tỷ lệ hoàn thành môn học',
+    description: 'Theo dõi xu hướng hoàn thành môn theo năm.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/course-completion',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#3f51b5',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 70,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'student-rating',
+    type: 'studentRating',
+    title: 'Xếp loại học lực sinh viên',
+    description: 'Xếp loại 7 mức theo quy chuẩn 4 năm.',
+    enabled: true,
+    filters: {
+      course: 'Tat ca',
+      courseList: ['Tat ca', 'Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/student-rating',
+      manualJson: ''
+    },
+    chart: {
+      type: 'bar',
+      color: '#2563eb',
+      smooth: false,
+      showDots: false
+    },
+    threshold: 60,
+    benchmark: 75,
+    warning: 60
+  },
+  {
+    id: 'skill-trend',
+    type: 'skillTrend',
+    title: 'Tập kỹ năng',
+    description: 'Tiến độ hoàn thành kỹ năng theo 4 năm.',
+    enabled: true,
+    filters: {
+      course: 'Nhap mon lap trinh',
+      courseList: ['Nhap mon lap trinh', 'Ky thuat lap trinh', 'Cau truc du lieu & GT', 'Lap trinh HOT'],
+      trainingCycle: '4y',
+      startYear: 2022,
+      endYear: 2025
+    },
+    dataSource: {
+      mode: 'api',
+      endpoint: '/api/skill-trend',
+      manualJson: ''
+    },
+    chart: {
+      type: 'line',
+      color: '#2563eb',
+      smooth: true,
+      showDots: true
+    },
+    threshold: 65,
+    benchmark: 75,
+    warning: 60
+  }
+];
+
+const applyCardTextPatches = (configs) =>
+  configs.map((cfg) => {
+    const patch = CARD_TEXT_PATCHES[cfg.id];
+    if (!patch) return cfg;
+    const needsTitleFix = !cfg.title || (patch.oldTitles || []).includes(cfg.title);
+    const needsDescFix = !cfg.description || (patch.oldDescriptions || []).includes(cfg.description);
+    return {
+      ...cfg,
+      ...(needsTitleFix ? { title: patch.title } : {}),
+      ...(needsDescFix ? { description: patch.description } : {})
+    };
+  });
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,14 +201,35 @@ const Dashboard = () => {
   }, [filters]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
-    if (saved) {
-      try {
-        setCardConfigs(JSON.parse(saved));
-      } catch {
-        setCardConfigs([]);
+    const loadConfig = () => {
+      const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const patched = applyCardTextPatches(parsed);
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(patched));
+          setCardConfigs(patched);
+        } catch {
+          const defaults = buildDefaultCards();
+          localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(defaults));
+          setCardConfigs(defaults);
+        }
+      } else {
+        const defaults = buildDefaultCards();
+        const patched = applyCardTextPatches(defaults);
+        localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(patched));
+        setCardConfigs(patched);
       }
-    }
+    };
+
+    loadConfig();
+    const handleStorage = (e) => {
+      if (e.key === CONFIG_STORAGE_KEY) {
+        loadConfig();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   const handleFilterChange = (filterType, value) => {
@@ -106,9 +283,9 @@ const Dashboard = () => {
           onSearchChange={setSearchText}
           onCompletionRangeChange={setCompletionRange}
           onFilterChange={handleIndustryFilterChange}
-          showLectureCard={cardConfigs.find((c) => c.type === 'lectureEffectiveness' && c.enabled)}
-          lectureTitle={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.title}
-          lectureNote={cardConfigs.find((c) => c.type === 'lectureEffectiveness')?.description}
+          showLectureCard={false}
+          lectureTitle={null}
+          lectureNote={null}
         />
         {cardConfigs.find((c) => c.type === 'courseCompletion' && c.enabled) && (
           <CourseCompletionTrend

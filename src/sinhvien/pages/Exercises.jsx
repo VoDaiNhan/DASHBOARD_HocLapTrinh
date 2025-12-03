@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { courseExercises, learningPath, competencyByCourse, softSkills } from '../data/data';
 
 const Exercises = () => {
@@ -266,9 +267,19 @@ const Exercises = () => {
                     <h2 className="text-xl font-bold text-gray-800">
                       {course.thumbnail} {course.name}
                     </h2>
-                    <span className="text-sm text-gray-600">
-                      {filteredCourseExs.length} bài tập
-                    </span>
+                    <button
+                      onClick={() => {
+                        // TODO: Gọi API tính lại năng lực và gợi ý bài tập
+                        alert('Đang tính lại năng lực và gợi ý bài tập...');
+                        // Simulate API call
+                        setTimeout(() => {
+                          alert('Đã tính lại năng lực và cập nhật gợi ý bài tập!');
+                        }, 1500);
+                      }}
+                      className="btn-primary text-sm px-4 py-2"
+                    >
+                      🔄 Tính lại
+                    </button>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -483,8 +494,8 @@ const Exercises = () => {
       )}
 
       {/* Modal: Nộp bài - Chấm điểm Tự động */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {showSubmitModal && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, margin: 0 }}>
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -503,22 +514,20 @@ const Exercises = () => {
                 <>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nhập code của bạn:
+                      {/* Nhập code của bạn: */}
                     </label>
                     <textarea
                       value={submissionCode}
-                      onChange={(e) => setSubmissionCode(e.target.value)}
-                      className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="// Nhập code của bạn ở đây..."
+                      readOnly
+                      className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm bg-gray-100 cursor-not-allowed"
                     />
                   </div>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => handleSubmit(showSubmitModal)}
-                      disabled={isSubmitting}
-                      className="btn-primary flex-1"
+                      disabled
+                      className="btn-primary flex-1 opacity-50 cursor-not-allowed"
                     >
-                      {isSubmitting ? 'Đang chấm điểm...' : 'Nộp bài'}
+                      Nộp bài
                     </button>
                     <button
                       onClick={closeSubmitModal}
@@ -571,11 +580,12 @@ const Exercises = () => {
             </div>
           </div>
         </div>
+        , document.body
       )}
 
       {/* Modal: AI Feedback */}
-      {showFeedbackModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {showFeedbackModal && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 99999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, margin: 0 }}>
           <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -598,9 +608,8 @@ const Exercises = () => {
                     </label>
                     <textarea
                       value={feedbackCode}
-                      onChange={(e) => setFeedbackCode(e.target.value)}
-                      className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                      placeholder="// Nhập code của bạn ở đây..."
+                      readOnly
+                      className="w-full h-64 p-3 border border-gray-300 rounded-lg font-mono text-sm bg-gray-100 cursor-not-allowed"
                     />
                   </div>
                   <div className="mb-4">
@@ -610,11 +619,10 @@ const Exercises = () => {
                   </div>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => handleGetFeedback(showFeedbackModal)}
-                      disabled={isGettingFeedback}
-                      className="btn-accent flex-1"
+                      disabled
+                      className="btn-accent flex-1 opacity-50 cursor-not-allowed"
                     >
-                      {isGettingFeedback ? 'Đang phân tích...' : 'Nhận Feedback AI'}
+                      Nhận Feedback AI
                     </button>
                     <button
                       onClick={closeFeedbackModal}
@@ -710,6 +718,7 @@ const Exercises = () => {
             </div>
           </div>
         </div>
+        , document.body
       )}
     </div>
   );

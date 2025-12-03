@@ -31,7 +31,6 @@ import DashboardStudent from './sinhvien/pages/Dashboard.jsx';
 import Courses from './sinhvien/pages/Courses.jsx';
 import Exercises from './sinhvien/pages/Exercises.jsx';
 import Feedback from './sinhvien/pages/Feedback.jsx';
-import Skills from './sinhvien/pages/Skills.jsx';
 import Profile from './sinhvien/pages/Profile.jsx';
 
 // Ngành imports
@@ -63,8 +62,6 @@ const StudentApp = () => {
         return <Exercises />;
       case 'feedback':
         return <Feedback />;
-      case 'skills':
-        return <Skills />;
       case 'profile':
         return <Profile />;
       default:
