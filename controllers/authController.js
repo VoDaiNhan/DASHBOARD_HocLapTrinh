@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { pool, sql } from '../config/database.js';
+import { getPool, sql } from '../config/database.js';
 import { sendMSSVEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
@@ -38,6 +38,7 @@ export const register = async (req, res) => {
     // KIỂM TRA: full_name và class_name có trong danh sách lớp không
     if (userRole === 'sinh_vien') {
       // Check trong bảng class: LopID = class_name và HoTenSV = full_name
+      const pool = await getPool();
       const classCheckResult = await pool.request()
         .input('class_name', sql.NVarChar(20), class_name)
         .input('full_name', sql.NVarChar(255), full_name)
@@ -123,6 +124,7 @@ export const register = async (req, res) => {
       });
     } else {
       // Cho giảng viên và quản lý ngành đăng ký mà không cần kiểm tra class
+      const pool = await getPool();
       const existingUserResult = await pool.request()
         .input('email', sql.NVarChar(255), email)
         .query('SELECT id FROM users WHERE email = @email');
@@ -204,6 +206,7 @@ export const login = async (req, res) => {
     }
 
     // Tìm user bằng email hoặc MSSV
+    const pool = await getPool();
     let user;
     if (mssv && !email) {
       // Login bằng MSSV
@@ -294,9 +297,7 @@ export const login = async (req, res) => {
           class: user.class_name || null
         },
         access_token: accessToken,
-        refresh_token: refreshToken,
-        token_expires_at: tokenExpiresAt.toISOString(),
-        refresh_token_expires_at: refreshTokenExpiresAt.toISOString()
+        refresh_token: refreshToken
       }
     });
   } catch (error) {
@@ -321,6 +322,7 @@ export const getCurrentUser = async (req, res) => {
     }
 
     // Lấy thông tin user từ database
+    const pool = await getPool();
     const result = await pool.request()
       .input('user_id', sql.UniqueIdentifier, req.user.userId)
       .query('SELECT id, email, mssv, full_name, phone, address, class_id, role, created_at FROM users WHERE id = @user_id');
@@ -365,6 +367,7 @@ export const logout = async (req, res) => {
 
     // Xóa session khỏi database (hard delete để bảo mật)
     try {
+      const pool = await getPool();
       await pool.request()
         .input('token', sql.NVarChar(sql.MAX), token)
         .query('DELETE FROM user_sessions WHERE access_token = @token');
@@ -402,6 +405,7 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Tìm user trong database
+    const pool = await getPool();
     const result = await pool.request()
       .input('email', sql.NVarChar(255), email)
       .query('SELECT id, email, full_name FROM users WHERE email = @email');
@@ -464,6 +468,7 @@ export const verifyResetToken = async (req, res) => {
     }
 
     // Tìm token trong database
+    const pool = await getPool();
     const result = await pool.request()
       .input('token', sql.NVarChar(255), token)
       .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
@@ -539,6 +544,7 @@ export const resetPassword = async (req, res) => {
     }
 
     // Tìm token trong database
+    const pool = await getPool();
     const tokenResult = await pool.request()
       .input('token', sql.NVarChar(255), token)
       .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
@@ -623,6 +629,7 @@ export const refreshToken = async (req, res) => {
     }
 
     // Check refresh token exists in database and is still valid
+    const pool = await getPool();
     const sessionResult = await pool.request()
       .input('refresh_token', sql.NVarChar(sql.MAX), refresh_token)
       .query('SELECT user_id, is_active FROM user_sessions WHERE refresh_token = @refresh_token AND refresh_token_expires_at > GETDATE()');
@@ -683,9 +690,7 @@ export const refreshToken = async (req, res) => {
       message: 'Token đã được làm mới',
       data: {
         access_token: newAccessToken,
-        refresh_token: newRefreshToken,
-        token_expires_at: tokenExpiresAt.toISOString(),
-        refresh_token_expires_at: refreshTokenExpiresAt.toISOString()
+        refresh_token: newRefreshToken
       }
     });
   } catch (error) {
