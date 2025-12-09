@@ -327,7 +327,7 @@ export const login = async (req, res) => {
 
     // Set CSRF token cookie (non-HTTP-only for double submit)
     const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    setCsrfCookie(res, csrfToken, req);
 
     return res.json({
       success: true,
@@ -883,7 +883,7 @@ export const refreshToken = async (req, res) => {
     res.cookie('refresh_token', newRefreshToken, refreshCookieOptions);
     // Rotate CSRF token
     const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken);
+    setCsrfCookie(res, csrfToken, req);
 
     return res.json({
       success: true,
@@ -917,7 +917,7 @@ export const getCsrfToken = async (req, res) => {
     });
     
     // Set CSRF token in cookie (not HTTP-only so client can read it)
-    setCsrfCookie(res, csrfToken);
+    setCsrfCookie(res, csrfToken, req);
     
     console.log('✅ CSRF token generated and cookie set:', csrfToken.substring(0, 20) + '...');
     

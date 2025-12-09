@@ -8,7 +8,25 @@ const isProduction = process.env.NODE_ENV === 'production' ||
 
 export const generateCsrfToken = () => crypto.randomBytes(32).toString('hex');
 
-export const setCsrfCookie = (res, token) => {
+// Extract root domain from URL (e.g., 'dashboard.shopsheap.online' -> '.shopsheap.online')
+const getRootDomain = (url) => {
+  if (!url) return null;
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    const parts = hostname.split('.');
+    // If has at least 2 parts (e.g., 'shopsheap.online'), return root domain with dot
+    if (parts.length >= 2) {
+      const rootDomain = '.' + parts.slice(-2).join('.');
+      return rootDomain;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const setCsrfCookie = (res, token, req = null) => {
   // For production (HTTPS), use secure: true and sameSite: 'none'
   // For development (HTTP), use secure: false and sameSite: 'lax'
   const cookieOptions = {
@@ -17,8 +35,6 @@ export const setCsrfCookie = (res, token) => {
     sameSite: isProduction ? 'none' : 'lax', // 'none' requires secure: true
     path: '/',
     maxAge: 30 * 24 * 60 * 60 * 1000, // align with refresh token lifetime
-    // Don't set domain - let browser set it to the request origin (frontend domain)
-    // This allows frontend to read the cookie even in cross-origin scenarios
   };
   
   // If sameSite is 'none', secure must be true
@@ -26,11 +42,26 @@ export const setCsrfCookie = (res, token) => {
     cookieOptions.secure = true;
   }
   
+  // Set domain for cross-subdomain cookie sharing
+  // Try to get root domain from request origin or FRONTEND_URL
+  let rootDomain = null;
+  if (req && req.headers.origin) {
+    rootDomain = getRootDomain(req.headers.origin);
+  }
+  if (!rootDomain && process.env.FRONTEND_URL) {
+    rootDomain = getRootDomain(process.env.FRONTEND_URL);
+  }
+  
+  if (rootDomain && isProduction) {
+    cookieOptions.domain = rootDomain; // e.g., '.shopsheap.online'
+  }
+  
   console.log('🍪 Setting CSRF cookie with options:', {
     secure: cookieOptions.secure,
     sameSite: cookieOptions.sameSite,
     isProduction,
-    domain: 'not set (will use request origin)'
+    domain: cookieOptions.domain || 'not set',
+    origin: req?.headers?.origin
   });
   
   res.cookie('csrf_token', token, cookieOptions);
