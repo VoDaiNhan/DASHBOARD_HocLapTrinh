@@ -910,8 +910,16 @@ export const getCsrfToken = async (req, res) => {
     // Generate new CSRF token
     const csrfToken = generateCsrfToken();
     
+    console.log('🔐 Generating CSRF token:', {
+      origin: req.headers.origin,
+      userAgent: req.headers['user-agent']?.substring(0, 50),
+      cookies: req.cookies
+    });
+    
     // Set CSRF token in cookie (not HTTP-only so client can read it)
     setCsrfCookie(res, csrfToken);
+    
+    console.log('✅ CSRF token generated and cookie set:', csrfToken.substring(0, 20) + '...');
     
     return res.json({
       success: true,

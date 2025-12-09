@@ -16,10 +16,34 @@ const FRONTEND_URL = process.env.FRONTEND_URL;
 
 app.set('trust proxy', 1);
 
+// Configure allowed origins
+const getAllowedOrigins = () => {
+  const origins = ['https://dashboard.shopsheap.online'];
+  
+  if (FRONTEND_URL) {
+    const urls = FRONTEND_URL.split(',').map(url => url.trim());
+    origins.push(...urls);
+  }
+  
+  // Remove duplicates and return
+  return [...new Set(origins)];
+};
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: FRONTEND_URL ? FRONTEND_URL.split(',') : true,
+  origin: (origin, callback) => {
+    const allowedOrigins = getAllowedOrigins();
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(cookieParser());
