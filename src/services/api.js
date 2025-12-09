@@ -302,12 +302,23 @@ async function apiCall(endpoint, options = {}) {
       '/auth/csrf-token',
       '/auth/verify-reset-token' // Public endpoint, doesn't need CSRF token
     ];
-    if (!csrfToken && !publicEndpointsWithoutCsrf.includes(endpoint)) {
-      // Try to fetch CSRF token if not available (for protected or sensitive endpoints)
+    
+    // Use basePath for comparison (remove query string)
+    const needsCsrf = !publicEndpointsWithoutCsrf.includes(basePath);
+    
+    // If endpoint needs CSRF token but we don't have it, fetch it first
+    if (needsCsrf && !csrfToken) {
+      console.log('🔒 CSRF token missing for', basePath, '- fetching...');
       csrfToken = await fetchCsrfToken();
+      if (!csrfToken) {
+        console.warn('⚠️ Failed to fetch CSRF token for', basePath);
+      } else {
+        console.log('✅ CSRF token fetched successfully');
+      }
     }
     
-    if (csrfToken) {
+    // Always add CSRF token to header if we have it and endpoint needs it
+    if (csrfToken && needsCsrf) {
       headers['x-csrf-token'] = csrfToken;
     }
 
