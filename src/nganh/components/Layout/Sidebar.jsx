@@ -15,6 +15,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 import logo from '../../../assets/unnamed.jpg';
+import { clearAccessToken } from '../../../services/api';
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
@@ -130,12 +131,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')
     },
     {
-      name: 'Ngân Hàng Bài Tập',
-      href: '/assignments',
-      icon: BookOpen,
-      current: location.pathname === '/assignments'
-    },
-    {
       name: 'Phân tích Sinh viên',
       href: '/students',
       icon: Users,
@@ -166,8 +161,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       : 'bg-blue-50 text-blue-700 border-r-2 border-blue-600';
 
   const handleLogout = () => {
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
+    clearAccessToken();
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('dashboardType');
     onClose?.();
