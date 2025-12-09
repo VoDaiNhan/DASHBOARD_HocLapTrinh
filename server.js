@@ -1,18 +1,32 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import morgan from 'morgan';
 import { testConnection } from './config/database.js';
 import authRoutes from './routes/auth.js';
+import { defaultLimiter } from './middleware/rateLimit.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const FRONTEND_URL = process.env.FRONTEND_URL;
+
+app.set('trust proxy', 1);
 
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: FRONTEND_URL ? FRONTEND_URL.split(',') : true,
+  credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(defaultLimiter);
+app.use(morgan('combined'));
 
 // Test route
 app.get('/', (req, res) => {

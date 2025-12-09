@@ -4,14 +4,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // SQL Server Configuration
+// Check if server is IP address (for TLS/SSL configuration)
+// TLS/SSL doesn't allow IP address as ServerName, so we disable encryption for IP addresses
+const isIPAddress = /^\d+\.\d+\.\d+\.\d+$/.test(process.env.DB_SERVER || '');
+
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
   database: process.env.DB_NAME,
   options: {
-    encrypt: true, // For Azure
-    trustServerCertificate: true // For local dev
+    encrypt: !isIPAddress, // Disable encrypt if using IP address (TLS doesn't allow IP as ServerName)
+    trustServerCertificate: true, // Trust server certificate
+    enableArithAbort: true // Enable arithmetic abort for better compatibility
   },
   pool: {
     max: 10,

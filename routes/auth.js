@@ -7,9 +7,12 @@ import {
   forgotPassword,
   verifyResetToken,
   resetPassword,
-  refreshToken
+  refreshToken,
+  getCsrfToken
 } from '../controllers/authController.js';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyTokenAllowExpired } from '../middleware/auth.js';
+import { loginLimiter, registerLimiter, refreshLimiter, forgotPasswordLimiter } from '../middleware/rateLimit.js';
+import { csrfProtection } from '../middleware/csrf.js';
 
 const router = express.Router();
 
@@ -18,14 +21,14 @@ const router = express.Router();
  * @desc    Đăng ký tài khoản mới (mặc định role = sinh_vien)
  * @access  Public
  */
-router.post('/register', register);
+router.post('/register', registerLimiter, register);
 
 /**
  * @route   POST /api/auth/login
  * @desc    Đăng nhập
  * @access  Public
  */
-router.post('/login', login);
+router.post('/login', loginLimiter, login);
 
 /**
  * @route   GET /api/auth/me
@@ -39,14 +42,14 @@ router.get('/me', verifyToken, getCurrentUser);
  * @desc    Đăng xuất session hiện tại
  * @access  Private
  */
-router.post('/logout', verifyToken, logout);
+router.post('/logout', verifyToken, csrfProtection, logout);
 
 /**
  * @route   POST /api/auth/forgot-password
  * @desc    Gửi email reset password
- * @access  Public
+ * @access  Public (but rate limited to prevent abuse)
  */
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, csrfProtection, forgotPassword);
 
 /**
  * @route   GET /api/auth/verify-reset-token
@@ -60,13 +63,20 @@ router.get('/verify-reset-token', verifyResetToken);
  * @desc    Đặt lại mật khẩu mới
  * @access  Public
  */
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', csrfProtection, resetPassword);
+
+/**
+ * @route   GET /api/auth/csrf-token
+ * @desc    Lấy CSRF token để gửi trong header
+ * @access  Public
+ */
+router.get('/csrf-token', getCsrfToken);
 
 /**
  * @route   POST /api/auth/refresh-token
  * @desc    Làm mới access token
- * @access  Public
+ * @access  Requires access token (even if expired) + CSRF token for security
  */
-router.post('/refresh-token', refreshToken);
+router.post('/refresh-token', refreshLimiter, verifyTokenAllowExpired, csrfProtection, refreshToken);
 
 export default router;

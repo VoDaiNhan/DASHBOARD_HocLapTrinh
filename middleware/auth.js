@@ -1,5 +1,5 @@
-import { verifyAccessToken } from '../utils/jwt.js';
-import { pool, sql } from '../config/database.js';
+import { verifyAccessToken, decodeAccessToken } from '../utils/jwt.js';
+import { getPool, sql } from '../config/database.js';
 
 /**
  * Middleware để verify JWT token từ request header
@@ -27,9 +27,10 @@ export const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Lấy thông tin user từ database
-    try {
-      const result = await pool.request()
+      // Lấy thông tin user từ database
+      try {
+        const pool = await getPool();
+        const result = await pool.request()
         .input('user_id', sql.UniqueIdentifier, decoded.userId)
         .query('SELECT id, role FROM users WHERE id = @user_id');
 
@@ -108,7 +109,86 @@ export const checkRole = (allowedRoles) => {
   };
 };
 
+/**
+ * Middleware để verify access token nhưng cho phép expired token
+ * Dùng cho refresh-token endpoint để verify token signature và user
+ */
+export const verifyTokenAllowExpired = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Access token không được cung cấp'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Decode token (allows expired tokens, but verifies signature)
+    const decoded = decodeAccessToken(token);
+    
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Access token không hợp lệ'
+      });
+    }
+
+    // Lấy thông tin user từ database
+    try {
+      const pool = await getPool();
+      const result = await pool.request()
+        .input('user_id', sql.UniqueIdentifier, decoded.userId)
+        .query('SELECT id, role FROM users WHERE id = @user_id');
+
+      if (!result.recordset || result.recordset.length === 0) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'User không tồn tại'
+        });
+      }
+
+      // Check session exists (even if expired)
+      const sessionResult = await pool.request()
+        .input('token', sql.NVarChar(sql.MAX), token)
+        .query('SELECT id, is_active FROM user_sessions WHERE access_token = @token');
+
+      if (!sessionResult.recordset || sessionResult.recordset.length === 0) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Session không tồn tại'
+        });
+      }
+
+      // Lưu user và token vào request
+      req.user = {
+        userId: result.recordset[0].id,
+        role: result.recordset[0].role
+      };
+      req.token = token;
+      req.oldSessionId = sessionResult.recordset[0].id;
+      req.isTokenExpired = decoded.exp ? decoded.exp < Math.floor(Date.now() / 1000) : false;
+      
+      next();
+    } catch (dbError) {
+      console.error('Database error in verifyTokenAllowExpired:', dbError);
+      return res.status(500).json({
+        error: 'Server error',
+        message: 'Lỗi database'
+      });
+    }
+  } catch (error) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: error.message
+    });
+  }
+};
+
 export default {
   verifyToken,
+  verifyTokenAllowExpired,
   checkRole
 };

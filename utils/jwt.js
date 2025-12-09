@@ -7,13 +7,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-change-in-production';
 
 /**
- * Generate access token (expires in 1 hour)
+ * Generate access token (expires in 30 minutes)
  */
 export const generateAccessToken = (userId, role) => {
   return jwt.sign(
     { userId, role },
     JWT_SECRET,
-    { expiresIn: '1h' }
+    { expiresIn: '30m' }
   );
 };
 
@@ -29,11 +29,30 @@ export const generateRefreshToken = (userId) => {
 };
 
 /**
- * Verify access token
+ * Verify access token (strict - fails if expired)
  */
 export const verifyAccessToken = (token) => {
   try {
     return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Decode access token without verification (allows expired tokens)
+ * Used for refresh token endpoint to verify token signature and get user info
+ */
+export const decodeAccessToken = (token) => {
+  try {
+    // Decode without verification to allow expired tokens
+    // But still verify signature to ensure token is valid
+    const decoded = jwt.decode(token, { complete: true });
+    if (!decoded) return null;
+    
+    // Verify signature only (ignore expiration)
+    jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
+    return decoded.payload;
   } catch (error) {
     return null;
   }
@@ -54,5 +73,6 @@ export default {
   generateAccessToken,
   generateRefreshToken,
   verifyAccessToken,
-  verifyRefreshToken
+  verifyRefreshToken,
+  decodeAccessToken
 };

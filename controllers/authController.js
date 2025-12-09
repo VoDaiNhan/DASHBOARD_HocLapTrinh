@@ -4,6 +4,19 @@ import jwt from 'jsonwebtoken';
 import { getPool, sql } from '../config/database.js';
 import { sendMSSVEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
+import { generateCsrfToken, setCsrfCookie } from '../middleware/csrf.js';
+
+// Cookie options for refresh token (HTTP-only)
+const isProduction = process.env.NODE_ENV === 'production';
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProduction, // should be true on HTTPS
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/',
+  maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+};
+
+const sanitizeString = (value) => (typeof value === 'string' ? value.trim() : value);
 
 /**
  * Register - Đăng ký tài khoản mới
@@ -15,9 +28,14 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
  */
 export const register = async (req, res) => {
   try {
-    const { email, password, full_name, class_name, role } = req.body;
+    const email = sanitizeString(req.body.email);
+    const password = sanitizeString(req.body.password);
+    const full_name = sanitizeString(req.body.full_name);
+    const class_name = sanitizeString(req.body.class_name);
+    const role = sanitizeString(req.body.role);
 
     // Validation - Sinh viên cần email, password, full_name, class_name
+    // NOTE: password từ frontend đã được hash bằng SHA-256 (64 ký tự hex)
     if (!email || !password || !full_name || !class_name) {
       return res.status(400).json({
         error: 'Validation error',
@@ -25,10 +43,11 @@ export const register = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    // Validate SHA-256 hash format (64 hex characters)
+    if (!/^[a-f0-9]{64}$/i.test(password)) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Password phải có ít nhất 6 ký tự'
+        message: 'Password không đúng định dạng (phải là SHA-256 hash)'
       });
     }
 
@@ -137,6 +156,7 @@ export const register = async (req, res) => {
       }
 
       // Hash password với bcrypt
+      // NOTE: password từ frontend đã là SHA-256 hash, nên lưu bcrypt(SHA-256(password)) vào DB
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
@@ -195,13 +215,24 @@ export const register = async (req, res) => {
  */
 export const login = async (req, res) => {
   try {
-    const { email, mssv, password } = req.body;
+    const email = sanitizeString(req.body.email);
+    const mssv = sanitizeString(req.body.mssv);
+    const password = sanitizeString(req.body.password);
 
     // Validation
+    // NOTE: password từ frontend đã được hash bằng SHA-256 (64 ký tự hex)
     if (!password || (!email && !mssv)) {
       return res.status(400).json({
         error: 'Validation error',
         message: 'Email hoặc MSSV và password là bắt buộc'
+      });
+    }
+
+    // Validate SHA-256 hash format (64 hex characters)
+    if (!/^[a-f0-9]{64}$/i.test(password)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Password không đúng định dạng (phải là SHA-256 hash)'
       });
     }
 
@@ -241,8 +272,14 @@ export const login = async (req, res) => {
     }
 
     // Verify password
+    // NOTE: password từ frontend đã là SHA-256 hash
+    // DB lưu bcrypt(SHA-256(password)) cho user mới, hoặc bcrypt(plaintext) cho user cũ
+    // So sánh SHA-256(password) với bcrypt hash trong DB
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      // Log failed login attempt for security monitoring
+      console.warn(`⚠️ Failed login attempt for ${email || mssv} at ${new Date().toISOString()}`);
+      
       return res.status(401).json({
         error: 'Login failed',
         message: 'Email/MSSV hoặc password không đúng'
@@ -285,6 +322,13 @@ export const login = async (req, res) => {
     // Remove password from response
     delete user.password;
 
+    // Set refresh token as HTTP-only cookie
+    res.cookie('refresh_token', refreshToken, refreshCookieOptions);
+
+    // Set CSRF token cookie (non-HTTP-only for double submit)
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
+
     return res.json({
       success: true,
       message: 'Đăng nhập thành công',
@@ -296,8 +340,8 @@ export const login = async (req, res) => {
           full_name: user.full_name,
           class: user.class_name || null
         },
-        access_token: accessToken,
-        refresh_token: refreshToken
+        access_token: accessToken
+        // refresh_token stored in cookie
       }
     });
   } catch (error) {
@@ -376,6 +420,20 @@ export const logout = async (req, res) => {
       console.warn('Warning: Could not delete session from user_sessions table:', sessionError.message);
     }
 
+    // Clear refresh token cookie
+    res.clearCookie('refresh_token', { 
+      path: '/',
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax'
+    });
+    res.clearCookie('csrf_token', { 
+      path: '/',
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax'
+    });
+
     return res.json({
       success: true,
       message: 'Đăng xuất thành công'
@@ -394,13 +452,34 @@ export const logout = async (req, res) => {
  */
 export const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    // Sanitize và validate email
+    const email = sanitizeString(req.body.email);
 
     // Validation
     if (!email) {
       return res.status(400).json({
         error: 'Validation error',
         message: 'Email là bắt buộc'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      // Log suspicious activity
+      console.warn(`⚠️ Invalid email format attempted: ${email} from IP: ${req.ip} at ${new Date().toISOString()}`);
+      // Return same message to prevent email enumeration
+      return res.json({
+        success: true,
+        message: 'Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu'
+      });
+    }
+
+    // Limit email length to prevent abuse
+    if (email.length > 255) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Email không hợp lệ'
       });
     }
 
@@ -412,32 +491,59 @@ export const forgotPassword = async (req, res) => {
 
     const user = result.recordset[0];
 
-    // Không báo lỗi nếu email không tồn tại để tránh brute force
+    // Không báo lỗi nếu email không tồn tại để tránh brute force và email enumeration
     if (!user) {
+      // Log request for security monitoring (but don't reveal if email exists)
+      console.log(`📧 Password reset requested for non-existent email from IP: ${req.ip} at ${new Date().toISOString()}`);
       return res.json({
         success: true,
         message: 'Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu'
       });
     }
 
-    // Tạo token reset password
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+    // Xóa các token reset password cũ của user này (chưa sử dụng và chưa hết hạn)
+    // Để tránh tích lũy nhiều token
+    await pool.request()
+      .input('user_id', sql.UniqueIdentifier, user.id)
+      .query('DELETE FROM password_resets WHERE user_id = @user_id AND is_used = 0 AND expires_at > GETDATE()');
+
+    // Tạo token reset password mới
+    const resetToken = crypto.randomBytes(32).toString('hex'); // 64 ký tự hex
+    // Convert sang giờ VN (UTC+7) để lưu vào database
+    const expiresAtUTC = new Date(Date.now() + 15 * 60 * 1000); // 15 phút từ bây giờ (UTC)
+    const expiresAt = new Date(expiresAtUTC.getTime() + 7 * 60 * 60 * 1000); // Cộng 7 giờ để chuyển sang giờ VN
+
+    // Log token để debug
+    console.log(`🔑 Generated reset token: ${resetToken.substring(0, 10)}... (length: ${resetToken.length}), expires at: ${expiresAt.toISOString()}`);
 
     // Lưu token vào database
     await pool.request()
       .input('user_id', sql.UniqueIdentifier, user.id)
       .input('token', sql.NVarChar(255), resetToken)
-      .input('expires_at', sql.DateTime2, expiresAt)
+      .input('expires_at', sql.DateTime2, expiresAt.toISOString())
       .query('INSERT INTO password_resets (user_id, token, expires_at) VALUES (@user_id, @token, @expires_at)');
+    
+    // Verify token was saved correctly
+    const verifyToken = await pool.request()
+      .input('token', sql.NVarChar(255), resetToken)
+      .query('SELECT token, LEN(token) as token_length FROM password_resets WHERE token = @token');
+    
+    if (verifyToken.recordset.length > 0) {
+      const savedToken = verifyToken.recordset[0];
+      console.log(`✅ Token saved to DB: ${savedToken.token.substring(0, 10)}... (length: ${savedToken.token_length})`);
+    }
+
+    // Log successful request for security monitoring
+    console.log(`✅ Password reset token created for user: ${user.email} (ID: ${user.id}) from IP: ${req.ip} at ${new Date().toISOString()}`);
 
     // Gửi email reset password
     try {
       await sendResetPasswordEmail(user.email, user.full_name, resetToken);
-      console.log(`✅ Reset password email sent to ${user.email}`);
+      console.log(`📧 Reset password email sent to ${user.email}`);
     } catch (emailError) {
-      console.error('Error sending reset password email:', emailError);
-      // Không fail nếu không gửi được email
+      console.error('❌ Error sending reset password email:', emailError);
+      // Không fail nếu không gửi được email (có thể do config)
+      // Nhưng vẫn log để admin biết
     }
 
     return res.json({
@@ -445,7 +551,9 @@ export const forgotPassword = async (req, res) => {
       message: 'Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu'
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('❌ Forgot password error:', error);
+    // Log error with IP for security monitoring
+    console.error(`Error details - IP: ${req.ip}, Time: ${new Date().toISOString()}, Error: ${error.message}`);
     return res.status(500).json({
       error: 'Server error',
       message: error.message
@@ -467,16 +575,44 @@ export const verifyResetToken = async (req, res) => {
       });
     }
 
-    // Tìm token trong database
+    // Sanitize token (trim whitespace)
+    const sanitizedToken = token.trim();
+
+    // Log để debug
+    console.log(`🔍 Verifying reset token: ${sanitizedToken.substring(0, 10)}... (length: ${sanitizedToken.length})`);
+
+    // Tìm token trong database và kiểm tra hết hạn bằng SQL Server (để đảm bảo timezone đúng)
     const pool = await getPool();
     const result = await pool.request()
-      .input('token', sql.NVarChar(255), token)
-      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
+      .input('token', sql.NVarChar(255), sanitizedToken)
+      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token AND expires_at > GETDATE()');
 
     const resetRecord = result.recordset[0];
 
-    // Kiểm tra token có tồn tại không
+    // Kiểm tra token có tồn tại và chưa hết hạn không
     if (!resetRecord) {
+      // Check xem token có tồn tại nhưng đã hết hạn không
+      const checkExpired = await pool.request()
+        .input('token', sql.NVarChar(255), sanitizedToken)
+        .query('SELECT id, is_used, expires_at FROM password_resets WHERE token = @token');
+      
+      if (checkExpired.recordset.length > 0) {
+        const record = checkExpired.recordset[0];
+        console.log(`⚠️ Token found but expired or invalid. Expires at: ${record.expires_at}, Current: ${new Date().toISOString()}, Is used: ${record.is_used}`);
+        if (record.is_used) {
+          return res.status(400).json({
+            error: 'Token already used',
+            message: 'Token này đã được sử dụng'
+          });
+        } else {
+          return res.status(400).json({
+            error: 'Token expired',
+            message: 'Token đã hết hạn'
+          });
+        }
+      }
+      
+      console.log(`❌ Token not found in database: ${sanitizedToken.substring(0, 10)}...`);
       return res.status(404).json({
         error: 'Invalid token',
         message: 'Token không hợp lệ hoặc không tồn tại'
@@ -491,14 +627,7 @@ export const verifyResetToken = async (req, res) => {
       });
     }
 
-    // Kiểm tra token đã hết hạn chưa
-    if (new Date() > new Date(resetRecord.expires_at)) {
-      return res.status(400).json({
-        error: 'Token expired',
-        message: 'Token đã hết hạn'
-      });
-    }
-
+    console.log(`✅ Token is valid. User ID: ${resetRecord.user_id}, Expires at: ${resetRecord.expires_at}`);
     // Token hợp lệ
     return res.json({
       success: true,
@@ -529,6 +658,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
+    // NOTE: password và confirmPassword từ frontend đã được hash bằng SHA-256 (64 ký tự hex)
     if (password !== confirmPassword) {
       return res.status(400).json({
         error: 'Validation error',
@@ -536,23 +666,52 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    // Validate SHA-256 hash format (64 hex characters)
+    if (!/^[a-f0-9]{64}$/i.test(password)) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Password phải có ít nhất 6 ký tự'
+        message: 'Password không đúng định dạng (phải là SHA-256 hash)'
       });
     }
 
-    // Tìm token trong database
+    // Sanitize token (trim whitespace)
+    const sanitizedToken = token.trim();
+    
+    // Log để debug
+    console.log(`🔍 Resetting password with token: ${sanitizedToken.substring(0, 10)}... (length: ${sanitizedToken.length})`);
+
+    // Tìm token trong database và kiểm tra hết hạn bằng SQL Server (để đảm bảo timezone đúng)
     const pool = await getPool();
     const tokenResult = await pool.request()
-      .input('token', sql.NVarChar(255), token)
-      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token');
+      .input('token', sql.NVarChar(255), sanitizedToken)
+      .query('SELECT id, user_id, expires_at, is_used FROM password_resets WHERE token = @token AND expires_at > GETDATE()');
 
     const resetRecord = tokenResult.recordset[0];
 
-    // Kiểm tra token có tồn tại không
+    // Kiểm tra token có tồn tại và chưa hết hạn không
     if (!resetRecord) {
+      // Check xem token có tồn tại nhưng đã hết hạn không
+      const checkExpired = await pool.request()
+        .input('token', sql.NVarChar(255), sanitizedToken)
+        .query('SELECT id, is_used, expires_at FROM password_resets WHERE token = @token');
+      
+      if (checkExpired.recordset.length > 0) {
+        const record = checkExpired.recordset[0];
+        console.log(`⚠️ Token found but expired or invalid. Expires at: ${record.expires_at}, Current: ${new Date().toISOString()}, Is used: ${record.is_used}`);
+        if (record.is_used) {
+          return res.status(400).json({
+            error: 'Token already used',
+            message: 'Token này đã được sử dụng'
+          });
+        } else {
+          return res.status(400).json({
+            error: 'Token expired',
+            message: 'Token đã hết hạn'
+          });
+        }
+      }
+      
+      console.log(`❌ Token not found in database: ${sanitizedToken.substring(0, 10)}...`);
       return res.status(404).json({
         error: 'Invalid token',
         message: 'Token không hợp lệ hoặc không tồn tại'
@@ -567,15 +726,9 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Kiểm tra token đã hết hạn chưa
-    if (new Date() > new Date(resetRecord.expires_at)) {
-      return res.status(400).json({
-        error: 'Token expired',
-        message: 'Token đã hết hạn'
-      });
-    }
-
+    console.log(`✅ Token is valid for reset. User ID: ${resetRecord.user_id}, Expires at: ${resetRecord.expires_at}`);
     // Hash password mới
+    // NOTE: password từ frontend đã là SHA-256 hash, nên lưu bcrypt(SHA-256(password)) vào DB
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -605,12 +758,19 @@ export const resetPassword = async (req, res) => {
 
 /**
  * Refresh Token - Làm mới access token khi token hết hạn
+ * Requires: Access token (even if expired) + Refresh token cookie for security
  */
 export const refreshToken = async (req, res) => {
   try {
-    const { refresh_token } = req.body;
+    // Access token is already verified by verifyTokenAllowExpired middleware
+    // req.user and req.token are available from middleware
+    const oldAccessToken = req.token;
+    const userId = req.user.userId;
+    const isTokenExpired = req.isTokenExpired;
 
-    // Validation
+    // Get refresh token from cookie (HTTP-only)
+    const refresh_token = req.cookies?.refresh_token;
+
     if (!refresh_token) {
       return res.status(400).json({
         error: 'Validation error',
@@ -619,33 +779,62 @@ export const refreshToken = async (req, res) => {
     }
 
     // Verify refresh token
-    const decoded = verifyRefreshToken(refresh_token);
+    const decodedRefresh = verifyRefreshToken(refresh_token);
     
-    if (!decoded) {
+    if (!decodedRefresh) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Refresh token không hợp lệ hoặc đã hết hạn'
       });
     }
 
-    // Check refresh token exists in database and is still valid
-    const pool = await getPool();
-    const sessionResult = await pool.request()
-      .input('refresh_token', sql.NVarChar(sql.MAX), refresh_token)
-      .query('SELECT user_id, is_active FROM user_sessions WHERE refresh_token = @refresh_token AND refresh_token_expires_at > GETDATE()');
-
-    if (!sessionResult.recordset || sessionResult.recordset.length === 0) {
+    // Verify access token and refresh token belong to same user
+    if (decodedRefresh.userId !== userId) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'Refresh token không còn hợp lệ'
+        message: 'Access token và refresh token không khớp'
       });
     }
 
-    const session = sessionResult.recordset[0];
+    const pool = await getPool();
+
+    // Check old session exists with old access token
+    const oldSessionResult = await pool.request()
+      .input('access_token', sql.NVarChar(sql.MAX), oldAccessToken)
+      .query('SELECT id, user_id, refresh_token FROM user_sessions WHERE access_token = @access_token');
+
+    if (!oldSessionResult.recordset || oldSessionResult.recordset.length === 0) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Session cũ không tồn tại'
+      });
+    }
+
+    const oldSession = oldSessionResult.recordset[0];
+
+    // Verify refresh token matches old session
+    if (oldSession.refresh_token !== refresh_token) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Refresh token không khớp với session'
+      });
+    }
+
+    // Check refresh token is still valid
+    const refreshTokenCheck = await pool.request()
+      .input('refresh_token', sql.NVarChar(sql.MAX), refresh_token)
+      .query('SELECT id FROM user_sessions WHERE refresh_token = @refresh_token AND refresh_token_expires_at > GETDATE()');
+
+    if (!refreshTokenCheck.recordset || refreshTokenCheck.recordset.length === 0) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Refresh token đã hết hạn'
+      });
+    }
 
     // Get user info to generate new tokens
     const userResult = await pool.request()
-      .input('user_id', sql.UniqueIdentifier, decoded.userId)
+      .input('user_id', sql.UniqueIdentifier, userId)
       .query('SELECT id, role FROM users WHERE id = @user_id');
 
     if (!userResult.recordset || userResult.recordset.length === 0) {
@@ -672,7 +861,12 @@ export const refreshToken = async (req, res) => {
     const tokenExpiresAt = new Date(tokenExpiresAtUTC.getTime() + 7 * 60 * 60 * 1000);
     const refreshTokenExpiresAt = new Date(refreshTokenExpiresAtUTC.getTime() + 7 * 60 * 60 * 1000);
 
-    // Update session in database (đã convert sang giờ VN)
+    // Deactivate old session (set is_active = false)
+    await pool.request()
+      .input('old_session_id', sql.UniqueIdentifier, oldSession.id)
+      .query('UPDATE user_sessions SET is_active = 0, updated_at = GETDATE() WHERE id = @old_session_id');
+
+    // Update session with new tokens (đã convert sang giờ VN)
     await pool.request()
       .input('access_token', sql.NVarChar(sql.MAX), newAccessToken)
       .input('refresh_token', sql.NVarChar(sql.MAX), newRefreshToken)
@@ -681,20 +875,52 @@ export const refreshToken = async (req, res) => {
       .input('old_refresh_token', sql.NVarChar(sql.MAX), refresh_token)
       .query(`
         UPDATE user_sessions 
-        SET access_token = @access_token, refresh_token = @refresh_token, token_expires_at = @token_expires_at, refresh_token_expires_at = @refresh_token_expires_at, updated_at = GETDATE()
+        SET access_token = @access_token, refresh_token = @refresh_token, token_expires_at = @token_expires_at, refresh_token_expires_at = @refresh_token_expires_at, is_active = 1, updated_at = GETDATE()
         WHERE refresh_token = @old_refresh_token
       `);
+
+    // Set new refresh token cookie
+    res.cookie('refresh_token', newRefreshToken, refreshCookieOptions);
+    // Rotate CSRF token
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(res, csrfToken);
 
     return res.json({
       success: true,
       message: 'Token đã được làm mới',
       data: {
-        access_token: newAccessToken,
-        refresh_token: newRefreshToken
+        access_token: newAccessToken
+        // refresh_token is stored in HTTP-only cookie
       }
     });
   } catch (error) {
     console.error('Refresh token error:', error);
+    return res.status(500).json({
+      error: 'Server error',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Get CSRF Token - Lấy CSRF token để gửi trong header của các request
+ */
+export const getCsrfToken = async (req, res) => {
+  try {
+    // Generate new CSRF token
+    const csrfToken = generateCsrfToken();
+    
+    // Set CSRF token in cookie (not HTTP-only so client can read it)
+    setCsrfCookie(res, csrfToken);
+    
+    return res.json({
+      success: true,
+      data: {
+        csrf_token: csrfToken
+      }
+    });
+  } catch (error) {
+    console.error('Get CSRF token error:', error);
     return res.status(500).json({
       error: 'Server error',
       message: error.message
@@ -710,5 +936,6 @@ export default {
   forgotPassword,
   verifyResetToken,
   resetPassword,
-  refreshToken
+  refreshToken,
+  getCsrfToken
 };
