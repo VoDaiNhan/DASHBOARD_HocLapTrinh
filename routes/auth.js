@@ -12,7 +12,6 @@ import {
 } from '../controllers/authController.js';
 import { verifyToken, verifyTokenAllowExpired } from '../middleware/auth.js';
 import { loginLimiter, registerLimiter, refreshLimiter, forgotPasswordLimiter } from '../middleware/rateLimit.js';
-import { csrfProtection } from '../middleware/csrf.js';
 
 const router = express.Router();
 
@@ -42,14 +41,14 @@ router.get('/me', verifyToken, getCurrentUser);
  * @desc    Đăng xuất session hiện tại
  * @access  Private
  */
-router.post('/logout', verifyToken, csrfProtection, logout);
+router.post('/logout', verifyToken, logout);
 
 /**
  * @route   POST /api/auth/forgot-password
  * @desc    Gửi email reset password
  * @access  Public (but rate limited to prevent abuse)
  */
-router.post('/forgot-password', forgotPasswordLimiter, csrfProtection, forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
 
 /**
  * @route   GET /api/auth/verify-reset-token
@@ -63,7 +62,7 @@ router.get('/verify-reset-token', verifyResetToken);
  * @desc    Đặt lại mật khẩu mới
  * @access  Public
  */
-router.post('/reset-password', csrfProtection, resetPassword);
+router.post('/reset-password', resetPassword);
 
 /**
  * @route   GET /api/auth/csrf-token
@@ -77,6 +76,6 @@ router.get('/csrf-token', getCsrfToken);
  * @desc    Làm mới access token
  * @access  Requires access token (even if expired) + CSRF token for security
  */
-router.post('/refresh-token', refreshLimiter, verifyTokenAllowExpired, csrfProtection, refreshToken);
+router.post('/refresh-token', refreshLimiter, verifyTokenAllowExpired, refreshToken);
 
 export default router;

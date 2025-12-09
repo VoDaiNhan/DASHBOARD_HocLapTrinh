@@ -47,11 +47,22 @@ export const setCsrfCookie = (res, token, req = null) => {
   let rootDomain = null;
   if (req && req.headers.origin) {
     rootDomain = getRootDomain(req.headers.origin);
+    console.log('🌐 Detected root domain from origin:', rootDomain);
   }
   if (!rootDomain && process.env.FRONTEND_URL) {
     rootDomain = getRootDomain(process.env.FRONTEND_URL);
+    console.log('🌐 Detected root domain from FRONTEND_URL:', rootDomain);
   }
   
+  // Always clear old cookie first (with and without domain) to ensure it's replaced
+  // This is important because browser might have old cookie with different domain
+  res.clearCookie('csrf_token', { path: '/', domain: undefined });
+  if (rootDomain) {
+    res.clearCookie('csrf_token', { path: '/', domain: rootDomain });
+    res.clearCookie('csrf_token', { path: '/', domain: rootDomain.replace(/^\./, '') }); // Also try without leading dot
+  }
+  
+  // Set new cookie with domain if we have root domain
   if (rootDomain && isProduction) {
     cookieOptions.domain = rootDomain; // e.g., '.shopsheap.online'
   }
@@ -61,7 +72,8 @@ export const setCsrfCookie = (res, token, req = null) => {
     sameSite: cookieOptions.sameSite,
     isProduction,
     domain: cookieOptions.domain || 'not set',
-    origin: req?.headers?.origin
+    origin: req?.headers?.origin,
+    tokenPreview: token.substring(0, 20) + '...'
   });
   
   res.cookie('csrf_token', token, cookieOptions);
