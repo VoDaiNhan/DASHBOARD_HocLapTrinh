@@ -45,6 +45,10 @@ import CourseDetailNghanh from './nganh/pages/CourseManagement/CourseDetail';
 import StudentTrackingNghanh from './nganh/pages/StudentTracking/StudentTracking';
 import ReportsNghanh from './nganh/pages/Reports/Reports';
 import SettingsNghanh from './nganh/pages/Settings/Settings';
+import AssignmentManagementNghanh from './nganh/pages/AssignmentManagement/AssignmentManagement';
+import AssignmentDetailNghanh from './nganh/pages/AssignmentManagement/AssignmentDetail';
+import AssignmentCreateNghanh from './nganh/pages/AssignmentManagement/AssignmentCreate';
+import AssignmentEditNghanh from './nganh/pages/AssignmentManagement/AssignmentEdit';
 
 // Student App Component (without router)
 const StudentApp = () => {
@@ -213,6 +217,10 @@ function App() {
                 <Route path="/classes" element={<ClassManagementNghanh />} />
                 <Route path="/classes/:id" element={<ClassDetailNghanh />} />
                 <Route path="/students" element={<StudentTrackingNghanh />} />
+                <Route path="/assignments" element={<AssignmentManagementNghanh />} />
+                <Route path="/assignments/create" element={<AssignmentCreateNghanh />} />
+                <Route path="/assignments/:id" element={<AssignmentDetailNghanh />} />
+                <Route path="/assignments/:id/edit" element={<AssignmentEditNghanh />} />
                 <Route path="/reports" element={<ReportsNghanh />} />
                 <Route path="/settings" element={<SettingsNghanh />} />
               </Routes>
