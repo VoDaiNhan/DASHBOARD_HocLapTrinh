@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
@@ -102,8 +102,56 @@ const StudentApp = () => {
 
 function App() {
   const [selectedDashboard, setSelectedDashboard] = useState(sessionStorage.getItem('dashboardType') || null);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('access_token'));
+  // Allow reset-password route even if user exists in sessionStorage (for password reset flow)
+  const currentPath = window.location.pathname;
+  const isResetPasswordRoute = currentPath.startsWith('/reset-password');
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !isResetPasswordRoute && !!sessionStorage.getItem('user')
+  );
+  
+  console.log('🔍 App render check:', {
+    currentPath,
+    isResetPasswordRoute,
+    hasUser: !!sessionStorage.getItem('user'),
+    isAuthenticated
+  });
 
+  // Sync selectedDashboard with sessionStorage when it changes
+  useEffect(() => {
+    const dashboardType = sessionStorage.getItem('dashboardType');
+    if (dashboardType && dashboardType !== selectedDashboard) {
+      console.log('🔄 Syncing dashboardType from sessionStorage:', dashboardType);
+      setSelectedDashboard(dashboardType);
+    }
+  }, []);
+
+  // Fetch CSRF token and refresh access token if needed when app loads/reloads
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const { fetchCsrfToken, getAccessToken, refreshAccessToken } = await import('./services/api.js');
+        
+        // Fetch CSRF token first
+        await fetchCsrfToken();
+        
+        // If user is authenticated but no access token in memory (page reloaded),
+        // try to refresh token using temp_access_token from sessionStorage
+        const hasUser = !!sessionStorage.getItem('user');
+        const currentAccessToken = getAccessToken();
+        const tempAccessToken = sessionStorage.getItem('temp_access_token');
+        
+        if (hasUser && !currentAccessToken && tempAccessToken) {
+          console.log('🔄 User found with temp access token, restoring to memory...');
+          const { setAccessToken } = await import('./services/api.js');
+          setAccessToken(tempAccessToken);
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+      }
+    };
+    
+    initAuth();
+  }, []);
 
   // Auth routes wrapper
   if (!isAuthenticated) {

@@ -742,11 +742,11 @@ const Courses = () => {
                     </h3>
                     <div className="w-full flex justify-center">
                       <GaugeChart value={progress} courseName={course.name} size={gaugeSize} />
-                    </div>
-                  </div>
-                  );
+                          </div>
+                      </div>
+                    );
                 })}
-            </div>
+          </div>
           ) : (
             <div className="flex items-center justify-center h-[420px] text-gray-500 dark:text-gray-400">
               Đang tải biểu đồ...
@@ -865,12 +865,12 @@ const Courses = () => {
                     >
                       📄 Chi tiết
                     </button>
-                    <button
-                      onClick={() => handleEnroll(course)}
-                      className="flex-1 btn-accent text-sm"
-                    >
-                      ✅ Đăng ký ngay
-                    </button>
+                  <button
+                    onClick={() => handleEnroll(course)}
+                    className="flex-1 btn-accent text-sm"
+                  >
+                    ✅ Đăng ký ngay
+                  </button>
                   </>
                 )}
               </div>

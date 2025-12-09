@@ -130,6 +130,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')
     },
     {
+      name: 'Ngân Hàng Bài Tập',
+      href: '/assignments',
+      icon: BookOpen,
+      current: location.pathname === '/assignments'
+    },
+    {
       name: 'Phân tích Sinh viên',
       href: '/students',
       icon: Users,

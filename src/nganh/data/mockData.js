@@ -1,8 +1,8 @@
-export const mockDashboardData = {
+﻿export const mockDashboardData = {
   kpiMetrics: {
     totalStudents: 150,
     studentChange: 12,
-    totalTeachers: 8,
+    totalTeachers: 14,
     teacherChange: 1,
     ongoingClasses: 2,
     classChange: 2,
@@ -258,7 +258,7 @@ export const mockDepartmentData = {
     description: 'Khoa Công Nghệ Thông Tin - Đào tạo chuyên sâu về lập trình, hệ thống và công nghệ',
     establishedYear: 2005,
     totalStudents: 150,
-    totalTeachers: 8,
+    totalTeachers: 14,
     totalCourses: 12,
     totalClasses: 24
   },
@@ -415,12 +415,126 @@ export const mockDepartmentData = {
       researchAreas: ['Data Analytics', 'Business Intelligence', 'Big Data'],
       publications: 3,
       projects: 1
+    },
+    {
+      id: 9,
+      name: 'TS. Nguyen Hai Long',
+      email: 'long.nh@university.edu.vn',
+      phone: '0901234575',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'Khoa hoc du lieu, Machine Learning',
+      experience: 7,
+      status: 'active',
+      totalClasses: 2,
+      totalStudents: 26,
+      averageRating: 4.35,
+      joinDate: '2017-01-15',
+      education: 'Tien si Khoa hoc Du lieu - DH Quoc gia',
+      researchAreas: ['Data Science', 'Machine Learning', 'MLOps'],
+      publications: 10,
+      projects: 5
+    },
+    {
+      id: 10,
+      name: 'ThS. Tran Minh Khoi',
+      email: 'khoi.tm@university.edu.vn',
+      phone: '0901234576',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'Blockchain, An toan he thong',
+      experience: 5,
+      status: 'active',
+      totalClasses: 2,
+      totalStudents: 22,
+      averageRating: 4.2,
+      joinDate: '2019-05-10',
+      education: 'Thac si An toan thong tin - DH Bach Khoa',
+      researchAreas: ['Blockchain', 'Security', 'Distributed Systems'],
+      publications: 6,
+      projects: 3
+    },
+    {
+      id: 11,
+      name: 'TS. Pham Lan Chi',
+      email: 'chi.pl@university.edu.vn',
+      phone: '0901234577',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'Thi giac may tinh, Deep Learning',
+      experience: 9,
+      status: 'active',
+      totalClasses: 3,
+      totalStudents: 34,
+      averageRating: 4.6,
+      joinDate: '2015-11-20',
+      education: 'Tien si Thi giac may tinh - DH Quoc te',
+      researchAreas: ['Computer Vision', 'Deep Learning', 'Image Processing'],
+      publications: 16,
+      projects: 7
+    },
+    {
+      id: 12,
+      name: 'ThS. Hoang Nhat Quang',
+      email: 'quang.hn@university.edu.vn',
+      phone: '0901234578',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'DevOps, Cloud',
+      experience: 6,
+      status: 'active',
+      totalClasses: 2,
+      totalStudents: 25,
+      averageRating: 4.25,
+      joinDate: '2018-07-12',
+      education: 'Thac si Khoa hoc May tinh - DH Cong nghe',
+      researchAreas: ['Cloud Computing', 'DevOps', 'SRE'],
+      publications: 5,
+      projects: 4
+    },
+    {
+      id: 13,
+      name: 'TS. Vu Mai Anh',
+      email: 'anh.vm@university.edu.vn',
+      phone: '0901234579',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'Khoa hoc du lieu, Thong ke ung dung',
+      experience: 8,
+      status: 'active',
+      totalClasses: 3,
+      totalStudents: 32,
+      averageRating: 4.55,
+      joinDate: '2016-04-05',
+      education: 'Tien si Thong ke - DH Quoc gia',
+      researchAreas: ['Statistics', 'Data Analytics', 'Predictive Modeling'],
+      publications: 12,
+      projects: 6
+    },
+    {
+      id: 14,
+      name: 'ThS. Le Thanh Tung',
+      email: 'tung.lt@university.edu.vn',
+      phone: '0901234580',
+      position: 'Giang vien',
+      department: 'CNTT',
+      specialization: 'Tri tue nhan tao, Xu ly ngon ngu tu nhien',
+      experience: 4,
+      status: 'active',
+      totalClasses: 1,
+      totalStudents: 18,
+      averageRating: 4.15,
+      joinDate: '2021-02-01',
+      education: 'Thac si AI - DH Quoc te',
+      researchAreas: ['NLP', 'AI', 'Chatbot'],
+      publications: 4,
+      projects: 2
     }
   ],
   
   departmentStats: {
     totalStudents: 150,
-    totalTeachers: 8,
+    totalTeachers: 14,
     totalCourses: 12,
     totalClasses: 24,
     averageClassSize: 6.25,
@@ -435,696 +549,111 @@ export const mockDepartmentData = {
 
 export const mockAssignmentData = {
   stats: {
-    totalAssignments: 48,
-    assignmentChange: 12.5,
-    activeAssignments: 18,
-    activeChange: 8.3,
-    completedAssignments: 25,
-    completedChange: 15.2,
-    overdueAssignments: 5,
-    overdueChange: -25.0,
-    averageSubmissionRate: 82.4,
-    submissionChange: 3.7,
-    averageScore: 7.5,
-    scoreChange: 0.5
+    totalAssignments: 12,
+    assignmentChange: 5.2,
+    activeAssignments: 4,
+    completedAssignments: 6,
+    overdueAssignments: 2,
+    averageSubmissionRate: 78,
+    averageScore: 7.5
   },
-  
   assignments: [
     {
       id: 1,
-      title: 'Bài tập 1: Biến và Kiểu dữ liệu',
-      description: 'Làm quen với các kiểu dữ liệu cơ bản và cách khai báo biến',
-      instructions: 'Sinh viên cần hoàn thành các bài tập về: Khai báo và sử dụng biến, Các kiểu dữ liệu cơ bản (int, float, string, boolean), Nhập xuất dữ liệu từ bàn phím, Các phép toán số học cơ bản, Định dạng và in ra kết quả.',
-      course: 'Nhập môn lập trình',
+      title: 'Bai tap 1: Bien va kieu du lieu',
+      description: 'Lam quen voi kieu du lieu co ban va cach khai bao bien.',
+      difficulty: 'Easy',
+      status: 'completed',
+      course: 'Nhap mon lap trinh',
       courseId: 'intro-prog',
       className: '22CT111',
       classId: 1,
-      status: 'completed',
-      startDate: '2024-11-15T08:00:00',
-      dueDate: '2024-11-22T23:59:00',
-      submittedCount: 3,
-      totalStudents: 3,
-      averageScore: 7.8,
+      startDate: '2024-11-15',
+      dueDate: '2024-11-22',
+      submittedCount: 18,
+      totalStudents: 20,
+      averageScore: 78,
       lateSubmissions: 3,
-      maxScore: 100,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 10,
-      maxAttempts: 2,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['html', 'css', 'js', 'zip'],
-      maxFileSize: 10,
-      createdAt: '2024-11-10T10:00:00',
-      updatedAt: '2024-11-22T15:30:00'
+      updatedAt: '2024-11-22'
     },
     {
       id: 2,
-      title: 'Bài tập 2: Cấu trúc điều khiển',
-      description: 'Làm việc với câu lệnh if-else và vòng lặp',
-      instructions: 'Thực hiện các bài tập: Viết chương trình kiểm tra số chẵn/lẻ, Tìm số lớn nhất trong 3 số, Tính giai thừa sử dụng vòng lặp, In bảng cửu chương, Kiểm tra số nguyên tố.',
-      course: 'Nhập môn lập trình',
+      title: 'Bai tap 2: Cau truc dieu khien',
+      description: 'If/else, vong lap, tim so lon nhat, bang cuu chuong, so nguyen to.',
+      difficulty: 'Medium',
+      status: 'active',
+      course: 'Nhap mon lap trinh',
       courseId: 'intro-prog',
       className: '22CT111',
       classId: 1,
-      status: 'active',
-      startDate: '2024-11-25T08:00:00',
-      dueDate: '2024-12-05T23:59:00',
-      submittedCount: 2,
-      totalStudents: 3,
-      averageScore: 7.2,
-      lateSubmissions: 2,
-      maxScore: 100,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 15,
-      maxAttempts: 3,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['html', 'css', 'js', 'zip'],
-      maxFileSize: 15,
-      createdAt: '2024-11-20T14:00:00',
-      updatedAt: '2024-12-01T09:15:00'
+      startDate: '2024-11-25',
+      dueDate: '2024-12-05',
+      submittedCount: 5,
+      totalStudents: 20,
+      averageScore: 0,
+      lateSubmissions: 0,
+      updatedAt: '2024-12-01'
     },
     {
       id: 3,
-      title: 'Bài tập 3: Hàm và thủ tục',
-      description: 'Xây dựng và sử dụng hàm trong chương trình',
-      instructions: 'Viết các hàm để thực hiện: Tính tổng và tích của 2 số, Kiểm tra số hoàn hảo, Chuyển đổi nhiệt độ (C sang F và ngược lại), Tính diện tích và chu vi hình học, Tìm UCLN và BCNN của 2 số.',
-      course: 'Nhập môn lập trình',
-      courseId: 'intro-prog',
-      className: '22CT112',
-      classId: 2,
-      status: 'active',
-      startDate: '2024-12-01T08:00:00',
-      dueDate: '2024-12-15T23:59:00',
-      submittedCount: 3,
-      totalStudents: 4,
-      averageScore: 7.5,
-      lateSubmissions: 1,
-      maxScore: 100,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 10,
-      maxAttempts: 2,
-      showScoreToStudents: false,
-      requireFiles: true,
-      allowedFileTypes: ['zip', 'rar'],
-      maxFileSize: 25,
-      createdAt: '2024-11-28T16:00:00',
-      updatedAt: '2024-12-05T11:20:00'
-    },
-    {
-      id: 4,
-      title: 'Dự án cuối kỳ: Chương trình quản lý',
-      description: 'Xây dựng chương trình quản lý đơn giản',
-      instructions: 'Phát triển một chương trình quản lý hoàn chỉnh với các tính năng: Menu điều hướng, Thêm/Sửa/Xóa dữ liệu, Tìm kiếm và lọc thông tin, Lưu trữ dữ liệu vào file, Đọc dữ liệu từ file, Xử lý lỗi và validate input, Giao diện thân thiện với người dùng.',
-      course: 'Nhập môn lập trình',
-      courseId: 'intro-prog',
-      className: '22CT113',
-      classId: 3,
+      title: 'OOP: Ke thua va da hinh',
+      description: 'Xay dung class, interface, override methods, polymorphism.',
+      difficulty: 'Hard',
       status: 'upcoming',
-      startDate: '2024-12-10T08:00:00',
-      dueDate: '2025-01-20T23:59:00',
-      submittedCount: 0,
-      totalStudents: 35,
-      averageScore: 0,
-      lateSubmissions: 0,
-      maxScore: 200,
-      allowLateSubmission: false,
-      lateSubmissionPenalty: 0,
-      maxAttempts: 1,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['zip', 'rar', 'tar.gz'],
-      maxFileSize: 100,
-      createdAt: '2024-12-01T10:00:00',
-      updatedAt: '2024-12-01T10:00:00'
-    },
-    {
-      id: 5,
-      title: 'Bài tập 1: Con trỏ và cấp phát động',
-      description: 'Làm việc với con trỏ và quản lý bộ nhớ động',
-      instructions: 'Thực hiện các bài tập về: Khai báo và sử dụng con trỏ, Truyền tham số bằng con trỏ, Cấp phát bộ nhớ động với malloc/free, Quản lý mảng động, Xử lý chuỗi với con trỏ, Giải phóng bộ nhớ đúng cách.',
-      course: 'Kĩ thuật lập trình',
-      courseId: 'prog-technique',
-      className: '22CT111',
-      classId: 1,
-      status: 'active',
-      startDate: '2024-11-20T08:00:00',
-      dueDate: '2024-12-10T23:59:00',
-      submittedCount: 2,
-      totalStudents: 3,
-      averageScore: 7.3,
-      lateSubmissions: 4,
-      maxScore: 150,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 20,
-      maxAttempts: 2,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['zip', 'apk'],
-      maxFileSize: 50,
-      createdAt: '2024-11-15T09:00:00',
-      updatedAt: '2024-12-05T14:45:00'
-    },
-    {
-      id: 6,
-      title: 'Bài tập 2: File và xử lý ngoại lệ',
-      description: 'Làm việc với file và xử lý lỗi trong chương trình',
-      instructions: 'Thực hiện các bài tập: Đọc và ghi file text, Xử lý file CSV, Binary file I/O, Exception handling với try-catch, Validate dữ liệu đầu vào, Xử lý lỗi runtime và compile-time.',
-      course: 'Kĩ thuật lập trình',
-      courseId: 'prog-technique',
+      course: 'Lap trinh huong doi tuong',
+      courseId: 'oop',
       className: '22CT112',
-      classId: 2,
-      status: 'overdue',
-      startDate: '2024-11-10T08:00:00',
-      dueDate: '2024-11-30T23:59:00',
-      submittedCount: 3,
-      totalStudents: 4,
-      averageScore: 7.6,
-      lateSubmissions: 8,
-      maxScore: 120,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 25,
-      maxAttempts: 1,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['ipynb', 'py', 'csv', 'zip'],
-      maxFileSize: 30,
-      createdAt: '2024-11-05T11:00:00',
-      updatedAt: '2024-12-02T16:30:00'
-    },
-    {
-      id: 7,
-      title: 'Bài tập 1: Lớp và đối tượng',
-      description: 'Tạo và sử dụng class trong lập trình hướng đối tượng',
-      instructions: 'Phát triển các class cơ bản: Thiết kế class với thuộc tính và phương thức, Constructor và Destructor, Encapsulation với private/public, Getter và Setter methods, Tạo và sử dụng đối tượng, Quản lý đối tượng trong mảng.',
-      course: 'Lập trình hướng đối tượng',
-      courseId: 'oop',
-      className: '22CT113',
       classId: 3,
-      status: 'draft',
-      startDate: '2024-12-15T08:00:00',
-      dueDate: '2025-01-15T23:59:00',
+      startDate: '2024-12-10',
+      dueDate: '2024-12-20',
       submittedCount: 0,
-      totalStudents: 35,
+      totalStudents: 18,
       averageScore: 0,
       lateSubmissions: 0,
-      maxScore: 180,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 15,
-      maxAttempts: 2,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['ipynb', 'py', 'h5', 'zip'],
-      maxFileSize: 200,
-      createdAt: '2024-12-08T13:00:00',
-      updatedAt: '2024-12-08T13:00:00'
-    },
-    {
-      id: 8,
-      title: 'Bài tập 2: Kế thừa và đa hình',
-      description: 'Áp dụng tính kế thừa và đa hình trong OOP',
-      instructions: 'Xây dựng hệ thống class với inheritance: Tạo class cha và class con, Override methods, Virtual functions và abstract class, Polymorphism với upcasting/downcasting, Interface implementation, Sử dụng kế thừa đa cấp.',
-      course: 'Lập trình hướng đối tượng',
-      courseId: 'oop',
-      className: '22CT111',
-      classId: 1,
-      status: 'completed',
-      startDate: '2024-10-15T08:00:00',
-      dueDate: '2024-11-15T23:59:00',
-      submittedCount: 3,
-      totalStudents: 3,
-      averageScore: 8.2,
-      lateSubmissions: 2,
-      maxScore: 160,
-      allowLateSubmission: true,
-      lateSubmissionPenalty: 10,
-      maxAttempts: 1,
-      showScoreToStudents: true,
-      requireFiles: true,
-      allowedFileTypes: ['zip', 'tar.gz'],
-      maxFileSize: 40,
-      createdAt: '2024-10-10T10:00:00',
-      updatedAt: '2024-11-20T12:00:00'
-    }
-  ],
-  
-  assignmentDetails: {
-    submissions: [
-      {
-        id: 1,
-        studentId: 'SV001',
-        studentName: 'Nguyễn Văn Minh',
-        submittedAt: '2024-11-21T14:30:00',
-        status: 'graded',
-        score: 8.5,
-        feedback: 'Bài làm rất tốt! Code clean và có comment đầy đủ. Giao diện responsive hoàn hảo.',
-        files: [
-          { name: 'index.html', size: 2048, url: '#' },
-          { name: 'style.css', size: 1536, url: '#' },
-          { name: 'script.js', size: 1024, url: '#' }
-        ]
-      },
-      {
-        id: 2,
-        studentId: 'SV002',
-        studentName: 'Trần Thị Hương',
-        submittedAt: '2024-11-22T09:15:00',
-        status: 'graded',
-        score: 7.8,
-        feedback: 'Bài làm tốt, tuy nhiên cần cải thiện phần responsive trên mobile.',
-        files: [
-          { name: 'project.zip', size: 5120, url: '#' }
-        ]
-      },
-      {
-        id: 3,
-        studentId: 'SV003',
-        studentName: 'Lê Hoàng Nam',
-        submittedAt: '2024-11-23T16:45:00',
-        status: 'late',
-        score: 6.5,
-        feedback: 'Nộp muộn 1 ngày. Code cần cải thiện về cấu trúc và naming convention.',
-        files: [
-          { name: 'assignment.zip', size: 3072, url: '#' }
-        ]
-      },
-      {
-        id: 4,
-        studentId: 'SV004',
-        studentName: 'Phạm Thị Lan',
-        submittedAt: '2024-11-20T11:20:00',
-        status: 'pending',
-        score: null,
-        feedback: null,
-        files: [
-          { name: 'homework.zip', size: 4096, url: '#' }
-        ]
-      },
-      {
-        id: 5,
-        studentId: 'SV005',
-        studentName: 'Vũ Đức Thành',
-        submittedAt: '2024-11-21T18:30:00',
-        status: 'graded',
-        score: 9.2,
-        feedback: 'Xuất sắc! Code rất clean, có sử dụng best practices. Giao diện đẹp và UX tốt.',
-        files: [
-          { name: 'final-project.zip', size: 6144, url: '#' }
-        ]
-      },
-      {
-        id: 6,
-        studentId: 'SV006',
-        studentName: 'Hoàng Thị Mai',
-        submittedAt: null,
-        status: 'missing',
-        score: null,
-        feedback: null,
-        files: []
-      }
-    ],
-    
-    analytics: {
-      submissionRate: 8.5,
-      averageScore: 7.6,
-      lateSubmissions: 1,
-      failureRate: 1.2,
-      totalSubmissions: 8,
-      averageSubmissionTime: '2.5 ngày',
-      resubmissions: 1,
-      plagiarismDetected: 0,
-      averageGradingTime: '1.2 ngày',
-      feedbackGiven: 7,
-      
-      scoreDistribution: [
-        { range: '9-10', count: 2 },
-        { range: '8-8.9', count: 3 },
-        { range: '7-7.9', count: 3 },
-        { range: '6-6.9', count: 1 },
-        { range: '0-5.9', count: 1 }
-      ],
-      
-      submissionStatus: [
-        { name: 'Đã chấm', value: 6 },
-        { name: 'Chờ chấm', value: 2 },
-        { name: 'Nộp muộn', value: 1 },
-        { name: 'Chưa nộp', value: 1 }
-      ],
-      
-      submissionTimeline: [
-        { date: '15/11', submissions: 0 },
-        { date: '16/11', submissions: 1 },
-        { date: '17/11', submissions: 2 },
-        { date: '18/11', submissions: 3 },
-        { date: '19/11', submissions: 4 },
-        { date: '20/11', submissions: 6 },
-        { date: '21/11', submissions: 7 },
-        { date: '22/11', submissions: 8 }
-      ],
-      
-      classComparison: [
-        { className: '22CT111', averageScore: 7.8, submissionRate: 8.5 },
-        { className: '22CT112', averageScore: 7.5, submissionRate: 8.0 },
-        { className: '22CT113', averageScore: 7.2, submissionRate: 7.5 }
-      ]
-    },
-    
-    files: [
-      { name: 'Hướng dẫn bài tập.pdf', url: '#' },
-      { name: 'Template HTML.zip', url: '#' },
-      { name: 'Rubric chấm điểm.xlsx', url: '#' }
-    ]
-  }
-};
-
-export const mockStudentTrackingData = {
-  students: [
-    {
-      id: 1,
-      name: 'Nguyễn Văn Minh',
-      studentId: '122000001',
-      email: 'minh.nv@student.edu.vn',
-      phone: '0901234567',
-      status: 'active',
-      riskLevel: 'low',
-      completionRate: 90,
-      averageScore: 8.5,
-      completedAssignments: 18,
-      totalAssignments: 20,
-      totalHours: 156,
-      scoreChange: 0.5,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 95, score: 8.9, className: '22CT111' },
-        { id: 'prog-technique', name: 'Kĩ thuật lập trình', progress: 88, score: 8.7, className: '22CT111' }
-      ],
-      classes: [
-        { id: 1, name: 'Nhập môn lập trình - 22CT111' },
-        { id: 3, name: 'Kĩ thuật lập trình - 22CT111' }
-      ],
-      recentAssignments: [
-        { title: 'Hàm và thủ tục', score: 8.5, submittedDate: '2024-12-05', status: 'completed' },
-        { title: 'Cấu trúc điều khiển', score: 8.2, submittedDate: '2024-12-03', status: 'completed' },
-        { title: 'Biến và kiểu dữ liệu', score: 8.8, submittedDate: '2024-12-01', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-06', content: 'Sinh viên có tiến bộ rõ rệt, tích cực tham gia lớp học.' },
-        { author: 'TS. Nguyễn Văn An', date: '2024-11-28', content: 'Cần cải thiện kỹ năng debug code.' }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Trần Thị Hương',
-      studentId: '122000002',
-      email: 'huong.tt@student.edu.vn',
-      phone: '0901234568',
-      status: 'active',
-      riskLevel: 'low',
-      completionRate: 85,
-      averageScore: 8.0,
-      completedAssignments: 16,
-      totalAssignments: 20,
-      totalHours: 142,
-      scoreChange: 0.2,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 88, score: 8.2, className: '22CT112' },
-        { id: 'oop', name: 'Lập trình hướng đối tượng', progress: 82, score: 7.9, className: '22CT112' }
-      ],
-      classes: [
-        { id: 2, name: 'Nhập môn lập trình - 22CT112' },
-        { id: 4, name: 'Lập trình hướng đối tượng - 22CT112' }
-      ],
-      recentAssignments: [
-        { title: 'Lớp và đối tượng', score: 8.0, submittedDate: '2024-12-04', status: 'completed' },
-        { title: 'Hàm và thủ tục', score: 7.8, submittedDate: '2024-12-02', status: 'completed' },
-        { title: 'Con trỏ cơ bản', score: 8.1, submittedDate: '2024-11-30', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-05', content: 'Sinh viên chăm chỉ, cần hỗ trợ thêm về thuật toán.' }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Lê Hoàng Nam',
-      studentId: '122000003',
-      email: 'nam.lh@student.edu.vn',
-      phone: '0901234569',
-      status: 'at_risk',
-      riskLevel: 'high',
-      completionRate: 45,
-      averageScore: 6.0,
-      completedAssignments: 8,
-      totalAssignments: 20,
-      totalHours: 89,
-      scoreChange: -0.4,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 48, score: 6.2, className: '22CT113' },
-        { id: 'prog-technique', name: 'Kĩ thuật lập trình', progress: 42, score: 5.8, className: '22CT113' }
-      ],
-      classes: [
-        { id: 1, name: 'Nhập môn lập trình - 22CT113' },
-        { id: 3, name: 'Kĩ thuật lập trình - 22CT113' }
-      ],
-      recentAssignments: [
-        { title: 'Hàm và thủ tục', score: 5.5, submittedDate: '2024-12-07', status: 'late' },
-        { title: 'Cấu trúc điều khiển', score: 6.8, submittedDate: '2024-12-05', status: 'completed' },
-        { title: 'Biến và kiểu dữ liệu', score: 0, submittedDate: null, status: 'missing' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-07', content: 'CẢNH BÁO: Sinh viên có nguy cơ bỏ học cao. Cần can thiệp ngay.' },
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-01', content: 'Vắng mặt nhiều buổi học, điểm số giảm.' }
-      ]
+      updatedAt: '2024-12-01'
     },
     {
       id: 4,
-      name: 'Phạm Thị Lan',
-      studentId: '122000004',
-      email: 'lan.pt@student.edu.vn',
-      phone: '0901234570',
+      title: 'Data Structures: Stack & Queue',
+      description: 'Cai dat stack, queue; ung dung trong bai toan ngoac dung.',
+      difficulty: 'Medium',
       status: 'active',
-      riskLevel: 'medium',
-      completionRate: 78,
-      averageScore: 7.5,
-      completedAssignments: 14,
-      totalAssignments: 20,
-      totalHours: 128,
-      scoreChange: 0.2,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'oop', name: 'Lập trình hướng đối tượng', progress: 82, score: 7.8, className: '22CT111' },
-        { id: 'data-struct-algo', name: 'Cấu trúc dữ liệu và giải thuật', progress: 74, score: 7.4, className: '22CT111' }
-      ],
-      classes: [
-        { id: 4, name: 'Lập trình hướng đối tượng - 22CT111' },
-        { id: 5, name: 'Cấu trúc dữ liệu và giải thuật - 22CT111' }
-      ],
-      recentAssignments: [
-        { title: 'Kế thừa và đa hình', score: 7.5, submittedDate: '2024-12-06', status: 'completed' },
-        { title: 'Lớp và đối tượng', score: 7.8, submittedDate: '2024-12-04', status: 'completed' },
-        { title: 'Stack và Queue', score: 7.6, submittedDate: '2024-12-02', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-06', content: 'Sinh viên có tiềm năng, cần tập trung hơn vào lý thuyết.' }
-      ]
+      course: 'Cau truc du lieu',
+      courseId: 'data-struct-algo',
+      className: '22CT113',
+      classId: 8,
+      startDate: '2024-11-28',
+      dueDate: '2024-12-08',
+      submittedCount: 9,
+      totalStudents: 16,
+      averageScore: 0,
+      lateSubmissions: 1,
+      updatedAt: '2024-12-02'
     },
     {
       id: 5,
-      name: 'Vũ Đức Thành',
-      studentId: '122000005',
-      email: 'thanh.vd@student.edu.vn',
-      phone: '0901234571',
-      status: 'active',
-      riskLevel: 'low',
-      completionRate: 95,
-      averageScore: 9.0,
-      completedAssignments: 19,
-      totalAssignments: 20,
-      totalHours: 168,
-      scoreChange: 0.4,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 98, score: 9.2, className: '22CT112' },
-        { id: 'prog-technique', name: 'Kĩ thuật lập trình', progress: 92, score: 8.8, className: '22CT112' }
-      ],
-      classes: [
-        { id: 1, name: 'Nhập môn lập trình - 22CT112' },
-        { id: 6, name: 'Kĩ thuật lập trình - 22CT112' }
-      ],
-      recentAssignments: [
-        { title: 'Dự án quản lý', score: 9.3, submittedDate: '2024-12-05', status: 'completed' },
-        { title: 'File và xử lý ngoại lệ', score: 8.6, submittedDate: '2024-12-03', status: 'completed' },
-        { title: 'Con trỏ và cấp phát động', score: 9.0, submittedDate: '2024-12-01', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-05', content: 'Sinh viên xuất sắc, có thể làm mentor cho các bạn khác.' }
-      ]
-    },
-    {
-      id: 6,
-      name: 'Hoàng Thị Mai',
-      studentId: 'SV006',
-      email: 'mai.ht@student.edu.vn',
-      phone: '0901234572',
-      status: 'completed',
-      riskLevel: 'low',
-      completionRate: 100,
-      averageScore: 9.2,
-      completedAssignments: 20,
-      totalAssignments: 20,
-      totalHours: 180,
-      scoreChange: 0.6,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'oop', name: 'Lập trình hướng đối tượng', progress: 100, score: 9.3, className: '22CT113' },
-        { id: 'data-struct-algo', name: 'Cấu trúc dữ liệu và giải thuật', progress: 100, score: 9.1, className: '22CT113' }
-      ],
-      classes: [
-        { id: 6, name: 'Lập trình hướng đối tượng - 22CT113' },
-        { id: 7, name: 'Cấu trúc dữ liệu và giải thuật - 22CT113' }
-      ],
-      recentAssignments: [
-        { title: 'Cây nhị phân', score: 9.4, submittedDate: '2024-12-04', status: 'completed' },
-        { title: 'Danh sách liên kết', score: 9.0, submittedDate: '2024-12-02', status: 'completed' },
-        { title: 'Sắp xếp và tìm kiếm', score: 9.2, submittedDate: '2024-11-30', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-04', content: 'Hoàn thành xuất sắc tất cả khóa học. Đề xuất làm TA.' }
-      ]
-    },
-    {
-      id: 7,
-      name: 'Đặng Văn Hùng',
-      studentId: 'SV007',
-      email: 'hung.dv@student.edu.vn',
-      phone: '0901234573',
-      status: 'active',
-      riskLevel: 'medium',
-      completionRate: 72,
-      averageScore: 7.2,
-      completedAssignments: 13,
-      totalAssignments: 20,
-      totalHours: 118,
-      scoreChange: -0.1,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'prog-technique', name: 'Kĩ thuật lập trình', progress: 75, score: 7.5, className: '22CT111' },
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 69, score: 7.0, className: '22CT112' }
-      ],
-      classes: [
-        { id: 3, name: 'Kĩ thuật lập trình - 22CT111' },
-        { id: 2, name: 'Nhập môn lập trình - 22CT112' }
-      ],
-      recentAssignments: [
-        { title: 'Con trỏ và cấp phát động', score: 7.1, submittedDate: '2024-12-06', status: 'completed' },
-        { title: 'File và xử lý ngoại lệ', score: 7.6, submittedDate: '2024-12-04', status: 'completed' },
-        { title: 'Hàm và thủ tục', score: 7.3, submittedDate: '2024-12-02', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-06', content: 'Cần cải thiện kỹ năng coding và tham gia tích cực hơn.' }
-      ]
-    },
-    {
-      id: 8,
-      name: 'Bùi Thị Ngọc',
-      studentId: 'SV008',
-      email: 'ngoc.bt@student.edu.vn',
-      phone: '0901234574',
-      status: 'active',
-      riskLevel: 'low',
-      completionRate: 89,
-      averageScore: 8.4,
-      completedAssignments: 17,
-      totalAssignments: 20,
-      totalHours: 152,
-      scoreChange: 0.4,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'oop', name: 'Lập trình hướng đối tượng', progress: 92, score: 8.6, className: '22CT112' },
-        { id: 'data-struct-algo', name: 'Cấu trúc dữ liệu và giải thuật', progress: 86, score: 8.2, className: '22CT112' }
-      ],
-      classes: [
-        { id: 4, name: 'Lập trình hướng đối tượng - 22CT112' },
-        { id: 5, name: 'Cấu trúc dữ liệu và giải thuật - 22CT112' }
-      ],
-      recentAssignments: [
-        { title: 'Cây nhị phân tìm kiếm', score: 8.7, submittedDate: '2024-12-05', status: 'completed' },
-        { title: 'Kế thừa và đa hình', score: 8.1, submittedDate: '2024-12-03', status: 'completed' },
-        { title: 'Stack và Queue', score: 8.4, submittedDate: '2024-12-01', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-05', content: 'Sinh viên có năng khiếu về phân tích dữ liệu.' }
-      ]
-    },
-    {
-      id: 9,
-      name: 'Lý Minh Tuấn',
-      studentId: 'SV009',
-      email: 'tuan.lm@student.edu.vn',
-      phone: '0901234575',
-      status: 'at_risk',
-      riskLevel: 'high',
-      completionRate: 38,
-      averageScore: 5.5,
-      completedAssignments: 7,
-      totalAssignments: 20,
-      totalHours: 76,
-      scoreChange: -0.6,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'intro-prog', name: 'Nhập môn lập trình', progress: 42, score: 5.8, className: '22CT113' },
-        { id: 'oop', name: 'Lập trình hướng đối tượng', progress: 34, score: 5.2, className: '22CT113' }
-      ],
-      classes: [
-        { id: 2, name: 'Nhập môn lập trình - 22CT113' },
-        { id: 6, name: 'Lập trình hướng đối tượng - 22CT113' }
-      ],
-      recentAssignments: [
-        { title: 'Lớp và đối tượng', score: 4.5, submittedDate: '2024-12-08', status: 'late' },
-        { title: 'Hàm và thủ tục', score: 6.5, submittedDate: '2024-12-06', status: 'completed' },
-        { title: 'Cấu trúc điều khiển', score: 0, submittedDate: null, status: 'missing' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-08', content: 'KHẨN CẤP: Cần họp phụ huynh và tư vấn học tập.' },
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-03', content: 'Sinh viên gặp khó khăn về cơ bản, cần hỗ trợ đặc biệt.' }
-      ]
-    },
-    {
-      id: 10,
-      name: 'Ngô Thị Thu',
-      studentId: 'SV010',
-      email: 'thu.nt@student.edu.vn',
-      phone: '0901234576',
-      status: 'active',
-      riskLevel: 'low',
-      completionRate: 91,
-      averageScore: 8.6,
-      completedAssignments: 18,
-      totalAssignments: 20,
-      totalHours: 159,
-      scoreChange: 0.4,
-      enrollmentDate: '2024-09-01',
-      courses: [
-        { id: 'data-struct-algo', name: 'Cấu trúc dữ liệu và giải thuật', progress: 94, score: 8.7, className: '22CT111' },
-        { id: 'prog-technique', name: 'Kĩ thuật lập trình', progress: 88, score: 8.5, className: '22CT111' }
-      ],
-      classes: [
-        { id: 7, name: 'Cấu trúc dữ liệu và giải thuật - 22CT111' },
-        { id: 6, name: 'Kĩ thuật lập trình - 22CT111' }
-      ],
-      recentAssignments: [
-        { title: 'Thuật toán Dijkstra', score: 8.9, submittedDate: '2024-12-05', status: 'completed' },
-        { title: 'Cây AVL', score: 8.3, submittedDate: '2024-12-03', status: 'completed' },
-        { title: 'Hash Table', score: 8.6, submittedDate: '2024-12-01', status: 'completed' }
-      ],
-      notes: [
-        { author: 'TS. Nguyễn Văn An', date: '2024-12-05', content: 'Sinh viên có khả năng tốt về hệ thống và vận hành.' }
-      ]
+      title: 'Machine Learning mini project',
+      description: 'Xay dung model phan loai don gian (SVM/Logistic).',
+      difficulty: 'Hard',
+      status: 'draft',
+      course: 'Machine Learning',
+      courseId: 'ml',
+      className: '22CT201',
+      classId: 11,
+      startDate: '2024-12-15',
+      dueDate: '2024-12-30',
+      submittedCount: 0,
+      totalStudents: 12,
+      averageScore: 0,
+      lateSubmissions: 0,
+      updatedAt: '2024-12-01'
     }
   ]
 };
 
+export const mockStudentTrackingData = {
+  students: []
+};
 export const mockClassData = {
   stats: {
     totalClasses: 12,
@@ -1415,3 +944,5 @@ export const mockClassData = {
     12: { students: [{ id: 3, name: 'Lê Hoàng Nam', studentId: 'SV003', email: 'nam.lh@student.edu.vn', phone: '0901234569', status: 'at_risk', completionRate: 45, averageScore: 6.0, completedAssignments: 4, totalAssignments: 10, scoreChange: -0.4 }, { id: 6, name: 'Hoàng Thị Mai', studentId: 'SV006', email: 'mai.ht@student.edu.vn', phone: '0901234572', status: 'completed', completionRate: 100, averageScore: 9.2, completedAssignments: 10, totalAssignments: 10, scoreChange: 0.1 }, { id: 9, name: 'Lý Minh Tuấn', studentId: 'SV009', email: 'tuan.lm@student.edu.vn', phone: '0901234575', status: 'at_risk', completionRate: 38, averageScore: 5.5, completedAssignments: 3, totalAssignments: 10, scoreChange: -0.6 }], assignments: [{ id: 1, title: 'Bài tập 1: Algorithms', description: 'Bài tập thuật toán', status: 'active', startDate: '15/11/2024', dueDate: '22/11/2024', submittedCount: 2, totalStudents: 3, averageScore: 6.9 }], schedule: [{ title: 'Buổi 1: Algorithms', description: 'Giới thiệu thuật toán', type: 'lecture', date: '04/11/2024', time: '13:30 - 17:00', location: 'Phòng Lab 201', status: 'completed', attendanceRate: 7.7, attendedStudents: 3, absentStudents: 0, lateStudents: 0, materials: [] }] }
   }
 };
+
+

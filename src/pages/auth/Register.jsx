@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { authAPI, hashPassword } from '../../services/api';
 import { Mail, Lock, Eye, EyeOff, User, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Register = () => {
@@ -48,9 +48,10 @@ const Register = () => {
     }
 
     try {
+      const hashedPassword = await hashPassword(formData.password);
       const response = await authAPI.register({
         email: formData.email,
-        password: formData.password,
+        password: hashedPassword,
         full_name: formData.full_name,
         class_name: formData.class_name,
       });

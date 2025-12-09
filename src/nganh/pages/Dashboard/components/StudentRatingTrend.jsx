@@ -59,6 +59,7 @@ const SummaryItem = ({ label, value, tone = 'default' }) => {
 const StudentRatingTrend = ({ title, description }) => {
   const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
   const [hoveredYear, setHoveredYear] = useState(null);
+  const [clickedInfo, setClickedInfo] = useState(null);
 
   const chartData = useMemo(() => {
     const years = Array.from({ length: 4 }, (_, i) => startYear + i);
@@ -134,6 +135,16 @@ const StudentRatingTrend = ({ title, description }) => {
     };
   }, [chartData]);
 
+  const handleBarClick = (point, levelKey) => {
+    if (!point) return;
+    const year = point.year;
+    const total = point.totalStudents || 0;
+    const pct = point[levelKey] || 0;
+    const count = point[`${levelKey}_count`] || 0;
+    const levelLabel = LEVELS.find((l) => l.key === levelKey)?.label || levelKey;
+    setClickedInfo({ year, levelLabel, pct, count, total });
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
     const point = payload[0].payload;
@@ -150,6 +161,7 @@ const StudentRatingTrend = ({ title, description }) => {
                 <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }}></span>
                 <span className="font-medium">{entry.name}:</span>
                 <span className="font-semibold">{entry.value}%</span>
+                <span className="text-xs text-gray-500">({point?.[`${entry.dataKey}_count`] || 0} SV)</span>
                 <span className={`text-xs ${delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-600' : 'text-gray-500'}`}>
                   {deltaText}
                 </span>
@@ -288,11 +300,25 @@ const StudentRatingTrend = ({ title, description }) => {
                 radius={idx === LEVELS.length - 1 ? [6, 6, 0, 0] : 0}
                 isAnimationActive
                 animationDuration={600}
+                onClick={(data) => handleBarClick(data?.payload, lvl.key)}
               />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {clickedInfo && (
+        <div className="mt-3 text-sm text-gray-700 p-3 rounded-lg border border-gray-200 bg-white">
+          <div className="font-semibold text-gray-900 mb-1">
+            {clickedInfo.levelLabel} – Năm {clickedInfo.year}
+          </div>
+          <div className="text-sm">
+            Tỉ lệ: <span className="font-semibold">{clickedInfo.pct}%</span> ({clickedInfo.count}/
+            {clickedInfo.total} sinh viên)
+          </div>
+          <div className="text-xs text-gray-500">* Danh sách sinh viên: dữ liệu mock, chưa có chi tiết.</div>
+        </div>
+      )}
 
       {summary && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">

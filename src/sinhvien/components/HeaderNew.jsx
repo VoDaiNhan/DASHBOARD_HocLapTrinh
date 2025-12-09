@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { authAPI } from '../../services/api';
+import { authAPI, clearAccessToken } from '../../services/api';
 import { availableCourses, studyGroups, groupAssignments, courseLessons } from '../data/data';
 
 const X = () => (
@@ -350,8 +350,7 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
       console.error('Logout error:', error);
     } finally {
       // Clear all data
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
+      clearAccessToken();
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('dashboardType');
       

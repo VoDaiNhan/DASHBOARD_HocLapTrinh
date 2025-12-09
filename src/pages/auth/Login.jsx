@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, decodeJWT } from '../../services/api';
+import { authAPI, decodeJWT, setAccessToken, clearAccessToken, hashPassword } from '../../services/api';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const Login = ({ setIsAuthenticated }) => {
@@ -37,18 +37,39 @@ const Login = ({ setIsAuthenticated }) => {
         loginData.email = formData.email;
       }
       
-      const response = await authAPI.login(loginData);
+      const hashedPassword = await hashPassword(formData.password);
+      console.log('🔐 Attempting login...');
+      const response = await authAPI.login({ ...loginData, password: hashedPassword });
+      console.log('✅ Login response received:', response);
+      
+      // Check response structure
+      if (!response || !response.data) {
+        console.error('❌ Invalid login response structure:', response);
+        setError('Phản hồi từ server không hợp lệ');
+        setLoading(false);
+        return;
+      }
+      
+      if (!response.data.access_token) {
+        console.error('❌ No access token in response:', response);
+        setError('Không nhận được access token từ server');
+        setLoading(false);
+        return;
+      }
       
       // Clear old data first để tránh xung đột
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
+      clearAccessToken();
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('dashboardType');
       
-      // Lưu token vào sessionStorage (tự động xóa khi đóng tab)
-      sessionStorage.setItem('access_token', response.data.access_token);
-      sessionStorage.setItem('refresh_token', response.data.refresh_token);
+      // Lưu access token vào bộ nhớ tạm (in-memory) và sessionStorage (tạm thời để dùng khi refresh)
+      console.log('💾 Saving access token to memory and sessionStorage...');
+      setAccessToken(response.data.access_token);
+      // Lưu tạm vào sessionStorage để dùng khi refresh token (sẽ xóa sau khi refresh thành công)
+      sessionStorage.setItem('temp_access_token', response.data.access_token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      console.log('✅ Access token saved to memory and sessionStorage');
+      console.log('🔍 Verifying temp_access_token in sessionStorage:', sessionStorage.getItem('temp_access_token') ? 'EXISTS' : 'MISSING');
 
       // Decode JWT để lấy role
       const decodedToken = decodeJWT(response.data.access_token);
@@ -60,6 +81,7 @@ const Login = ({ setIsAuthenticated }) => {
       }
 
       const userRole = decodedToken.role;
+      console.log('👤 User role:', userRole);
 
       // Update auth state
       if (setIsAuthenticated) {
@@ -67,21 +89,23 @@ const Login = ({ setIsAuthenticated }) => {
       }
 
       // Redirect based on role
-      // Lưu dashboard type vào sessionStorage
+      // Lưu dashboard type vào sessionStorage TRƯỚC KHI navigate
+      let dashboardType = 'teacher'; // default
       if (userRole === 'sinh_vien' || userRole === 'student') {
-        sessionStorage.setItem('dashboardType', 'student');
-        window.location.href = '/';
+        dashboardType = 'student';
       } else if (userRole === 'giang_vien' || userRole === 'teacher') {
-        sessionStorage.setItem('dashboardType', 'teacher');
-        window.location.href = '/';
+        dashboardType = 'teacher';
       } else if (userRole === 'manage_nghanh') {
-        sessionStorage.setItem('dashboardType', 'nghanh');
-        window.location.href = '/';
-      } else {
-        // Role khác
-        sessionStorage.setItem('dashboardType', 'teacher');
-        window.location.href = '/';
+        dashboardType = 'nghanh';
       }
+      
+      console.log('💾 Saving dashboardType to sessionStorage:', dashboardType);
+      sessionStorage.setItem('dashboardType', dashboardType);
+      console.log('✅ DashboardType saved, verifying...', sessionStorage.getItem('dashboardType'));
+      
+      // Force page reload to ensure state is synced with sessionStorage
+      // This also ensures access token is preserved in memory (via temp_access_token)
+        window.location.href = '/';
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại');
     } finally {
