@@ -538,8 +538,19 @@ export const forgotPassword = async (req, res) => {
 
     // Gửi email reset password
     try {
-      await sendResetPasswordEmail(user.email, user.full_name, resetToken);
-      console.log(`📧 Reset password email sent to ${user.email}`);
+      const emailResult = await sendResetPasswordEmail(user.email, user.full_name, resetToken);
+      if (emailResult.success) {
+        console.log(`📧 Reset password email sent to ${user.email}`);
+        console.log(`   MessageId: ${emailResult.messageId}`);
+        console.log(`   Response: ${emailResult.response || 'N/A'}`);
+      } else {
+        console.error(`❌ Failed to send reset password email to ${user.email}:`);
+        console.error(`   Error: ${emailResult.message}`);
+        if (emailResult.error) {
+          console.error(`   Code: ${emailResult.error.code || 'N/A'}`);
+          console.error(`   Response: ${emailResult.error.response || 'N/A'}`);
+        }
+      }
     } catch (emailError) {
       console.error('❌ Error sending reset password email:', emailError);
       // Không fail nếu không gửi được email (có thể do config)

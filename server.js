@@ -18,7 +18,7 @@ app.set('trust proxy', 1);
 
 // Configure allowed origins
 const getAllowedOrigins = () => {
-  const origins = ['https://dashboard.shopsheap.online'];
+  const origins = ['http://localhost:3001'];
   
   if (FRONTEND_URL) {
     const urls = FRONTEND_URL.split(',').map(url => url.trim());

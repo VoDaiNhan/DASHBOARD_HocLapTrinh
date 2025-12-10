@@ -42,8 +42,25 @@ Hệ thống Quản lý Học Lập Trình
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-      }
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000
     });
+
+    // Verify SMTP connection trước khi gửi
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('❌ SMTP verification failed:', {
+        message: verifyError.message,
+        code: verifyError.code,
+        command: verifyError.command,
+        response: verifyError.response
+      });
+      throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    }
 
     // Nội dung email
     const subject = 'Thông tin đăng ký tài khoản - MSSV của bạn';
@@ -75,26 +92,58 @@ Hệ thống Quản lý Học Lập Trình
     `;
 
     // Gửi email
+    console.log(`📤 Attempting to send MSSV email to: ${email}`);
+    const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
     const info = await transporter.sendMail({
-      from: `"Hệ thống Quản lý Học Lập Trình" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+      from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
       to: email,
       subject: subject,
       text: textBody,
-      html: htmlBody
+      html: htmlBody,
+      // Headers để tránh spam
+      headers: {
+        'List-Unsubscribe': `<${process.env.FRONTEND_URL || 'https://dashboard.shopsheap.online'}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'X-Mailer': 'Dashboard System',
+        'Precedence': 'bulk',
+        'Auto-Submitted': 'auto-generated',
+        'X-Auto-Response-Suppress': 'All'
+      },
+      priority: 'normal'
     });
 
-    console.log('✅ Email sent successfully:', info.messageId);
+    console.log('✅ Email sent successfully');
+    console.log('📬 Email response:', {
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected
+    });
+
+    // Kiểm tra xem email có bị reject không
+    if (info.rejected && info.rejected.length > 0) {
+      console.error('❌ Email was rejected:', info.rejected);
+      throw new Error(`Email was rejected: ${info.rejected.join(', ')}`);
+    }
     
     return {
       success: true,
       message: 'Email sent successfully',
-      messageId: info.messageId
+      messageId: info.messageId,
+      response: info.response
     };
   } catch (error) {
-    console.error('❌ Error sending email:', error);
+    console.error('❌ Error sending email:');
+    console.error('   Message:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Response:', error.response);
     return {
       success: false,
-      message: error.message
+      message: error.message || 'Failed to send email',
+      error: {
+        code: error.code,
+        response: error.response
+      }
     };
   }
 };
@@ -140,8 +189,36 @@ Hệ thống Quản lý Học Lập Trình
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-      }
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000
     });
+
+    // Verify SMTP connection trước khi gửi
+    console.log('🔍 Verifying SMTP connection...');
+    console.log('📋 SMTP Config:', {
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      user: process.env.SMTP_USER,
+      passLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0
+    });
+
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('❌ SMTP verification failed:', {
+        message: verifyError.message,
+        code: verifyError.code,
+        command: verifyError.command,
+        response: verifyError.response,
+        responseCode: verifyError.responseCode,
+        stack: verifyError.stack
+      });
+      throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    }
 
     // Tạo URL reset password
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -157,16 +234,16 @@ Hệ thống Quản lý Học Lập Trình
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đặt lại mật khẩu</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; padding: 40px 0;">
         <tr>
             <td align="center">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="background-color: #ffffff; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden;">
                     <!-- Header -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: 0.5px;">
-                                🔐 Đặt lại mật khẩu
+                        <td style="background-color: #667eea; padding: 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                                Đặt lại mật khẩu
                             </h1>
                         </td>
                     </tr>
@@ -185,12 +262,14 @@ Hệ thống Quản lý Học Lập Trình
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td align="center" style="padding: 20px 0;">
-                                        <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; display: inline-block; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                                        <a href="${resetUrl}" style="background-color: #667eea; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 4px; font-size: 16px; font-weight: 600; display: inline-block;">
                                             Đặt lại mật khẩu
                                         </a>
                                     </td>
                                 </tr>
                             </table>
+                            <!-- Plain text link fallback -->
+                           
                             
                             <!-- Warning -->
                             <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0; border-radius: 4px;">
@@ -246,26 +325,78 @@ Hệ thống Quản lý Học Lập Trình
     `;
 
     // Gửi email
-    const info = await transporter.sendMail({
-      from: `"Hệ thống Quản lý Học Lập Trình" <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+    console.log(`📤 Attempting to send email to: ${email}`);
+    const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
+    const mailOptions = {
+      from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
       to: email,
       subject: subject,
       text: textBody,
-      html: htmlBody
+      html: htmlBody,
+      // Headers để tránh spam
+      headers: {
+        'List-Unsubscribe': `<${process.env.FRONTEND_URL || 'https://dashboard.shopsheap.online'}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'X-Mailer': 'Dashboard System',
+        'Precedence': 'bulk',
+        'Auto-Submitted': 'auto-generated',
+        'X-Auto-Response-Suppress': 'All'
+      },
+      // Priority: normal (không dùng high để tránh spam)
+      priority: 'normal'
+    };
+    console.log('📧 Mail options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
     });
 
-    console.log('✅ Reset password email sent successfully:', info.messageId);
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ Reset password email sent successfully');
+    console.log('📬 Email response:', {
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      pending: info.pending,
+      envelope: info.envelope
+    });
+
+    // Kiểm tra xem email có bị reject không
+    if (info.rejected && info.rejected.length > 0) {
+      console.error('❌ Email was rejected:', info.rejected);
+      throw new Error(`Email was rejected: ${info.rejected.join(', ')}`);
+    }
+
+    if (!info.messageId) {
+      console.warn('⚠️ No messageId returned, email may not have been sent');
+    }
     
     return {
       success: true,
       message: 'Email sent successfully',
-      messageId: info.messageId
+      messageId: info.messageId,
+      response: info.response
     };
   } catch (error) {
-    console.error('❌ Error sending reset password email:', error);
+    console.error('❌ Error sending reset password email:');
+    console.error('   Message:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Command:', error.command);
+    console.error('   Response:', error.response);
+    console.error('   ResponseCode:', error.responseCode);
+    console.error('   Stack:', error.stack);
+    
     return {
       success: false,
-      message: error.message
+      message: error.message || 'Failed to send email',
+      error: {
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      }
     };
   }
 };
