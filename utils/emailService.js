@@ -1,7 +1,88 @@
 import dotenv from 'dotenv';
-import nodemailer from 'nodemailer';
 
 dotenv.config();
+
+/**
+ * Gửi email qua Mailjet Transactional API (HTTP)
+ * Dùng API thay vì SMTP để tránh bị chặn bởi cloud platforms như Render
+ */
+const sendEmailViaMailjetAPI = async ({ to, toName, subject, htmlContent, textContent }) => {
+  const apiKey = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
+  const secretKey = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
+  const emailFrom = process.env.EMAIL_FROM || 'no-reply@learn-dashboard.shopsheap.online';
+  const senderName = 'Hệ thống Quản lý Học Lập Trình';
+
+  if (!apiKey || !secretKey) {
+    throw new Error('Mailjet API credentials are not configured');
+  }
+
+  // Tạo Basic Auth header
+  const auth = Buffer.from(`${apiKey}:${secretKey}`).toString('base64');
+
+  const payload = {
+    Messages: [
+      {
+        From: {
+          Email: emailFrom,
+          Name: senderName
+        },
+        To: [
+          {
+            Email: to,
+            Name: toName || to
+          }
+        ],
+        Subject: subject,
+        HTMLPart: htmlContent,
+        TextPart: textContent || htmlContent.replace(/<[^>]*>/g, '') // Strip HTML if no text version
+      }
+    ]
+  };
+
+  try {
+    console.log('📤 Sending email via Mailjet API...');
+    console.log('📋 Email details:', {
+      to: to,
+      subject: subject,
+      from: emailFrom
+    });
+
+    const response = await fetch('https://api.mailjet.com/v3.1/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('❌ Mailjet API error:', responseData);
+      throw new Error(`Mailjet API error: ${responseData.ErrorMessage || response.statusText} (${response.status})`);
+    }
+
+    console.log('✅ Email sent via Mailjet API successfully');
+    console.log('📬 Mailjet response:', {
+      messageId: responseData.Messages?.[0]?.To?.[0]?.MessageID,
+      status: response.status,
+      response: responseData
+    });
+
+    return {
+      success: true,
+      message: 'Email sent successfully',
+      messageId: responseData.Messages?.[0]?.To?.[0]?.MessageID,
+      response: responseData
+    };
+  } catch (error) {
+    console.error('❌ Error sending email via Mailjet API:');
+    console.error('   Message:', error.message);
+    console.error('   Stack:', error.stack);
+    throw error;
+  }
+};
 
 /**
  * Gửi email MSSV cho sinh viên sau khi đăng ký thành công
@@ -9,15 +90,12 @@ dotenv.config();
  */
 export const sendMSSVEmail = async (email, fullName, mssv) => {
   try {
-    // Mailjet SMTP config: ưu tiên MAILJET_API_KEY/MAILJET_SECRET_KEY, fallback về SMTP_USER/SMTP_PASS
-    const smtpUser = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
-    const smtpPass = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
-    const smtpHost = process.env.SMTP_HOST || 'in-v3.mailjet.com';
-    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+    // Kiểm tra Mailjet API credentials
+    const apiKey = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
+    const secretKey = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
     
-    // Kiểm tra email config có đầy đủ không
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      console.warn('⚠️ Email config chưa được setup. Chỉ log email content.');
+    if (!apiKey || !secretKey) {
+      console.warn('⚠️ Mailjet API credentials chưa được setup. Chỉ log email content.');
       console.log('📧 Email content:', {
         to: email,
         subject: 'Thông tin đăng ký tài khoản - MSSV của bạn',
@@ -38,49 +116,6 @@ Hệ thống Quản lý Học Lập Trình
         success: true,
         message: 'Email config chưa setup - chỉ log'
       };
-    }
-
-    // Tạo transporter với Mailjet SMTP config
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      },
-      // Tăng timeout cho cloud platforms
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
-      socketTimeout: 30000,
-      pool: true,
-      maxConnections: 1
-    });
-
-    // Verify SMTP connection trước khi gửi
-    const skipVerify = process.env.SKIP_SMTP_VERIFY === 'true';
-    
-    if (!skipVerify) {
-      try {
-        await transporter.verify();
-        console.log('✅ SMTP connection verified successfully');
-      } catch (verifyError) {
-        console.error('❌ SMTP verification failed:', {
-          message: verifyError.message,
-          code: verifyError.code,
-          command: verifyError.command,
-          response: verifyError.response
-        });
-        
-        if (isProduction) {
-          console.warn('⚠️ SMTP verify failed in production, but will try to send anyway...');
-        } else {
-          throw new Error(`SMTP connection failed: ${verifyError.message}`);
-        }
-      }
-    } else {
-      console.log('⚠️ Skipping SMTP verification');
     }
 
     // Nội dung email
@@ -112,58 +147,26 @@ Trân trọng,
 Hệ thống Quản lý Học Lập Trình
     `;
 
-    // Gửi email
+    // Gửi email qua Mailjet API
     console.log(`📤 Attempting to send MSSV email to: ${email}`);
-    const emailFrom = process.env.EMAIL_FROM || 'no-reply@learn-dashboard.shopsheap.online';
-    const info = await transporter.sendMail({
-      from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
+    const result = await sendEmailViaMailjetAPI({
       to: email,
+      toName: fullName,
       subject: subject,
-      text: textBody,
-      html: htmlBody,
-      // Headers để tránh spam
-      headers: {
-        'List-Unsubscribe': `<${process.env.FRONTEND_URL || 'https://dashboard.shopsheap.online'}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-        'X-Mailer': 'Dashboard System',
-        'Precedence': 'bulk',
-        'Auto-Submitted': 'auto-generated',
-        'X-Auto-Response-Suppress': 'All'
-      },
-      priority: 'normal'
+      htmlContent: htmlBody,
+      textContent: textBody
     });
 
-    console.log('✅ Email sent successfully');
-    console.log('📬 Email response:', {
-      messageId: info.messageId,
-      response: info.response,
-      accepted: info.accepted,
-      rejected: info.rejected
-    });
-
-    // Kiểm tra xem email có bị reject không
-    if (info.rejected && info.rejected.length > 0) {
-      console.error('❌ Email was rejected:', info.rejected);
-      throw new Error(`Email was rejected: ${info.rejected.join(', ')}`);
-    }
-    
-    return {
-      success: true,
-      message: 'Email sent successfully',
-      messageId: info.messageId,
-      response: info.response
-    };
+    return result;
   } catch (error) {
     console.error('❌ Error sending email:');
     console.error('   Message:', error.message);
-    console.error('   Code:', error.code);
-    console.error('   Response:', error.response);
+    console.error('   Stack:', error.stack);
     return {
       success: false,
       message: error.message || 'Failed to send email',
       error: {
-        code: error.code,
-        response: error.response
+        message: error.message
       }
     };
   }
@@ -174,15 +177,12 @@ Hệ thống Quản lý Học Lập Trình
  */
 export const sendResetPasswordEmail = async (email, fullName, resetToken) => {
   try {
-    // Mailjet SMTP config: ưu tiên MAILJET_API_KEY/MAILJET_SECRET_KEY, fallback về SMTP_USER/SMTP_PASS
-    const smtpUser = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
-    const smtpPass = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
-    const smtpHost = process.env.SMTP_HOST || 'in-v3.mailjet.com';
-    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+    // Kiểm tra Mailjet API credentials
+    const apiKey = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
+    const secretKey = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
     
-    // Kiểm tra email config có đầy đủ không
-    if (!smtpHost || !smtpUser || !smtpPass) {
-      console.warn('⚠️ Email config chưa được setup. Chỉ log email content.');
+    if (!apiKey || !secretKey) {
+      console.warn('⚠️ Mailjet API credentials chưa được setup. Chỉ log email content.');
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
       console.log('📧 Email content:', {
         to: email,
@@ -206,67 +206,6 @@ Hệ thống Quản lý Học Lập Trình
         success: true,
         message: 'Email config chưa setup - chỉ log'
       };
-    }
-
-    // Tạo transporter với Mailjet SMTP config
-    // Tăng timeout cho Render và các cloud platforms
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      },
-      // Tăng timeout cho cloud platforms
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 30000,
-      socketTimeout: 30000,
-      // Thêm options cho cloud
-      pool: true,
-      maxConnections: 1,
-      maxMessages: 3,
-      rateDelta: 1000,
-      rateLimit: 5
-    });
-
-    // Verify SMTP connection trước khi gửi (skip trong production nếu cần)
-    console.log('🔍 Verifying SMTP connection...');
-    console.log('📋 Mailjet SMTP Config:', {
-      host: smtpHost,
-      port: smtpPort,
-      secure: process.env.SMTP_SECURE === 'true',
-      user: smtpUser,
-      passLength: smtpPass ? smtpPass.length : 0,
-      isProduction: isProduction
-    });
-
-    // Skip verify trong production nếu có env variable
-    const skipVerify = process.env.SKIP_SMTP_VERIFY === 'true';
-    
-    if (!skipVerify) {
-      try {
-        await transporter.verify();
-        console.log('✅ SMTP connection verified successfully');
-      } catch (verifyError) {
-        console.error('❌ SMTP verification failed:', {
-          message: verifyError.message,
-          code: verifyError.code,
-          command: verifyError.command,
-          response: verifyError.response,
-          responseCode: verifyError.responseCode
-        });
-        
-        // Trong production, chỉ warn thay vì throw error
-        if (isProduction) {
-          console.warn('⚠️ SMTP verify failed in production, but will try to send anyway...');
-        } else {
-          throw new Error(`SMTP connection failed: ${verifyError.message}`);
-        }
-      }
-    } else {
-      console.log('⚠️ Skipping SMTP verification (SKIP_SMTP_VERIFY=true)');
     }
 
     // Tạo URL reset password
@@ -373,78 +312,27 @@ Trân trọng,
 Hệ thống Quản lý Học Lập Trình
     `;
 
-    // Gửi email
-    console.log(`📤 Attempting to send email to: ${email}`);
-    const emailFrom = process.env.EMAIL_FROM || 'no-reply@learn-dashboard.shopsheap.online';
-    const mailOptions = {
-      from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
+    // Gửi email qua Mailjet API
+    console.log(`📤 Attempting to send reset password email to: ${email}`);
+    const result = await sendEmailViaMailjetAPI({
       to: email,
+      toName: fullName,
       subject: subject,
-      text: textBody,
-      html: htmlBody,
-      // Headers để tránh spam
-      headers: {
-        'List-Unsubscribe': `<${process.env.FRONTEND_URL || 'https://dashboard.shopsheap.online'}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-        'X-Mailer': 'Dashboard System',
-        'Precedence': 'bulk',
-        'Auto-Submitted': 'auto-generated',
-        'X-Auto-Response-Suppress': 'All'
-      },
-      // Priority: normal (không dùng high để tránh spam)
-      priority: 'normal'
-    };
-    console.log('📧 Mail options:', {
-      from: mailOptions.from,
-      to: mailOptions.to,
-      subject: mailOptions.subject
+      htmlContent: htmlBody,
+      textContent: textBody
     });
 
-    const info = await transporter.sendMail(mailOptions);
-
-    console.log('✅ Reset password email sent successfully');
-    console.log('📬 Email response:', {
-      messageId: info.messageId,
-      response: info.response,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      pending: info.pending,
-      envelope: info.envelope
-    });
-
-    // Kiểm tra xem email có bị reject không
-    if (info.rejected && info.rejected.length > 0) {
-      console.error('❌ Email was rejected:', info.rejected);
-      throw new Error(`Email was rejected: ${info.rejected.join(', ')}`);
-    }
-
-    if (!info.messageId) {
-      console.warn('⚠️ No messageId returned, email may not have been sent');
-    }
-    
-    return {
-      success: true,
-      message: 'Email sent successfully',
-      messageId: info.messageId,
-      response: info.response
-    };
+    return result;
   } catch (error) {
     console.error('❌ Error sending reset password email:');
     console.error('   Message:', error.message);
-    console.error('   Code:', error.code);
-    console.error('   Command:', error.command);
-    console.error('   Response:', error.response);
-    console.error('   ResponseCode:', error.responseCode);
     console.error('   Stack:', error.stack);
     
     return {
       success: false,
       message: error.message || 'Failed to send email',
       error: {
-        code: error.code,
-        command: error.command,
-        response: error.response,
-        responseCode: error.responseCode
+        message: error.message
       }
     };
   }
