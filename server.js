@@ -18,34 +18,54 @@ app.set('trust proxy', 1);
 
 // Configure allowed origins
 const getAllowedOrigins = () => {
-  const origins = ['http://localhost:3001'];
+  const origins = [
+    'http://localhost:5173', // Vite dev server
+    'https://dashboard.shopsheap.online'
+  ];
   
   if (FRONTEND_URL) {
     const urls = FRONTEND_URL.split(',').map(url => url.trim());
     origins.push(...urls);
   }
-  
-  // Remove duplicates and return
-  return [...new Set(origins)];
+
+  const uniqueOrigins = [...new Set(origins)];
+  console.log('🌐 Allowed CORS origins:', uniqueOrigins);
+  return uniqueOrigins;
 };
 
+
 // Middleware
-app.use(helmet());
-app.use(cors({
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = getAllowedOrigins();
     
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('⚠️ Request with no origin - allowing');
+      return callback(null, true);
+    }
     
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS allowed for origin: ${origin}`);
       callback(null, true);
     } else {
+      console.log(`❌ CORS blocked for origin: ${origin}`);
+      console.log(`   Allowed origins:`, allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 hours
+};
+
+app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -76,8 +96,18 @@ app.use('/api/auth', authRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('❌ Error:', err.stack);
+  
+  // Handle CORS errors
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: 'CORS Error',
+      message: 'Origin not allowed by CORS policy',
+      origin: req.headers.origin
+    });
+  }
+  
+  res.status(err.status || 500).json({
     error: 'Something went wrong!',
     message: err.message
   });

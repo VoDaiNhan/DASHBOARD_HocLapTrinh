@@ -9,8 +9,14 @@ dotenv.config();
  */
 export const sendMSSVEmail = async (email, fullName, mssv) => {
   try {
+    // Mailjet SMTP config: ưu tiên MAILJET_API_KEY/MAILJET_SECRET_KEY, fallback về SMTP_USER/SMTP_PASS
+    const smtpUser = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
+    const smtpPass = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
+    const smtpHost = process.env.SMTP_HOST || 'in-v3.mailjet.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+    
     // Kiểm tra email config có đầy đủ không
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (!smtpHost || !smtpUser || !smtpPass) {
       console.warn('⚠️ Email config chưa được setup. Chỉ log email content.');
       console.log('📧 Email content:', {
         to: email,
@@ -34,32 +40,47 @@ Hệ thống Quản lý Học Lập Trình
       };
     }
 
-    // Tạo transporter với SMTP config
+    // Tạo transporter với Mailjet SMTP config
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true', // true cho 465, false cho các port khác
+      host: smtpHost,
+      port: smtpPort,
+      secure: process.env.SMTP_SECURE === 'true',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: smtpUser,
+        pass: smtpPass
       },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000
+      // Tăng timeout cho cloud platforms
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+      pool: true,
+      maxConnections: 1
     });
 
     // Verify SMTP connection trước khi gửi
-    try {
-      await transporter.verify();
-      console.log('✅ SMTP connection verified successfully');
-    } catch (verifyError) {
-      console.error('❌ SMTP verification failed:', {
-        message: verifyError.message,
-        code: verifyError.code,
-        command: verifyError.command,
-        response: verifyError.response
-      });
-      throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    const skipVerify = process.env.SKIP_SMTP_VERIFY === 'true';
+    
+    if (!skipVerify) {
+      try {
+        await transporter.verify();
+        console.log('✅ SMTP connection verified successfully');
+      } catch (verifyError) {
+        console.error('❌ SMTP verification failed:', {
+          message: verifyError.message,
+          code: verifyError.code,
+          command: verifyError.command,
+          response: verifyError.response
+        });
+        
+        if (isProduction) {
+          console.warn('⚠️ SMTP verify failed in production, but will try to send anyway...');
+        } else {
+          throw new Error(`SMTP connection failed: ${verifyError.message}`);
+        }
+      }
+    } else {
+      console.log('⚠️ Skipping SMTP verification');
     }
 
     // Nội dung email
@@ -93,7 +114,7 @@ Hệ thống Quản lý Học Lập Trình
 
     // Gửi email
     console.log(`📤 Attempting to send MSSV email to: ${email}`);
-    const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@learn-dashboard.shopsheap.online';
     const info = await transporter.sendMail({
       from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
       to: email,
@@ -153,8 +174,14 @@ Hệ thống Quản lý Học Lập Trình
  */
 export const sendResetPasswordEmail = async (email, fullName, resetToken) => {
   try {
+    // Mailjet SMTP config: ưu tiên MAILJET_API_KEY/MAILJET_SECRET_KEY, fallback về SMTP_USER/SMTP_PASS
+    const smtpUser = process.env.MAILJET_API_KEY || process.env.SMTP_USER;
+    const smtpPass = process.env.MAILJET_SECRET_KEY || process.env.SMTP_PASS;
+    const smtpHost = process.env.SMTP_HOST || 'in-v3.mailjet.com';
+    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+    
     // Kiểm tra email config có đầy đủ không
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (!smtpHost || !smtpUser || !smtpPass) {
       console.warn('⚠️ Email config chưa được setup. Chỉ log email content.');
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
       console.log('📧 Email content:', {
@@ -181,43 +208,65 @@ Hệ thống Quản lý Học Lập Trình
       };
     }
 
-    // Tạo transporter với SMTP config
+    // Tạo transporter với Mailjet SMTP config
+    // Tăng timeout cho Render và các cloud platforms
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
+      host: smtpHost,
+      port: smtpPort,
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        user: smtpUser,
+        pass: smtpPass
       },
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000
+      // Tăng timeout cho cloud platforms
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+      // Thêm options cho cloud
+      pool: true,
+      maxConnections: 1,
+      maxMessages: 3,
+      rateDelta: 1000,
+      rateLimit: 5
     });
 
-    // Verify SMTP connection trước khi gửi
+    // Verify SMTP connection trước khi gửi (skip trong production nếu cần)
     console.log('🔍 Verifying SMTP connection...');
-    console.log('📋 SMTP Config:', {
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
+    console.log('📋 Mailjet SMTP Config:', {
+      host: smtpHost,
+      port: smtpPort,
       secure: process.env.SMTP_SECURE === 'true',
-      user: process.env.SMTP_USER,
-      passLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0
+      user: smtpUser,
+      passLength: smtpPass ? smtpPass.length : 0,
+      isProduction: isProduction
     });
 
-    try {
-      await transporter.verify();
-      console.log('✅ SMTP connection verified successfully');
-    } catch (verifyError) {
-      console.error('❌ SMTP verification failed:', {
-        message: verifyError.message,
-        code: verifyError.code,
-        command: verifyError.command,
-        response: verifyError.response,
-        responseCode: verifyError.responseCode,
-        stack: verifyError.stack
-      });
-      throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    // Skip verify trong production nếu có env variable
+    const skipVerify = process.env.SKIP_SMTP_VERIFY === 'true';
+    
+    if (!skipVerify) {
+      try {
+        await transporter.verify();
+        console.log('✅ SMTP connection verified successfully');
+      } catch (verifyError) {
+        console.error('❌ SMTP verification failed:', {
+          message: verifyError.message,
+          code: verifyError.code,
+          command: verifyError.command,
+          response: verifyError.response,
+          responseCode: verifyError.responseCode
+        });
+        
+        // Trong production, chỉ warn thay vì throw error
+        if (isProduction) {
+          console.warn('⚠️ SMTP verify failed in production, but will try to send anyway...');
+        } else {
+          throw new Error(`SMTP connection failed: ${verifyError.message}`);
+        }
+      }
+    } else {
+      console.log('⚠️ Skipping SMTP verification (SKIP_SMTP_VERIFY=true)');
     }
 
     // Tạo URL reset password
@@ -326,7 +375,7 @@ Hệ thống Quản lý Học Lập Trình
 
     // Gửi email
     console.log(`📤 Attempting to send email to: ${email}`);
-    const emailFrom = process.env.EMAIL_FROM || process.env.SMTP_USER;
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@learn-dashboard.shopsheap.online';
     const mailOptions = {
       from: `"Hệ thống Quản lý Học Lập Trình" <${emailFrom}>`,
       to: email,

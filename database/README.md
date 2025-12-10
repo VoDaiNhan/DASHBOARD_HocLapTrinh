@@ -40,13 +40,13 @@ DB_NAME=Data_PersonalizedSystem  # Tên database
 # Server Configuration
 PORT=3001
 
-# SMTP Email Configuration
-SMTP_HOST=smtp.gmail.com
+# SMTP Email Configuration (Mailjet)
+SMTP_HOST=in-v3.mailjet.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-EMAIL_FROM=your_email@gmail.com
+SMTP_USER=<MAILJET_API_KEY>
+SMTP_PASS=<MAILJET_SECRET_KEY>
+EMAIL_FROM=no-reply@learn-dashboard.shopsheap.online
 
 # Frontend URL
 FRONTEND_URL=http://localhost:5173
