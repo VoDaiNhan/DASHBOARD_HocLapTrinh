@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   BarChart,
   Bar,
@@ -15,13 +15,13 @@ import { BarChart3, CalendarRange } from 'lucide-react';
 import { coursePerformanceData } from '../../../data/coursePerformanceData';
 
 const LEVELS = [
-  { key: 'xs', label: 'Xuáº¥t sáº¯c', color: '#4c8bf5' },
-  { key: 'g', label: 'Giá»i', color: '#63b3f3' },
-  { key: 'kg', label: 'KhÃ¡ giá»i', color: '#f5a623' },
-  { key: 'k', label: 'KhÃ¡', color: '#f6b84f' },
-  { key: 'tbk', label: 'Trung bÃ¬nh khÃ¡', color: '#f8cc6b' },
-  { key: 'tb', label: 'Trung bÃ¬nh', color: '#fbd38d' },
-  { key: 'yk', label: 'Yáº¿u / KÃ©m', color: '#eb4d4b' }
+  { key: 'xs', label: 'Xuất sắc', color: '#4c8bf5' },
+  { key: 'g', label: 'Giỏi', color: '#63b3f3' },
+  { key: 'kg', label: 'Khá giỏi', color: '#f5a623' },
+  { key: 'k', label: 'Khá', color: '#f6b84f' },
+  { key: 'tbk', label: 'Trung bình khá', color: '#f8cc6b' },
+  { key: 'tb', label: 'Trung bình', color: '#fbd38d' },
+  { key: 'yk', label: 'Yếu / Kém', color: '#eb4d4b' }
 ];
 
 const RATING_DISTRIBUTION = {
@@ -38,8 +38,9 @@ const TOTAL_STUDENTS = {
   2025: 215
 };
 
-const GOOD_BENCHMARK = 70; // % >= Kha
-const WEAK_BENCHMARK = 10; // % Yeu/Kem toi da
+const GOOD_BENCHMARK = 70; // % >= Khá
+const WEAK_BENCHMARK = 10; // % Yếu/Kém tối đa
+
 const LEVEL_THRESHOLDS = [
   { key: 'xs', min: 9 },
   { key: 'g', min: 8.5 },
@@ -50,15 +51,13 @@ const LEVEL_THRESHOLDS = [
   { key: 'yk', min: 0 }
 ];
 
-
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
 const statusColor = (status) => (status === 'good' ? '#16a34a' : status === 'warning' ? '#f59e0b' : '#ef4444');
 
 const SummaryItem = ({ label, value, tone = 'default' }) => {
-  const toneClass =
-    tone === 'up' ? 'text-green-600' : tone === 'down' ? 'text-red-600' : 'text-gray-800';
+  const toneClass = tone === 'up' ? 'text-green-600' : tone === 'down' ? 'text-red-600' : 'text-gray-800';
   return (
     <div className="p-3 rounded-lg border border-gray-200 bg-white shadow-sm">
       <p className="text-xs text-gray-500">{label}</p>
@@ -87,7 +86,7 @@ const buildStudentLevelDirectory = () => {
   students.forEach((student, idx) => {
     const courses = Object.values(student.courses || {});
     const avgScore =
-      courses.length === 0
+      !courses.length
         ? null
         : Math.round(
             (courses.reduce((sum, course) => sum + (course?.avgScore || 0), 0) / courses.length) * 10
@@ -209,8 +208,8 @@ const StudentRatingTrend = ({ title, description }) => {
     const point = payload[0].payload;
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow w-64">
-        <p className="text-sm font-medium text-gray-900 mb-1">NÄƒm {label}</p>
-        <p className="text-xs text-gray-500 mb-2">Tá»•ng: {point.totalStudents || 0} sinh viÃªn</p>
+        <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
+        <p className="text-xs text-gray-500 mb-2">Tổng: {point.totalStudents || 0} sinh viên</p>
         <div className="space-y-2 max-h-48 overflow-auto pr-1">
           {payload.map((entry) => {
             const delta = point?.[`${entry.dataKey}_delta`];
@@ -226,7 +225,7 @@ const StudentRatingTrend = ({ title, description }) => {
                 </div>
                 <div className="pl-5 flex items-center justify-between text-xs text-gray-500">
                   <span>
-                    {point?.[`${entry.dataKey}_count`] || 0}/{point.totalStudents || 0} sinh viA¦n
+                    {point?.[`${entry.dataKey}_count`] || 0}/{point.totalStudents || 0} sinh viên
                   </span>
                   {deltaText && (
                     <span
@@ -242,10 +241,10 @@ const StudentRatingTrend = ({ title, description }) => {
         </div>
         <div className="mt-2 text-xs text-gray-600 space-y-1 border-t pt-2">
           <div>
-            Tá»· lá»‡ KhÃ¡ trá»Ÿ lÃªn: <span className="font-semibold">{point.goodRatio?.toFixed(1) || 0}%</span>
+            Tỷ lệ Khá trở lên: <span className="font-semibold">{point.goodRatio?.toFixed(1) || 0}%</span>
           </div>
           <div>
-            Tá»· lá»‡ cáº§n cáº£i thiá»‡n (Yáº¿u/KÃ©m):{' '}
+            Tỷ lệ cần cải thiện (Yếu/Kém):{' '}
             <span className="font-semibold">{point.weakRatio?.toFixed(1) || 0}%</span>
           </div>
         </div>
@@ -273,8 +272,7 @@ const StudentRatingTrend = ({ title, description }) => {
   );
 
   const StatusBadges = useCallback(
-    (props) => {
-      const { xAxisMap, yAxisMap } = props;
+    ({ xAxisMap, yAxisMap }) => {
       if (!xAxisMap || !yAxisMap) return null;
       const xAxis = xAxisMap[0];
       const yAxis = yAxisMap[0];
@@ -307,10 +305,10 @@ const StudentRatingTrend = ({ title, description }) => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              {title || 'Xáº¿p loáº¡i há»c lá»±c sinh viÃªn'}
+              {title || 'Xếp loại học lực sinh viên'}
             </h3>
             <p className="text-sm text-gray-600">
-              {description || 'Theo quy chuáº©n 4 nÄƒm, xáº¿p loáº¡i 7 má»©c'}
+              {description || 'Theo quy chuẩn 4 năm, xếp loại 7 mức'}
             </p>
           </div>
         </div>
@@ -381,10 +379,11 @@ const StudentRatingTrend = ({ title, description }) => {
       {clickedInfo && (
         <div className="mt-3 text-sm text-gray-700 p-3 rounded-lg border border-gray-200 bg-white">
           <div className="font-semibold text-gray-900 mb-1">
-            {clickedInfo.levelLabel} - Nam {clickedInfo.year}
+            {clickedInfo.levelLabel} · Năm {clickedInfo.year}
           </div>
           <div className="text-sm mb-2">
-            Ty le: <span className="font-semibold">{clickedInfo.pct}%</span> ({clickedInfo.count}/{clickedInfo.total} sinh vien)
+            Tỷ lệ: <span className="font-semibold">{clickedInfo.pct}%</span> ({clickedInfo.count}/
+            {clickedInfo.total} sinh viên)
           </div>
           {clickedInfo.students && clickedInfo.students.length > 0 ? (
             <div className="max-h-48 overflow-auto divide-y divide-gray-100">
@@ -393,7 +392,7 @@ const StudentRatingTrend = ({ title, description }) => {
                   <div>
                     <p className="font-medium text-gray-900">{student.name}</p>
                     <p className="text-xs text-gray-500">
-                      {student.id} - Lop {student.className}
+                      {student.id} · Lớp {student.className}
                     </p>
                   </div>
                   <span className="text-xs font-semibold text-primary-600">{student.avgScore?.toFixed(1) ?? '0.0'}</span>
@@ -401,10 +400,10 @@ const StudentRatingTrend = ({ title, description }) => {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-gray-500">Chua co du lieu minh hoa cho nhom nay.</p>
+            <p className="text-xs text-gray-500">Chưa có dữ liệu minh họa cho nhóm này.</p>
           )}
           <div className="text-[11px] text-gray-400 mt-2">
-            Danh sach sinh vien sinh ra tu kho du lieu gia lap de tham khao nhanh.
+            Danh sách sinh viên được sinh từ kho dữ liệu giả lập để tham khảo nhanh.
           </div>
         </div>
       )}
@@ -412,49 +411,45 @@ const StudentRatingTrend = ({ title, description }) => {
       {summary && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <SummaryItem
-            label="Xu hÆ°á»›ng 4 nÄƒm"
+            label="Xu hướng 4 năm"
             value={`${summary.trend >= 0 ? '+' : ''}${summary.trend}%`}
             tone={summary.trend > 0 ? 'up' : summary.trend < 0 ? 'down' : 'default'}
           />
           <SummaryItem
-            label="TÄƒng máº¡nh nháº¥t"
+            label="Tăng mạnh nhất"
             value={
               summary.maxIncrease
-                ? `${summary.maxIncrease.delta}% (${summary.maxIncrease.from} â†’ ${summary.maxIncrease.to})`
+                ? `${summary.maxIncrease.delta}% (${summary.maxIncrease.from} → ${summary.maxIncrease.to})`
                 : '-'
             }
             tone="up"
           />
           <SummaryItem
-            label="Giáº£m máº¡nh nháº¥t"
+            label="Giảm mạnh nhất"
             value={
               summary.maxDecrease
-                ? `${summary.maxDecrease.delta}% (${summary.maxDecrease.from} â†’ ${summary.maxDecrease.to})`
+                ? `${summary.maxDecrease.delta}% (${summary.maxDecrease.from} → ${summary.maxDecrease.to})`
                 : '-'
             }
             tone="down"
           />
           <SummaryItem
-            label="NÄƒm tá»‘t nháº¥t"
+            label="Năm tốt nhất"
             value={`${summary.best.year} (${summary.best.value.toFixed(1)}%)`}
             tone="up"
           />
           <SummaryItem
-            label="NÄƒm tháº¥p nháº¥t"
+            label="Năm thấp nhất"
             value={`${summary.worst.year} (${summary.worst.value.toFixed(1)}%)`}
             tone="down"
           />
-          <SummaryItem label="Trung bÃ¬nh 4 nÄƒm" value={`${summary.average}%`} />
+          <SummaryItem label="Trung bình 4 năm" value={`${summary.average}%`} />
         </div>
       )}
 
-      {!summary && <div className="mt-4 text-sm text-gray-600">KhÃ´ng cÃ³ dá»¯ liá»‡u cho giai Ä‘oáº¡n nÃ y</div>}
+      {!summary && <div className="mt-4 text-sm text-gray-600">Không có dữ liệu cho giai đoạn này</div>}
     </div>
   );
 };
 
 export default StudentRatingTrend;
-
-
-
-
