@@ -7,8 +7,7 @@ import {
   forgotPassword,
   verifyResetToken,
   resetPassword,
-  refreshToken,
-  getCsrfToken
+  refreshToken
 } from '../controllers/authController.js';
 import { verifyToken, verifyTokenAllowExpired } from '../middleware/auth.js';
 import { loginLimiter, registerLimiter, refreshLimiter, forgotPasswordLimiter } from '../middleware/rateLimit.js';
@@ -65,16 +64,9 @@ router.get('/verify-reset-token', verifyResetToken);
 router.post('/reset-password', resetPassword);
 
 /**
- * @route   GET /api/auth/csrf-token
- * @desc    Lấy CSRF token để gửi trong header
- * @access  Public
- */
-router.get('/csrf-token', getCsrfToken);
-
-/**
  * @route   POST /api/auth/refresh-token
  * @desc    Làm mới access token
- * @access  Requires access token (even if expired) + CSRF token for security
+ * @access  Requires access token (even if expired)
  */
 router.post('/refresh-token', refreshLimiter, verifyTokenAllowExpired, refreshToken);
 
