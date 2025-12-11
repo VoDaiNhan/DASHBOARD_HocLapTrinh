@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import { getPool, sql } from '../config/database.js';
 import { sendMSSVEmail, sendResetPasswordEmail } from '../utils/emailService.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
-import { generateCsrfToken, setCsrfCookie } from '../middleware/csrf.js';
 
 // Cookie options for refresh token (HTTP-only)
 const isProduction = process.env.NODE_ENV === 'production';
@@ -325,10 +324,6 @@ export const login = async (req, res) => {
     // Set refresh token as HTTP-only cookie
     res.cookie('refresh_token', refreshToken, refreshCookieOptions);
 
-    // Set CSRF token cookie (non-HTTP-only for double submit)
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken, req);
-
     return res.json({
       success: true,
       message: 'Đăng nhập thành công',
@@ -421,15 +416,9 @@ export const logout = async (req, res) => {
     }
 
     // Clear refresh token cookie
-    res.clearCookie('refresh_token', { 
+    res.clearCookie('refresh_token', {
       path: '/',
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax'
-    });
-    res.clearCookie('csrf_token', { 
-      path: '/',
-      httpOnly: false,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax'
     });
@@ -892,9 +881,6 @@ export const refreshToken = async (req, res) => {
 
     // Set new refresh token cookie
     res.cookie('refresh_token', newRefreshToken, refreshCookieOptions);
-    // Rotate CSRF token
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(res, csrfToken, req);
 
     return res.json({
       success: true,
@@ -913,40 +899,6 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-/**
- * Get CSRF Token - Lấy CSRF token để gửi trong header của các request
- */
-export const getCsrfToken = async (req, res) => {
-  try {
-    // Generate new CSRF token
-    const csrfToken = generateCsrfToken();
-    
-    console.log('🔐 Generating CSRF token:', {
-      origin: req.headers.origin,
-      userAgent: req.headers['user-agent']?.substring(0, 50),
-      cookies: req.cookies
-    });
-    
-    // Set CSRF token in cookie (not HTTP-only so client can read it)
-    setCsrfCookie(res, csrfToken, req);
-    
-    console.log('✅ CSRF token generated and cookie set:', csrfToken.substring(0, 20) + '...');
-    
-    return res.json({
-      success: true,
-      data: {
-        csrf_token: csrfToken
-      }
-    });
-  } catch (error) {
-    console.error('Get CSRF token error:', error);
-    return res.status(500).json({
-      error: 'Server error',
-      message: error.message
-    });
-  }
-};
-
 export default {
   register,
   login,
@@ -955,6 +907,5 @@ export default {
   forgotPassword,
   verifyResetToken,
   resetPassword,
-  refreshToken,
-  getCsrfToken
+  refreshToken
 };
