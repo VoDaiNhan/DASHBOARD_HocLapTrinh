@@ -15,10 +15,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 import logo from '../../../assets/unnamed.jpg';
-<<<<<<< HEAD
-=======
 import { clearAccessToken } from '../../../services/api';
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
@@ -128,11 +125,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       type: 'class'
     },
     {
-<<<<<<< HEAD
-      name: 'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn',
-=======
       name: 'Quản Lý Giảng Viên',
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       href: '/teachers',
       icon: UserCheck,
       current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')

@@ -12,11 +12,7 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
-<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
-=======
-      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
@@ -39,11 +35,7 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
-<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
-=======
-      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
@@ -66,11 +58,7 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Tất cả',
-<<<<<<< HEAD
       courseList: ['Tất cả', 'Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
-=======
-      courseList: ['Tất cả', 'Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
@@ -93,11 +81,7 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
-<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
-=======
-      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
@@ -143,14 +127,9 @@ const GeneralConfiguration = () => {
           return {
             ...def,
             ...c,
-<<<<<<< HEAD
-            filters: { ...def.filters, ...c.filters },
-            dataSource: { ...def.dataSource, ...c.dataSource },
-            chart: { ...def.chart, ...c.chart }
-=======
             filters: { ...def.filters, ...(c.filters || {}) },
+            dataSource: { ...(def.dataSource || {}), ...(c.dataSource || {}) },
             chart: { ...def.chart, ...(c.chart || {}) }
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
           };
         });
         setCards(merged);
@@ -199,16 +178,6 @@ const GeneralConfiguration = () => {
     setTimeout(() => setMessage(''), 2000);
   };
 
-<<<<<<< HEAD
-  const TAB_KEYS = [
-    { key: 'display', label: 'Thông tin hiển thị' },
-    { key: 'filters', label: 'Bộ lọc mặc định' },
-    { key: 'chart', label: 'Kiểu biểu đồ' },
-    { key: 'threshold', label: 'Ngưỡng đánh giá' }
-  ];
-
-=======
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -328,16 +297,10 @@ const GeneralConfiguration = () => {
             {activeTab === 'filters' && (
               <div className="space-y-4">
                 <h4 className={groupTitle}>Bộ lọc mặc định</h4>
-<<<<<<< HEAD
-                <div className="space-y-3">
-                  <div className="md:col-span-3 lg:col-span-2 space-y-2">
-                    <label className={label}>Chọn môn (dropdown)</label>
-=======
                 <p className={groupDesc}>Tự động lấy 4 năm gần nhất, có thể đổi chu kỳ đào tạo.</p>
                 <div className="space-y-4">
                   <div>
                     <label className={label}>Môn</label>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     <div className="flex items-center gap-3">
                       <select
                         className={`${inputClass} flex-1`}
@@ -354,11 +317,7 @@ const GeneralConfiguration = () => {
                       </select>
                     </div>
                     <p className="text-xs text-gray-500">
-<<<<<<< HEAD
-                      Danh sách môn dùng chung, thêm mới để ngành khác cũng chọn được.
-=======
                       Danh sách môn dùng chung; thêm mới để các ngành khác cũng chọn được.
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     </p>
                   </div>
 
@@ -434,9 +393,6 @@ const GeneralConfiguration = () => {
                           readOnly
                         />
                         <p className="text-xs text-gray-500 mt-1">
-<<<<<<< HEAD
-                          Tự động lấy {card.filters.trainingCycle === '3y' ? '3' : card.filters.trainingCycle === '5y' ? '5' : '4'} năm gần nhất.
-=======
                           Tự động lấy{' '}
                           {card.filters.trainingCycle === '3y'
                             ? '3'
@@ -444,7 +400,6 @@ const GeneralConfiguration = () => {
                               ? '5'
                               : '4'}{' '}
                           năm gần nhất.
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                         </p>
                       </div>
                     )}
@@ -471,11 +426,7 @@ const GeneralConfiguration = () => {
                       <option value="area">Area</option>
                       <option value="spline">Spline</option>
                     </select>
-<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">Line/Area phù hợp xu hướng; Bar cho so sánh nhanh.</p>
-=======
-                    <p className="text-xs text-gray-500 mt-1">Line/Area cho xu hướng; Bar cho so sánh nhanh.</p>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Màu biểu đồ</label>
@@ -514,15 +465,8 @@ const GeneralConfiguration = () => {
 
             {activeTab === 'threshold' && (
               <div className="space-y-4">
-<<<<<<< HEAD
-                <h4 className={groupTitle}>Mức đề ra (Benchmark)</h4>
-                <p className={groupDesc}>
-                  Đặt mục tiêu và ngưỡng cảnh báo cho tỷ lệ hoàn thành môn học.
-                </p>
-=======
                 <h4 className={groupTitle}>Mức đề ra / Ngưỡng đánh giá</h4>
                 <p className={groupDesc}>Đặt mục tiêu, ngưỡng cảnh báo cho từng card.</p>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                 <div className="space-y-4">
                   <div>
                     <label className={label}>Mức đề ra (mục tiêu %)</label>
@@ -532,13 +476,9 @@ const GeneralConfiguration = () => {
                       value={card.benchmark ?? 75}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, benchmark: Number(e.target.value) }))}
                     />
-<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">
                       Tỉ lệ mục tiêu mà khoa mong muốn cho môn học.
                     </p>
-=======
-                    <p className="text-xs text-gray-500 mt-1">Tỷ lệ mục tiêu khoa mong muốn.</p>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Mức dưới chuẩn (%)</label>
@@ -548,13 +488,9 @@ const GeneralConfiguration = () => {
                       value={card.warning ?? 60}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, warning: Number(e.target.value) }))}
                     />
-<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">
                       Nếu kết quả thấp hơn mức này thì hiển thị cảnh báo đỏ.
                     </p>
-=======
-                    <p className="text-xs text-gray-500 mt-1">Nếu kết quả thấp hơn mức này sẽ cảnh báo mạnh.</p>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Ngưỡng chú ý (%)</label>
@@ -565,11 +501,7 @@ const GeneralConfiguration = () => {
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, threshold: Number(e.target.value) }))}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-<<<<<<< HEAD
                       Nếu kết quả gần mức dưới chuẩn thì highlight nhẹ (cảnh báo vàng).
-=======
-                      Nếu gần mức dưới chuẩn sẽ highlight nhẹ (vùng cảnh báo).
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     </p>
                   </div>
                 </div>

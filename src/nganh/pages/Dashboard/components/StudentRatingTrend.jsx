@@ -38,11 +38,6 @@ const TOTAL_STUDENTS = {
   2025: 215
 };
 
-<<<<<<< HEAD
-const GOOD_BENCHMARK = 70; // % Khá trở lên
-const WEAK_BENCHMARK = 10; // % Yếu/Kém tối đa
-
-=======
 const GOOD_BENCHMARK = 70; // % >= Khá
 const WEAK_BENCHMARK = 10; // % Yếu/Kém tối đa
 
@@ -55,20 +50,13 @@ const LEVEL_THRESHOLDS = [
   { key: 'tb', min: 5 },
   { key: 'yk', min: 0 }
 ];
-
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
 const currentYear = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 12 }, (_, idx) => currentYear - idx).filter((y) => y >= 2013);
 
 const statusColor = (status) => (status === 'good' ? '#16a34a' : status === 'warning' ? '#f59e0b' : '#ef4444');
 
 const SummaryItem = ({ label, value, tone = 'default' }) => {
-<<<<<<< HEAD
-  const toneClass =
-    tone === 'up' ? 'text-green-600' : tone === 'down' ? 'text-red-600' : 'text-gray-800';
-=======
   const toneClass = tone === 'up' ? 'text-green-600' : tone === 'down' ? 'text-red-600' : 'text-gray-800';
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
   return (
     <div className="p-3 rounded-lg border border-gray-200 bg-white shadow-sm">
       <p className="text-xs text-gray-500">{label}</p>
@@ -77,11 +65,6 @@ const SummaryItem = ({ label, value, tone = 'default' }) => {
   );
 };
 
-<<<<<<< HEAD
-const StudentRatingTrend = ({ title, description }) => {
-  const [startYear, setStartYear] = useState(Math.max(currentYear - 3, 2022));
-  const [hoveredYear, setHoveredYear] = useState(null);
-=======
 const determineLevelKey = (score) => {
   if (!Number.isFinite(score)) return 'tb';
   const threshold = LEVEL_THRESHOLDS.find((lvl) => score >= lvl.min);
@@ -133,7 +116,6 @@ const StudentRatingTrend = ({ title, description }) => {
   const [hoveredYear, setHoveredYear] = useState(null);
   const [clickedInfo, setClickedInfo] = useState(null);
   const studentLevelDirectory = useMemo(() => STUDENT_LEVEL_DIRECTORY, []);
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
 
   const chartData = useMemo(() => {
     const years = Array.from({ length: 4 }, (_, i) => startYear + i);
@@ -209,8 +191,6 @@ const StudentRatingTrend = ({ title, description }) => {
     };
   }, [chartData]);
 
-<<<<<<< HEAD
-=======
   const handleBarClick = (point, levelKey) => {
     if (!point) return;
     const year = point.year;
@@ -222,7 +202,6 @@ const StudentRatingTrend = ({ title, description }) => {
     setClickedInfo({ year, levelLabel, levelKey, pct, count, total, students });
   };
 
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
     const point = payload[0].payload;
@@ -230,24 +209,11 @@ const StudentRatingTrend = ({ title, description }) => {
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow w-64">
         <p className="text-sm font-medium text-gray-900 mb-1">Năm {label}</p>
         <p className="text-xs text-gray-500 mb-2">Tổng: {point.totalStudents || 0} sinh viên</p>
-<<<<<<< HEAD
-        <div className="space-y-1 max-h-40 overflow-auto pr-1">
-=======
         <div className="space-y-2 max-h-48 overflow-auto pr-1">
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
           {payload.map((entry) => {
             const delta = point?.[`${entry.dataKey}_delta`];
             const deltaText = delta === null || delta === undefined ? '' : `${delta >= 0 ? '+' : ''}${delta}%`;
             return (
-<<<<<<< HEAD
-              <div key={entry.name} className="text-sm text-gray-700 flex items-center gap-2">
-                <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }}></span>
-                <span className="font-medium">{entry.name}:</span>
-                <span className="font-semibold">{entry.value}%</span>
-                <span className={`text-xs ${delta > 0 ? 'text-green-600' : delta < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                  {deltaText}
-                </span>
-=======
               <div key={entry.name} className="text-sm text-gray-700 space-y-0.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -268,7 +234,6 @@ const StudentRatingTrend = ({ title, description }) => {
                     </span>
                   )}
                 </div>
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
               </div>
             );
           })}
@@ -306,12 +271,7 @@ const StudentRatingTrend = ({ title, description }) => {
   );
 
   const StatusBadges = useCallback(
-<<<<<<< HEAD
-    (props) => {
-      const { xAxisMap, yAxisMap } = props;
-=======
     ({ xAxisMap, yAxisMap }) => {
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       if (!xAxisMap || !yAxisMap) return null;
       const xAxis = xAxisMap[0];
       const yAxis = yAxisMap[0];
@@ -408,18 +368,13 @@ const StudentRatingTrend = ({ title, description }) => {
                 radius={idx === LEVELS.length - 1 ? [6, 6, 0, 0] : 0}
                 isAnimationActive
                 animationDuration={600}
-<<<<<<< HEAD
-=======
                 onClick={(data) => handleBarClick(data?.payload, lvl.key)}
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
               />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-<<<<<<< HEAD
-=======
       {clickedInfo && (
         <div className="mt-3 text-sm text-gray-700 p-3 rounded-lg border border-gray-200 bg-white">
           <div className="font-semibold text-gray-900 mb-1">
@@ -452,7 +407,6 @@ const StudentRatingTrend = ({ title, description }) => {
         </div>
       )}
 
->>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       {summary && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <SummaryItem
