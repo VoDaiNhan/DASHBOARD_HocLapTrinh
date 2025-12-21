@@ -152,10 +152,10 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
     }
 
     const loadCourses = () => {
-      const savedCourses = sessionStorage.getItem('enrolledCourses');
-      if (savedCourses) {
+    const savedCourses = sessionStorage.getItem('enrolledCourses');
+    if (savedCourses) {
         let courses = JSON.parse(savedCourses);
-        
+
         // Tính lại tiến độ từ completedLessons nếu cần
         const savedCompletedLessons = sessionStorage.getItem('completedLessons');
         if (savedCompletedLessons) {
@@ -289,7 +289,7 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
                       ? 240
                       : 200;
                     
-                    return (
+                      return (
                       <div key={course.id} className="flex flex-col items-center justify-center p-2">
                         <h3 className={`font-semibold text-gray-800 dark:text-white mb-2 text-center ${
                           enrolledCourses.length === 1 ? 'text-xl' : enrolledCourses.length <= 4 ? 'text-lg' : 'text-base'
@@ -300,13 +300,13 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
                           <GaugeChart value={progress} courseName={course.name} size={gaugeSize} />
                         </div>
                       </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-[420px] text-gray-500 dark:text-gray-400">
                   Đang tải biểu đồ...
-                </div>
+                              </div>
               )
             ) : (
               <div className="flex items-center justify-center h-[420px] text-gray-500 dark:text-gray-400">
@@ -331,8 +331,8 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
               : 'lg:col-span-2'
           }`}>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
-              📊 Phân loại năng lực theo từng môn
-            </h2>
+            📊 Phân loại năng lực theo từng môn
+          </h2>
             <div 
               className={`${
                 enrolledCourses.length === 1 
@@ -346,9 +346,9 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
                 height: '500px'
               } : {}}
             >
-              {enrolledCourses.map((course) => {
-                const competencies = competencyByCourse[course.id] || {};
-                return (
+            {enrolledCourses.map((course) => {
+              const competencies = competencyByCourse[course.id] || {};
+              return (
                   <div 
                     key={course.id} 
                     className={`border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex-shrink-0 ${
@@ -356,39 +356,39 @@ const GaugeChart = ({ value, courseName, size = 250 }) => {
                     }`}
                   >
                     <h3 className="font-semibold text-sm text-gray-800 dark:text-white mb-3">
-                      {course.name}
-                    </h3>
+                    {course.name}
+                  </h3>
                     <div className="space-y-2.5">
-                      {Object.entries(competencies).map(([name, score]) => {
-                        const levelInfo = getLevel(score);
-                        return (
+                    {Object.entries(competencies).map(([name, score]) => {
+                      const levelInfo = getLevel(score);
+                      return (
                           <div key={name} className="space-y-1">
                             <div className="flex justify-between items-center">
                               <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate flex-1">
-                                {name}
-                              </span>
+                              {name}
+                            </span>
                               <span className={`text-xs font-bold ${levelInfo.textColor} ml-2 flex-shrink-0`}>
-                                {score}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                              <div
-                                className={`h-1.5 rounded-full transition-all ${levelInfo.color}`}
-                                style={{ width: `${score}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className={`text-xs ${levelInfo.textColor} font-semibold`}>
-                                {levelInfo.level}
-                              </span>
-                            </div>
+                              {score}%
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                            <div
+                                className={`h-1.5 rounded-full transition-all ${levelInfo.color}`}
+                              style={{ width: `${score}%` }}
+                            ></div>
+                          </div>
+                            <div className="flex items-center justify-between">
+                          <span className={`text-xs ${levelInfo.textColor} font-semibold`}>
+                            {levelInfo.level}
+                          </span>
+                            </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+            </div>
+              );
+            })}
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { authAPI } from '../../services/api';
+import { authAPI, clearAccessToken } from '../../services/api';
 import { availableCourses, studyGroups, groupAssignments, courseLessons } from '../data/data';
 
 const X = () => (
@@ -350,8 +350,7 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
       console.error('Logout error:', error);
     } finally {
       // Clear all data
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
+      clearAccessToken();
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('dashboardType');
       
@@ -461,7 +460,7 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
               onClick={() => setNotificationOpen(!notificationOpen)}
               className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <Bell />
+            <Bell />
               {unreadCount > 0 && (
                 <span className="absolute top-0 right-0 h-4 w-4 bg-danger-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -533,7 +532,7 @@ const HeaderNew = ({ onMenuClick, setCurrentPage }) => {
                               </p>
                             </div>
                           </div>
-                        </button>
+          </button>
                       ))}
                     </div>
                   ) : (

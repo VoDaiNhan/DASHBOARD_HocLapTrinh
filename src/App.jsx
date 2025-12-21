@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 
@@ -31,7 +31,6 @@ import DashboardStudent from './sinhvien/pages/Dashboard.jsx';
 import Courses from './sinhvien/pages/Courses.jsx';
 import Exercises from './sinhvien/pages/Exercises.jsx';
 import Feedback from './sinhvien/pages/Feedback.jsx';
-import Skills from './sinhvien/pages/Skills.jsx';
 import Profile from './sinhvien/pages/Profile.jsx';
 
 // Ngành imports
@@ -46,6 +45,10 @@ import CourseDetailNghanh from './nganh/pages/CourseManagement/CourseDetail';
 import StudentTrackingNghanh from './nganh/pages/StudentTracking/StudentTracking';
 import ReportsNghanh from './nganh/pages/Reports/Reports';
 import SettingsNghanh from './nganh/pages/Settings/Settings';
+import AssignmentManagementNghanh from './nganh/pages/AssignmentManagement/AssignmentManagement';
+import AssignmentDetailNghanh from './nganh/pages/AssignmentManagement/AssignmentDetail';
+import AssignmentCreateNghanh from './nganh/pages/AssignmentManagement/AssignmentCreate';
+import AssignmentEditNghanh from './nganh/pages/AssignmentManagement/AssignmentEdit';
 
 // Student App Component (without router)
 const StudentApp = () => {
@@ -63,8 +66,6 @@ const StudentApp = () => {
         return <Exercises />;
       case 'feedback':
         return <Feedback />;
-      case 'skills':
-        return <Skills />;
       case 'profile':
         return <Profile />;
       default:
@@ -105,8 +106,56 @@ const StudentApp = () => {
 
 function App() {
   const [selectedDashboard, setSelectedDashboard] = useState(sessionStorage.getItem('dashboardType') || null);
-  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('access_token'));
+  // Allow reset-password route even if user exists in sessionStorage (for password reset flow)
+  const currentPath = window.location.pathname;
+  const isResetPasswordRoute = currentPath.startsWith('/reset-password');
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !isResetPasswordRoute && !!sessionStorage.getItem('user')
+  );
+  
+  console.log('🔍 App render check:', {
+    currentPath,
+    isResetPasswordRoute,
+    hasUser: !!sessionStorage.getItem('user'),
+    isAuthenticated
+  });
 
+  // Sync selectedDashboard with sessionStorage when it changes
+  useEffect(() => {
+    const dashboardType = sessionStorage.getItem('dashboardType');
+    if (dashboardType && dashboardType !== selectedDashboard) {
+      console.log('🔄 Syncing dashboardType from sessionStorage:', dashboardType);
+      setSelectedDashboard(dashboardType);
+    }
+  }, []);
+
+  // Fetch CSRF token and refresh access token if needed when app loads/reloads
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const { fetchCsrfToken, getAccessToken, refreshAccessToken } = await import('./services/api.js');
+        
+        // Fetch CSRF token first
+        await fetchCsrfToken();
+        
+        // If user is authenticated but no access token in memory (page reloaded),
+        // try to refresh token using temp_access_token from sessionStorage
+        const hasUser = !!sessionStorage.getItem('user');
+        const currentAccessToken = getAccessToken();
+        const tempAccessToken = sessionStorage.getItem('temp_access_token');
+        
+        if (hasUser && !currentAccessToken && tempAccessToken) {
+          console.log('🔄 User found with temp access token, restoring to memory...');
+          const { setAccessToken } = await import('./services/api.js');
+          setAccessToken(tempAccessToken);
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+      }
+    };
+    
+    initAuth();
+  }, []);
 
   // Auth routes wrapper
   if (!isAuthenticated) {
@@ -114,6 +163,7 @@ function App() {
       <DarkModeProvider>
         <Router>
           <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -168,6 +218,10 @@ function App() {
                 <Route path="/classes" element={<ClassManagementNghanh />} />
                 <Route path="/classes/:id" element={<ClassDetailNghanh />} />
                 <Route path="/students" element={<StudentTrackingNghanh />} />
+                <Route path="/assignments" element={<AssignmentManagementNghanh />} />
+                <Route path="/assignments/create" element={<AssignmentCreateNghanh />} />
+                <Route path="/assignments/:id" element={<AssignmentDetailNghanh />} />
+                <Route path="/assignments/:id/edit" element={<AssignmentEditNghanh />} />
                 <Route path="/reports" element={<ReportsNghanh />} />
                 <Route path="/settings" element={<SettingsNghanh />} />
               </Routes>

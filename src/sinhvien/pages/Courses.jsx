@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { availableCourses, generateProgressData, studyGroups, groupAssignments, courseLessons } from '../data/data';
+import { availableCourses, generateProgressData, courseExercises, organizeExercisesByLevel, calculateLevelProgress } from '../data/data';
 import Toast from '../components/Toast';
 
 // Load Highcharts More module - cần thiết cho gauge chart
@@ -144,17 +144,10 @@ const Courses = () => {
   const [toast, setToast] = useState(null);
   const isFirstRender = useRef(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [selectedGroupForAssignments, setSelectedGroupForAssignments] = useState(null);
   const [selectedCourseForLessons, setSelectedCourseForLessons] = useState(null);
   const [learningLessons, setLearningLessons] = useState({}); // { lessonId: { startTime, timer } }
   const [completedLessons, setCompletedLessons] = useState(() => {
     const saved = sessionStorage.getItem('completedLessons');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [joinedGroups, setJoinedGroups] = useState(() => {
-    // Khởi tạo state từ sessionStorage
-    const saved = sessionStorage.getItem('joinedGroups');
     return saved ? JSON.parse(saved) : [];
   });
   const [gaugeReady, setGaugeReady] = useState(false);
@@ -187,77 +180,6 @@ const Courses = () => {
     sessionStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
   }, [enrolledCourses]);
 
-  // Save to sessionStorage whenever joinedGroups changes
-  useEffect(() => {
-    sessionStorage.setItem('joinedGroups', JSON.stringify(joinedGroups));
-  }, [joinedGroups]);
-
-  // Kiểm tra user đã tham gia nhóm chưa
-  const isUserJoinedGroup = (groupId) => {
-    return joinedGroups.some(g => g.id === groupId);
-  };
-
-  // Xử lý tham gia nhóm
-  const handleJoinGroup = (group) => {
-    if (!currentUser) {
-      setToast({
-        message: 'Vui lòng đăng nhập để tham gia nhóm',
-        type: 'warning'
-      });
-      return;
-    }
-
-    if (isUserJoinedGroup(group.id)) {
-      setToast({
-        message: 'Bạn đã tham gia nhóm này rồi',
-        type: 'info'
-      });
-      return;
-    }
-
-    // Lưu vào joinedGroups (chỉ lưu id và thời gian tham gia)
-    setJoinedGroups([...joinedGroups, { 
-      id: group.id, 
-      joinedAt: new Date().toISOString(),
-      userInfo: {
-        id: currentUser.id || Date.now(),
-        name: currentUser.full_name || 'User',
-        mssv: currentUser.mssv,
-        role: 'Member'
-      }
-    }]);
-
-    setToast({
-      message: `Đã tham gia nhóm "${group.name}" thành công!`,
-      type: 'success'
-    });
-
-    // Đóng modal
-    setSelectedGroup(null);
-  };
-
-  // Lấy danh sách thành viên kèm user đã tham gia
-  const getGroupMembersWithJoined = (group) => {
-    const joinedGroup = joinedGroups.find(g => g.id === group.id);
-    const isUserInOriginalMembers = currentUser && group.members.some(m => m.mssv === currentUser.mssv);
-    
-    // Nếu user đã tham gia và chưa có trong danh sách gốc
-    if (joinedGroup && !isUserInOriginalMembers && joinedGroup.userInfo) {
-      return [...group.members, joinedGroup.userInfo];
-    }
-    
-    return group.members;
-  };
-
-  // Xử lý rời nhóm
-  const handleLeaveGroup = (groupId) => {
-    setJoinedGroups(joinedGroups.filter(g => g.id !== groupId));
-    setToast({
-      message: 'Đã rời nhóm thành công',
-      type: 'success'
-    });
-    setSelectedGroup(null);
-  };
 
   const isEnrolled = (courseId) => {
     return enrolledCourses.some(c => c.id === courseId);
@@ -462,12 +384,50 @@ const Courses = () => {
   ];
 
   // Nếu đang xem bài học, hiển thị trang bài học
+  // Vertical Timeline - Gợi ý bài tập theo level
   if (selectedCourseForLessons) {
-    const lessons = courseLessons[selectedCourseForLessons.id] || [];
-    const completedCount = lessons.filter(l => completedLessons.includes(l.id)).length;
-    const inProgressCount = Object.keys(learningLessons).filter(lessonId => 
-      lessons.some(l => l.id === parseInt(lessonId))
-    ).length;
+    const courseId = selectedCourseForLessons.id;
+    const levels = organizeExercisesByLevel(courseId);
+    
+    // Lấy danh sách bài tập đã hoàn thành
+    const savedCompleted = typeof window !== 'undefined' 
+      ? JSON.parse(sessionStorage.getItem('completedExercises') || '[]')
+      : [];
+    
+    // Tính tiến độ cho từng level
+    const levelsWithProgress = levels.map(level => {
+      const progress = calculateLevelProgress(courseId, level.levelNumber);
+      const completedCount = level.exercises.filter(ex => 
+        savedCompleted.includes(ex.id) || ex.completed
+      ).length;
+      
+      return {
+        ...level,
+        progress,
+        completedCount,
+        totalCount: level.exercises.length
+      };
+    });
+    
+    // Xác định level nào được unlock (level đầu tiên luôn unlock, level tiếp theo unlock khi đạt >70%)
+    const unlockedLevels = [];
+    for (let i = 0; i < levelsWithProgress.length; i++) {
+      const level = levelsWithProgress[i];
+      if (i === 0) {
+        // Level đầu tiên luôn unlock
+        unlockedLevels.push({ ...level, isUnlocked: true });
+      } else {
+        // Level tiếp theo unlock khi level trước đạt >70%
+        const prevLevel = levelsWithProgress[i - 1];
+        const isUnlocked = prevLevel.progress > 70;
+        unlockedLevels.push({ ...level, isUnlocked });
+      }
+    }
+    
+    // Xác định level nào cần gợi ý bài tập bổ sung (<70%)
+    const needsMorePractice = unlockedLevels.filter(level => 
+      level.isUnlocked && level.progress < 70
+    );
 
     return (
       <div className="space-y-6">
@@ -490,7 +450,7 @@ const Courses = () => {
           </button>
           <div className="text-center mt-4">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              📖 Bài học: {selectedCourseForLessons.name}
+              🎯 Lộ trình Bài tập: {selectedCourseForLessons.name}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               {selectedCourseForLessons.code} • {selectedCourseForLessons.instructor}
@@ -498,393 +458,190 @@ const Courses = () => {
           </div>
         </div>
 
-        {/* Thống kê */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-primary-500 mb-2">{lessons.length}</div>
-            <div className="text-sm text-gray-600">Tổng số bài học</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-warning-500 mb-2">{inProgressCount}</div>
-            <div className="text-sm text-gray-600">Đang học</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-success-500 mb-2">{completedCount}</div>
-            <div className="text-sm text-gray-600">Đã hoàn thành</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-gray-500 mb-2">
-              {lessons.length - completedCount - inProgressCount}
+        {/* Cảnh báo nếu cần luyện thêm */}
+        {needsMorePractice.length > 0 && (
+          <div className="card bg-warning-50 dark:bg-warning-900/20 border-l-4 border-warning-500">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">⚠️</div>
+              <div className="flex-1">
+                <h3 className="font-bold text-warning-800 dark:text-warning-200 mb-2">
+                  Cần luyện tập thêm!
+                </h3>
+                <p className="text-sm text-warning-700 dark:text-warning-300">
+                  Bạn cần đạt trên 70% ở {needsMorePractice.map(l => l.name).join(', ')} để mở khóa level tiếp theo.
+                  Hãy làm thêm các bài tập ở level này để cải thiện kỹ năng!
+                </p>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Chưa bắt đầu</div>
           </div>
-        </div>
-
-        {/* Danh sách bài học */}
-        <div className="space-y-4">
-          {lessons.length === 0 ? (
-            <div className="card text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Chưa có bài học</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Khóa học này chưa có bài học nào.
-              </p>
-            </div>
-          ) : (
-            lessons.map((lesson) => {
-              const isCompleted = completedLessons.includes(lesson.id);
-              const isLearning = learningLessons[lesson.id];
-              const remainingTime = isLearning ? learningLessons[lesson.id].remainingTime : 0;
-
-              return (
-                <div 
-                  key={lesson.id} 
-                  className="card hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                          {lesson.title}
-                        </h3>
-                        {isCompleted && (
-                          <span className="badge bg-success-100 text-success-800">
-                            ✓ Đã hoàn thành
-                          </span>
-                        )}
-                        {isLearning && !isCompleted && (
-                          <span className="badge bg-warning-100 text-warning-800 animate-pulse">
-                            ⏱️ Đang học
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        {lesson.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <strong>⏱️ Thời lượng:</strong> {lesson.duration} phút
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <strong>📚 Loại:</strong> 
-                        <span className="ml-2 badge bg-primary-100 text-primary-800">
-                          {lesson.type === 'video' ? 'Video' : lesson.type === 'reading' ? 'Đọc' : 'Thực hành'}
-                        </span>
-                      </p>
-                      {isLearning && (
-                        <p className="text-sm font-semibold text-warning-600 mt-2">
-                          ⏳ Còn lại: {formatTime(remainingTime)}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        <strong>📝 Nội dung:</strong>
-                      </p>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
-                        {lesson.content}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Button Học bài */}
-                  <div className="flex justify-end gap-3">
-                    {isCompleted ? (
-                      <button
-                        disabled
-                        className="btn btn-success opacity-75 cursor-not-allowed"
-                      >
-                        ✓ Đã hoàn thành
-                      </button>
-                    ) : isLearning ? (
-                      <>
-                        <button
-                          onClick={() => handleCompleteLesson(lesson.id)}
-                          className="btn btn-success flex items-center gap-2"
-                        >
-                          ✓ Hoàn thành
-                        </button>
-                        <button
-                          disabled
-                          className="btn btn-warning flex items-center gap-2"
-                        >
-                          <span className="animate-spin">⏱️</span>
-                          Đang học ({formatTime(remainingTime)})
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleStartLesson(lesson.id)}
-                        className="btn btn-primary flex items-center gap-2"
-                      >
-                        📖 Học bài
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Nếu đang xem bài tập nhóm, hiển thị trang bài tập nhóm
-  if (selectedGroupForAssignments) {
-    const assignments = groupAssignments[selectedGroupForAssignments.id] || [];
-    const getStatusColor = (status) => {
-      switch (status) {
-        case 'not-started':
-          return 'bg-gray-100 text-gray-800';
-        case 'in-progress':
-          return 'bg-warning-100 text-warning-800';
-        case 'submitted':
-          return 'bg-primary-100 text-primary-800';
-        case 'graded':
-          return 'bg-success-100 text-success-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    };
-
-    const getStatusLabel = (status) => {
-      switch (status) {
-        case 'not-started':
-          return 'Chưa bắt đầu';
-        case 'in-progress':
-          return 'Đang làm';
-        case 'submitted':
-          return 'Đã nộp';
-        case 'graded':
-          return 'Đã chấm';
-        default:
-          return 'N/A';
-      }
-    };
-
-    return (
-      <div className="space-y-6">
-        {/* Toast Notification */}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
         )}
 
-        {/* Button Quay lại và Tiêu đề */}
-        <div className="relative">
-          <button
-            onClick={() => setSelectedGroupForAssignments(null)}
-            className="btn-secondary flex items-center gap-2 bg-primary-50 hover:bg-primary-100 text-primary-700 border-primary-200"
-          >
-            <span>←</span> Quay lại
-          </button>
-          <div className="text-center mt-4">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              📚 Bài tập Nhóm: {selectedGroupForAssignments.name}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {availableCourses.find(c => c.id === selectedGroupForAssignments.courseId)?.name || selectedGroupForAssignments.courseName}
-            </p>
-          </div>
-        </div>
+        {/* Vertical Timeline */}
+        <div className="card">
+          <div className="relative">
+            {/* Timeline line */}
+            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300 dark:bg-gray-600"></div>
+            
+            <div className="space-y-8">
+              {unlockedLevels.map((level, index) => {
+                const isLocked = !level.isUnlocked;
+                const progressColor = level.progress >= 70 ? 'bg-green-500' : 
+                                     level.progress >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+                
+                return (
+                  <div key={level.levelNumber} className="relative flex items-start gap-6">
+                    {/* Timeline dot */}
+                    <div className={`relative z-10 flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center ${
+                      isLocked 
+                        ? 'bg-gray-300 dark:bg-gray-600' 
+                        : level.progress >= 70 
+                          ? 'bg-green-500' 
+                          : level.progress >= 50 
+                            ? 'bg-yellow-500' 
+                            : 'bg-red-500'
+                    }`}>
+                      {isLocked ? (
+                        <span className="text-2xl">🔒</span>
+                      ) : level.progress === 100 ? (
+                        <span className="text-2xl">✓</span>
+                      ) : (
+                        <span className="text-white font-bold text-lg">{level.levelNumber}</span>
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className={`flex-1 pb-8 ${index < unlockedLevels.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}>
+                      <div className="card">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className={`text-xl font-bold mb-2 ${
+                              isLocked 
+                                ? 'text-gray-400 dark:text-gray-500' 
+                                : 'text-gray-800 dark:text-white'
+                            }`}>
+                              {level.name}
+                            </h3>
+                            {!isLocked && (
+                              <div className="mb-3">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    Tiến độ: {level.completedCount}/{level.totalCount} bài tập
+                                  </span>
+                                  <span className={`text-sm font-bold ${
+                                    level.progress >= 70 ? 'text-green-600' :
+                                    level.progress >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {level.progress}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full transition-all ${progressColor}`}
+                                    style={{ width: `${level.progress}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                            {isLocked && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                🔒 Hoàn thành trên 70% ở level trước để mở khóa
+                              </p>
+                            )}
+                          </div>
+                        </div>
 
-        {/* Thống kê */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-primary-500 mb-2">{assignments.length}</div>
-            <div className="text-sm text-gray-600">Tổng số bài tập</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-warning-500 mb-2">
-              {assignments.filter(a => a.status === 'in-progress').length}
-            </div>
-            <div className="text-sm text-gray-600">Đang làm</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-success-500 mb-2">
-              {assignments.filter(a => a.status === 'submitted' || a.status === 'graded').length}
-            </div>
-            <div className="text-sm text-gray-600">Đã nộp</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-primary-500 mb-2">
-              {assignments.filter(a => a.status === 'not-started').length}
-            </div>
-            <div className="text-sm text-gray-600">Chưa bắt đầu</div>
-          </div>
-        </div>
-
-        {/* Danh sách bài tập nhóm */}
-        <div className="space-y-4">
-          {assignments.length === 0 ? (
-            <div className="card text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Chưa có bài tập nhóm</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Nhóm này chưa có bài tập nào. Hãy chờ giảng viên hoặc leader tạo bài tập.
-              </p>
-            </div>
-          ) : (
-            assignments.map((assignment) => {
-              const deadlineDate = new Date(assignment.deadline);
-              const isOverdue = deadlineDate < new Date() && assignment.status !== 'submitted' && assignment.status !== 'graded';
-              
-              return (
-                <div 
-                  key={assignment.id} 
-                  className="card hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-gray-800 dark:text-white">
-                          {assignment.title}
-                        </h3>
-                        <span className={`badge ${getStatusColor(assignment.status)}`}>
-                          {getStatusLabel(assignment.status)}
-                        </span>
-                        {isOverdue && (
-                          <span className="badge bg-danger-100 text-danger-800">
-                            ⚠️ Quá hạn
-                          </span>
+                        {/* Danh sách bài tập */}
+                        {!isLocked && (
+                          <div className="space-y-3">
+                            {level.exercises.map((exercise) => {
+                              const isCompleted = savedCompleted.includes(exercise.id) || exercise.completed;
+                              
+                              return (
+                                <div
+                                  key={exercise.id}
+                                  className={`p-4 rounded-lg border-2 ${
+                                    isCompleted
+                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600'
+                                  } transition-all`}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <h4 className={`font-semibold ${
+                                          isCompleted 
+                                            ? 'text-green-800 dark:text-green-200' 
+                                            : 'text-gray-800 dark:text-white'
+                                        }`}>
+                                          {exercise.title}
+                                        </h4>
+                                        {isCompleted && (
+                                          <span className="badge bg-green-100 text-green-800">
+                                            ✓ Hoàn thành
+                                          </span>
+                                        )}
+                                        <span className={`badge ${
+                                          exercise.level === 'Easy' ? 'bg-green-100 text-green-800' :
+                                          exercise.level === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-red-100 text-red-800'
+                                        }`}>
+                                          {exercise.level}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        {exercise.description}
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {exercise.skills.map((skill, idx) => (
+                                          <span key={idx} className="text-xs px-2 py-1 bg-primary-100 text-primary-800 rounded">
+                                            {skill}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    <div className="ml-4">
+                                      {isCompleted ? (
+                                        <button
+                                          disabled
+                                          className="btn btn-success opacity-75 cursor-not-allowed text-sm"
+                                        >
+                                          ✓ Hoàn thành
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            // TODO: Navigate to exercise page
+                                            setToast({
+                                              message: `Bắt đầu làm bài: ${exercise.title}`,
+                                              type: 'info'
+                                            });
+                                          }}
+                                          className="btn btn-primary text-sm"
+                                        >
+                                          🚀 Làm bài
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 mb-3">
-                        {assignment.description}
-                      </p>
-                    </div>
-                    {assignment.score !== null && (
-                      <div className="text-right ml-4">
-                        <div className="text-3xl font-bold text-primary-500">
-                          {assignment.score}/{assignment.maxScore}
-                        </div>
-                        <div className="text-sm text-gray-600">Điểm</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <strong>📅 Deadline:</strong> {deadlineDate.toLocaleDateString('vi-VN')} {deadlineDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        <strong>⏱️ Thời gian ước tính:</strong> {assignment.estimatedTime}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <strong>📊 Độ khó:</strong> 
-                        <span className={`ml-2 badge ${
-                          assignment.level === 'Easy' ? 'bg-success-100 text-success-800' :
-                          assignment.level === 'Medium' ? 'bg-warning-100 text-warning-800' :
-                          'bg-danger-100 text-danger-800'
-                        }`}>
-                          {assignment.level}
-                        </span>
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        <strong>💼 Kỹ năng:</strong>
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {assignment.skills.map((skill, idx) => (
-                          <span key={idx} className="text-xs px-2 py-1 bg-primary-100 text-primary-800 rounded">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   </div>
-
-                  {/* Yêu cầu */}
-                  <div className="mb-4">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      📋 Yêu cầu:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                      {assignment.requirements.map((req, idx) => (
-                        <li key={idx}>{req}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Đóng góp thành viên */}
-                  {assignment.members && assignment.members.length > 0 && (
-                    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        👥 Đóng góp thành viên:
-                      </p>
-                      <div className="space-y-2">
-                        {assignment.members.map((member, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-700 dark:text-gray-300">{member.name}</span>
-                              <span className="text-xs text-gray-500">({member.contribution})</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                <div
-                                  className="bg-primary-500 h-2 rounded-full"
-                                  style={{ width: `${member.progress}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs text-gray-600 dark:text-gray-400 w-12 text-right">
-                                {member.progress}%
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    {assignment.status === 'not-started' && (
-                      <button className="btn-primary text-sm">
-                        🚀 Bắt đầu làm bài
-                      </button>
-                    )}
-                    {assignment.status === 'in-progress' && (
-                      <>
-                        <button className="btn-primary text-sm flex-1">
-                          ✏️ Tiếp tục làm bài
-                        </button>
-                        <button className="btn-accent text-sm">
-                          📤 Nộp bài
-                        </button>
-                      </>
-                    )}
-                    {assignment.status === 'submitted' && (
-                      <button className="btn-secondary text-sm">
-                        👁️ Xem bài đã nộp
-                      </button>
-                    )}
-                    {assignment.status === 'graded' && (
-                      <button className="btn-primary text-sm">
-                        📊 Xem kết quả
-                      </button>
-                    )}
-                    <button className="btn-secondary text-sm">
-                      💬 Thảo luận
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     );
   }
+
+  // Timeline bài tập theo level - thay thế phần khóa học cũ
+  // TODO: Implement Timeline component
 
   return (
     <div className="space-y-6">
@@ -978,18 +735,18 @@ const Courses = () => {
                 const progress = course.progress || 0;
                 const gaugeSize = 220; // Kích thước cho 4 cột trên 1 hàng
                 
-                return (
+                  return (
                   <div key={course.id} className="flex flex-col items-center justify-center p-2">
                     <h3 className="font-semibold text-gray-800 dark:text-white mb-2 text-center text-base">
                       {course.name}
                     </h3>
                     <div className="w-full flex justify-center">
                       <GaugeChart value={progress} courseName={course.name} size={gaugeSize} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                          </div>
+                      </div>
+                    );
+                })}
+          </div>
           ) : (
             <div className="flex items-center justify-center h-[420px] text-gray-500 dark:text-gray-400">
               Đang tải biểu đồ...
@@ -998,273 +755,6 @@ const Courses = () => {
         </div>
       )}
 
-      {/* DT056: Nhóm học tập - Chỉ hiển thị nhóm của khóa học đã đăng ký */}
-      {(() => {
-        // Lọc nhóm học tập dựa trên enrolledCourses
-        const enrolledCourseIds = enrolledCourses.map(c => c.id);
-        const filteredGroups = studyGroups.filter(group => enrolledCourseIds.includes(group.courseId));
-        
-        return filteredGroups.length > 0 ? (
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">👥 Nhóm Học tập</h2>
-            <div className="relative">
-              {/* Button Prev mờ ở góc trái */}
-              <button
-                className="prev-button absolute left-0 top-0 bottom-2 w-16 bg-gradient-to-r from-white to-transparent flex items-center justify-start pl-2 opacity-0 transition-opacity duration-300"
-                style={{ zIndex: 10, pointerEvents: 'none' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const container = e.currentTarget.nextElementSibling;
-                  if (container) {
-                    container.scrollBy({ left: -300, behavior: 'smooth' });
-                  }
-                }}
-              >
-                <span className="text-4xl font-bold text-gray-400 bounce-arrow" style={{ fontFamily: 'Arial, sans-serif' }}>&lt;</span>
-              </button>
-              
-              <div 
-                className="flex gap-6 overflow-x-auto scrollbar-hide pb-2 cursor-grab active:cursor-grabbing select-none"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
-                ref={(el) => {
-                  if (el) {
-                    let isDown = false;
-                    let startX;
-                    let scrollLeft;
-                    
-                    // Thêm event listener để ẩn/hiện button next và prev
-                    const handleScroll = () => {
-                      const nextButton = el.parentElement?.querySelector('.next-button');
-                      const prevButton = el.parentElement?.querySelector('.prev-button');
-                      
-                      if (nextButton && prevButton) {
-                        const isScrollable = el.scrollWidth > el.clientWidth;
-                        const isAtStart = el.scrollLeft <= 10;
-                        const isAtEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10;
-                        
-                        // Button Next
-                        nextButton.style.opacity = isScrollable && !isAtEnd ? '0.3' : '0';
-                        nextButton.style.pointerEvents = isScrollable && !isAtEnd ? 'auto' : 'none';
-                        
-                        // Button Prev
-                        prevButton.style.opacity = isScrollable && !isAtStart ? '0.3' : '0';
-                        prevButton.style.pointerEvents = isScrollable && !isAtStart ? 'auto' : 'none';
-                      }
-                    };
-                    
-                    // Drag to scroll functionality
-                    const handleMouseDown = (e) => {
-                      // Prevent text selection
-                      e.preventDefault();
-                      isDown = true;
-                      el.classList.add('cursor-grabbing');
-                      el.classList.remove('cursor-grab');
-                      startX = e.pageX - el.offsetLeft;
-                      scrollLeft = el.scrollLeft;
-                    };
-                    
-                    const handleMouseLeave = () => {
-                      isDown = false;
-                      el.classList.remove('cursor-grabbing');
-                      el.classList.add('cursor-grab');
-                    };
-                    
-                    const handleMouseUp = () => {
-                      isDown = false;
-                      el.classList.remove('cursor-grabbing');
-                      el.classList.add('cursor-grab');
-                    };
-                    
-                    const handleMouseMove = (e) => {
-                      if (!isDown) return;
-                      e.preventDefault();
-                      const x = e.pageX - el.offsetLeft;
-                      const walk = (x - startX) * 2; // Scroll speed multiplier
-                      el.scrollLeft = scrollLeft - walk;
-                    };
-                    
-                    // Touch events for mobile
-                    let touchStartX = 0;
-                    let touchScrollLeft = 0;
-                    
-                    const handleTouchStart = (e) => {
-                      touchStartX = e.touches[0].pageX - el.offsetLeft;
-                      touchScrollLeft = el.scrollLeft;
-                    };
-                    
-                    const handleTouchMove = (e) => {
-                      if (!touchStartX) return;
-                      const x = e.touches[0].pageX - el.offsetLeft;
-                      const walk = (x - touchStartX) * 2;
-                      el.scrollLeft = touchScrollLeft - walk;
-                    };
-                    
-                    const handleTouchEnd = () => {
-                      touchStartX = 0;
-                    };
-                    
-                    // Add event listeners
-                    el.addEventListener('scroll', handleScroll);
-                    el.addEventListener('mousedown', handleMouseDown);
-                    el.addEventListener('mouseleave', handleMouseLeave);
-                    el.addEventListener('mouseup', handleMouseUp);
-                    el.addEventListener('mousemove', handleMouseMove);
-                    el.addEventListener('touchstart', handleTouchStart);
-                    el.addEventListener('touchmove', handleTouchMove);
-                    el.addEventListener('touchend', handleTouchEnd);
-                    
-                    // Check initial state after a short delay to ensure layout is ready
-                    setTimeout(handleScroll, 100);
-                    // Also check on resize
-                    window.addEventListener('resize', handleScroll);
-                    
-                    return () => {
-                      window.removeEventListener('resize', handleScroll);
-                      el.removeEventListener('scroll', handleScroll);
-                      el.removeEventListener('mousedown', handleMouseDown);
-                      el.removeEventListener('mouseleave', handleMouseLeave);
-                      el.removeEventListener('mouseup', handleMouseUp);
-                      el.removeEventListener('mousemove', handleMouseMove);
-                      el.removeEventListener('touchstart', handleTouchStart);
-                      el.removeEventListener('touchmove', handleTouchMove);
-                      el.removeEventListener('touchend', handleTouchEnd);
-                    };
-                  }
-                }}
-              >
-                {filteredGroups.map((group) => {
-              const course = availableCourses.find(c => c.id === group.courseId);
-              const nextMeetingDate = new Date(group.nextMeeting);
-              const isUserLeader = currentUser && group.members.some(m => m.role === 'Leader' && m.mssv === currentUser.mssv);
-              const isJoined = isUserJoinedGroup(group.id);
-              const isUserInOriginalMembers = currentUser && group.members.some(m => m.mssv === currentUser.mssv);
-              const isUserMember = isUserInOriginalMembers || isJoined;
-              
-              // Tính tiến độ nhóm từ bài tập (thay vì dùng group.progress hardcode)
-              // Công thức: (Số bài tập đã hoàn thành / Tổng số bài tập) × 100
-              const calculatedProgress = group.assignments.total > 0
-                ? Math.round((group.assignments.completed / group.assignments.total) * 100)
-                : 0;
-              
-              // Sử dụng calculatedProgress nếu có, nếu không thì dùng group.progress (fallback)
-              const displayProgress = calculatedProgress || group.progress || 0;
-              
-              return (
-                <div 
-                  key={group.id} 
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800 flex-shrink-0 select-none"
-                  style={{ minWidth: '320px', maxWidth: '320px', userSelect: 'none', WebkitUserSelect: 'none' }}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-1">
-                        {group.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {course?.name || group.courseName}
-                      </p>
-                    </div>
-                    <span className={`badge ${
-                      group.status === 'active' ? 'bg-success-100 text-success-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {group.status === 'active' ? 'Hoạt động' : 'Tạm dừng'}
-                    </span>
-                  </div>
-
-                  <div className="mb-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-700 dark:text-gray-300">Tiến độ nhóm</span>
-                      <span className="text-sm font-bold text-gray-800 dark:text-white">{displayProgress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-primary-500 h-2 rounded-full"
-                        style={{ width: `${displayProgress}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Dựa trên: {group.assignments.completed}/{group.assignments.total} bài tập hoàn thành
-                    </p>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      <strong>Thành viên ({getGroupMembersWithJoined(group).length}):</strong>
-                    </p>
-                    <div className="grid grid-cols-2 gap-1">
-                      {getGroupMembersWithJoined(group).map((member) => (
-                        <div key={member.id} className="text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {member.name}
-                            {member.role === 'Leader' && <span className="text-accent-600 dark:text-accent-400 font-semibold ml-1">(Leader)</span>}
-                            {currentUser && member.mssv === currentUser.mssv && <span className="text-primary-600 dark:text-primary-400 font-semibold ml-1">(Bạn)</span>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mb-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      <strong>Bài tập:</strong> {group.assignments.completed}/{group.assignments.total} hoàn thành
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      <strong>Buổi họp tiếp theo:</strong> {nextMeetingDate.toLocaleDateString('vi-VN')} {nextMeetingDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    {!isUserMember && !isJoined ? (
-                      <>
-                        <button 
-                          onClick={() => setSelectedGroup(group)}
-                          className="btn-primary text-sm flex-1"
-                        >
-                          📝 Xem chi tiết
-                        </button>
-                        <button 
-                          onClick={() => handleJoinGroup(group)}
-                          className="btn-accent text-sm"
-                        >
-                          ➕ Tham gia
-                        </button>
-                      </>
-                    ) : (
-                      <button 
-                        onClick={() => setSelectedGroupForAssignments(group)}
-                        className="btn-primary text-sm w-full"
-                      >
-                        📚 Vào làm bài tập
-                      </button>
-                    )}
-                    {isUserLeader && (isUserMember || isJoined) && (
-                      <button className="btn-accent text-sm">
-                        ⚙️ Quản lý
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-                })}
-              </div>
-              {/* Button Next mờ ở góc phải */}
-              <button
-                className="next-button absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-white to-transparent flex items-center justify-end pr-2 opacity-0 transition-opacity duration-300"
-                style={{ zIndex: 10, pointerEvents: 'auto' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const container = e.currentTarget.previousElementSibling;
-                  if (container) {
-                    container.scrollBy({ left: 300, behavior: 'smooth' });
-                  }
-                }}
-              >
-                <span className="text-4xl font-bold text-gray-400 bounce-arrow" style={{ fontFamily: 'Arial, sans-serif' }}>&gt;</span>
-              </button>
-            </div>
-          </div>
-        ) : null;
-      })()}
 
       {/* Empty State */}
       {enrolledCourses.length === 0 && filterStatus === 'enrolled' && (
@@ -1360,12 +850,6 @@ const Courses = () => {
               </div>
 
               <div className="flex gap-2">
-                <button
-                  onClick={() => setSelectedCourse(course)}
-                  className="flex-1 btn-secondary text-sm"
-                >
-                  📄 Chi tiết
-                </button>
                 {enrolled ? (
                   <button
                     onClick={() => handleStartLearning(course.id)}
@@ -1374,12 +858,20 @@ const Courses = () => {
                     🎓 Vào học
                   </button>
                 ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedCourse(course)}
+                      className="flex-1 btn-secondary text-sm"
+                    >
+                      📄 Chi tiết
+                    </button>
                   <button
                     onClick={() => handleEnroll(course)}
                     className="flex-1 btn-accent text-sm"
                   >
                     ✅ Đăng ký ngay
                   </button>
+                  </>
                 )}
               </div>
             </div>
@@ -1513,7 +1005,7 @@ const Courses = () => {
                   }}
                   className="btn-primary"
                 >
-                  🎓 Vào học ngay
+                  🎓 Xem Timeline
                 </button>
               ) : (
                 <button
@@ -1586,196 +1078,6 @@ const Courses = () => {
         </div>
       )}
 
-      {/* Group Detail Modal */}
-      {selectedGroup && (
-        <div 
-          className="bg-black bg-opacity-60 flex items-center justify-center p-4" 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            zIndex: 9999,
-            margin: 0,
-            padding: '1rem'
-          }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary-500 to-primary-700 text-white rounded-t-lg">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-2">{selectedGroup.name}</h2>
-                  <p className="text-blue-100 mb-2">
-                    {availableCourses.find(c => c.id === selectedGroup.courseId)?.name || selectedGroup.courseName}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <span className={`badge ${
-                      selectedGroup.status === 'active' 
-                        ? 'bg-success-500 text-white' 
-                        : 'bg-gray-500 text-white'
-                    }`}>
-                      {selectedGroup.status === 'active' ? 'Hoạt động' : 'Tạm dừng'}
-                    </span>
-                    <span className="text-blue-100">
-                      👥 {getGroupMembersWithJoined(selectedGroup).length} thành viên
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedGroup(null)}
-                  className="text-white hover:text-gray-200 text-3xl font-bold ml-4"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Tiến độ nhóm */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">📊 Tiến độ Nhóm</h3>
-                <div className="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 p-4 rounded-xl">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-gray-800 dark:text-white font-semibold">Tiến độ hiện tại</span>
-                    <span className="text-2xl font-bold text-primary-500 dark:text-primary-400">
-                      {selectedGroup.assignments.total > 0
-                        ? Math.round((selectedGroup.assignments.completed / selectedGroup.assignments.total) * 100)
-                        : 0}%
-                    </span>
-                  </div>
-                  <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-4 shadow-inner">
-                    <div
-                      className="bg-primary-500 h-4 rounded-full transition-all duration-1000"
-                      style={{ 
-                        width: `${selectedGroup.assignments.total > 0
-                          ? Math.round((selectedGroup.assignments.completed / selectedGroup.assignments.total) * 100)
-                          : 0}%` 
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    {selectedGroup.assignments.completed}/{selectedGroup.assignments.total} bài tập đã hoàn thành
-                  </p>
-                </div>
-              </div>
-
-              {/* Thành viên */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">👥 Thành viên</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {getGroupMembersWithJoined(selectedGroup).map((member) => {
-                    const isCurrentUser = currentUser && member.mssv === currentUser.mssv;
-                    return (
-                      <div 
-                        key={member.id} 
-                        className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold flex-shrink-0">
-                          {member.name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 dark:text-white truncate">
-                            {member.name}
-                            {member.role === 'Leader' && <span className="text-accent-600 dark:text-accent-400 font-semibold ml-1">(Leader)</span>}
-                            {isCurrentUser && <span className="text-primary-500 dark:text-primary-400 font-semibold ml-1">(Bạn)</span>}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">MSSV: {member.mssv}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Thông tin Bài tập */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">📝 Bài tập Nhóm</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-success-50 dark:bg-success-900/20 p-4 rounded-lg border-l-4 border-success-500">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Đã hoàn thành</p>
-                    <p className="text-2xl font-bold text-success-600 dark:text-success-400">
-                      {selectedGroup.assignments.completed}
-                    </p>
-                  </div>
-                  <div className="bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border-l-4 border-primary-500">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tổng số</p>
-                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      {selectedGroup.assignments.total}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Lịch họp */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">📅 Lịch Họp</h3>
-                <div className="bg-accent-50 dark:bg-accent-900/20 p-4 rounded-lg border-l-4 border-accent-500">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Buổi họp tiếp theo</p>
-                  <p className="text-xl font-bold text-accent-600 dark:text-accent-400">
-                    {new Date(selectedGroup.nextMeeting).toLocaleDateString('vi-VN', { 
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                  <p className="text-lg font-semibold text-gray-800 dark:text-white mt-1">
-                    {new Date(selectedGroup.nextMeeting).toLocaleTimeString('vi-VN', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              {/* Mô tả nhóm */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">ℹ️ Thông tin</h3>
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Nhóm học tập này được tạo để hỗ trợ các thành viên học tập và làm bài tập cùng nhau. 
-                    Các thành viên có thể trao đổi, thảo luận và hỗ trợ lẫn nhau trong quá trình học.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
-              <button
-                onClick={() => setSelectedGroup(null)}
-                className="btn-secondary"
-              >
-                Đóng
-              </button>
-              {!isUserJoinedGroup(selectedGroup.id) && !selectedGroup.members.some(m => currentUser && m.mssv === currentUser.mssv) && (
-                <button
-                  onClick={() => handleJoinGroup(selectedGroup)}
-                  className="btn-accent"
-                >
-                  ➕ Tham gia Nhóm
-                </button>
-              )}
-              {(isUserJoinedGroup(selectedGroup.id) || selectedGroup.members.some(m => currentUser && m.mssv === currentUser.mssv)) && (
-                <button
-                  onClick={() => {
-                    handleLeaveGroup(selectedGroup.id);
-                    setSelectedGroup(null);
-                  }}
-                  className="btn-danger"
-                >
-                  🚪 Rời Nhóm
-                </button>
-              )}
-              {currentUser && selectedGroup.members.some(m => m.role === 'Leader' && m.mssv === currentUser.mssv) && (
-                <button className="btn-primary">
-                  ⚙️ Quản lý Nhóm
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

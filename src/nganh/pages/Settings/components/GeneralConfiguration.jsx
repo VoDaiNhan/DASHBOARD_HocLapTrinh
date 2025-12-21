@@ -12,15 +12,14 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
+=======
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/lecture-effectiveness',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -40,15 +39,14 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
+=======
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/course-completion',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -68,15 +66,14 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Tất cả',
+<<<<<<< HEAD
       courseList: ['Tất cả', 'Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
+=======
+      courseList: ['Tất cả', 'Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/student-rating',
-      manualJson: ''
     },
     chart: {
       type: 'bar',
@@ -96,15 +93,14 @@ const buildDefaultCards = () => [
     enabled: true,
     filters: {
       course: 'Nhập môn lập trình',
+<<<<<<< HEAD
       courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HĐT'],
+=======
+      courseList: ['Nhập môn lập trình', 'Kỹ thuật lập trình', 'Cấu trúc dữ liệu & GT', 'Lập trình HDT'],
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       trainingCycle: '4y',
       startYear: 2022,
       endYear: 2025
-    },
-    dataSource: {
-      mode: 'api',
-      endpoint: '/api/skill-trend',
-      manualJson: ''
     },
     chart: {
       type: 'line',
@@ -124,6 +120,13 @@ const label = 'block text-sm font-medium text-gray-700 mb-1';
 const groupTitle = 'text-lg font-semibold text-gray-900';
 const groupDesc = 'text-sm text-gray-600';
 
+const TAB_KEYS = [
+  { key: 'display', label: 'Thông tin hiển thị' },
+  { key: 'filters', label: 'Bộ lọc mặc định' },
+  { key: 'chart', label: 'Kiểu biểu đồ' },
+  { key: 'threshold', label: 'Ngưỡng đánh giá' }
+];
+
 const GeneralConfiguration = () => {
   const [cards, setCards] = useState(buildDefaultCards());
   const [activeTabs, setActiveTabs] = useState({});
@@ -134,16 +137,20 @@ const GeneralConfiguration = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Merge với defaults để tránh thiếu field
         const defaults = buildDefaultCards();
         const merged = parsed.map((c) => {
           const def = defaults.find((d) => d.type === c.type) || defaults[0];
           return {
             ...def,
             ...c,
+<<<<<<< HEAD
             filters: { ...def.filters, ...c.filters },
             dataSource: { ...def.dataSource, ...c.dataSource },
             chart: { ...def.chart, ...c.chart }
+=======
+            filters: { ...def.filters, ...(c.filters || {}) },
+            chart: { ...def.chart, ...(c.chart || {}) }
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
           };
         });
         setCards(merged);
@@ -163,8 +170,8 @@ const GeneralConfiguration = () => {
   };
 
   const addCard = () => {
-    const newId = `card-${Date.now()}`;
     const def = buildDefaultCards()[0];
+    const newId = `card-${Date.now()}`;
     persist([
       ...cards,
       {
@@ -172,8 +179,7 @@ const GeneralConfiguration = () => {
         id: newId,
         type: 'custom',
         title: 'Card mới',
-        description: 'Mô tả ngắn',
-        dataSource: { mode: 'api', endpoint: '', manualJson: '' }
+        description: 'Mô tả ngắn'
       }
     ]);
   };
@@ -193,6 +199,7 @@ const GeneralConfiguration = () => {
     setTimeout(() => setMessage(''), 2000);
   };
 
+<<<<<<< HEAD
   const TAB_KEYS = [
     { key: 'display', label: 'Thông tin hiển thị' },
     { key: 'filters', label: 'Bộ lọc mặc định' },
@@ -200,13 +207,15 @@ const GeneralConfiguration = () => {
     { key: 'threshold', label: 'Ngưỡng đánh giá' }
   ];
 
+=======
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Cấu hình Card Dashboard</h2>
           <p className="text-sm text-gray-600">
-            Mỗi card trên Dashboard có một cấu hình tương ứng. Chỉ giữ các trường thật sự cần cho người quản lý ngành.
+            Giữ lại các trường thật sự cần cho người quản lý ngành. Đã ẩn phần nguồn dữ liệu cho vai trò này.
           </p>
         </div>
         <div className="flex gap-2">
@@ -269,7 +278,7 @@ const GeneralConfiguration = () => {
                   onClick={() => removeCard(card.id)}
                   className="inline-flex items-center gap-1 px-2 py-1 text-sm rounded border border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  <Trash2 className="h-4 w-4" /> Xoá
+                  <Trash2 className="h-4 w-4" /> Xóa
                 </button>
               </div>
             </div>
@@ -317,11 +326,18 @@ const GeneralConfiguration = () => {
             )}
 
             {activeTab === 'filters' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h4 className={groupTitle}>Bộ lọc mặc định</h4>
+<<<<<<< HEAD
                 <div className="space-y-3">
                   <div className="md:col-span-3 lg:col-span-2 space-y-2">
                     <label className={label}>Chọn môn (dropdown)</label>
+=======
+                <p className={groupDesc}>Tự động lấy 4 năm gần nhất, có thể đổi chu kỳ đào tạo.</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className={label}>Môn</label>
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     <div className="flex items-center gap-3">
                       <select
                         className={`${inputClass} flex-1`}
@@ -338,7 +354,11 @@ const GeneralConfiguration = () => {
                       </select>
                     </div>
                     <p className="text-xs text-gray-500">
+<<<<<<< HEAD
                       Danh sách môn dùng chung, thêm mới để ngành khác cũng chọn được.
+=======
+                      Danh sách môn dùng chung; thêm mới để các ngành khác cũng chọn được.
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     </p>
                   </div>
 
@@ -414,7 +434,17 @@ const GeneralConfiguration = () => {
                           readOnly
                         />
                         <p className="text-xs text-gray-500 mt-1">
+<<<<<<< HEAD
                           Tự động lấy {card.filters.trainingCycle === '3y' ? '3' : card.filters.trainingCycle === '5y' ? '5' : '4'} năm gần nhất.
+=======
+                          Tự động lấy{' '}
+                          {card.filters.trainingCycle === '3y'
+                            ? '3'
+                            : card.filters.trainingCycle === '5y'
+                              ? '5'
+                              : '4'}{' '}
+                          năm gần nhất.
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                         </p>
                       </div>
                     )}
@@ -432,13 +462,20 @@ const GeneralConfiguration = () => {
                     <select
                       className={inputClass}
                       value={card.chart.type}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, type: e.target.value } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, type: e.target.value } }))
+                      }
                     >
                       <option value="line">Line</option>
                       <option value="bar">Bar</option>
                       <option value="area">Area</option>
+                      <option value="spline">Spline</option>
                     </select>
+<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">Line/Area phù hợp xu hướng; Bar cho so sánh nhanh.</p>
+=======
+                    <p className="text-xs text-gray-500 mt-1">Line/Area cho xu hướng; Bar cho so sánh nhanh.</p>
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Màu biểu đồ</label>
@@ -446,14 +483,18 @@ const GeneralConfiguration = () => {
                       type="color"
                       className="h-10 w-full rounded border border-gray-300"
                       value={card.chart.color}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, color: e.target.value } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, color: e.target.value } }))
+                      }
                     />
                   </div>
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={card.chart.smooth}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, smooth: e.target.checked } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, smooth: e.target.checked } }))
+                      }
                     />
                     <label className={label + ' mb-0'}>Đường mượt</label>
                   </div>
@@ -461,9 +502,11 @@ const GeneralConfiguration = () => {
                     <input
                       type="checkbox"
                       checked={card.chart.showDots}
-                      onChange={(e) => updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, showDots: e.target.checked } }))}
+                      onChange={(e) =>
+                        updateCard(card.id, (c) => ({ ...c, chart: { ...c.chart, showDots: e.target.checked } }))
+                      }
                     />
-                    <label className={label + ' mb-0'}>Hiện dots</label>
+                    <label className={label + ' mb-0'}>Hiển thị điểm dữ liệu</label>
                   </div>
                 </div>
               </div>
@@ -471,10 +514,15 @@ const GeneralConfiguration = () => {
 
             {activeTab === 'threshold' && (
               <div className="space-y-4">
+<<<<<<< HEAD
                 <h4 className={groupTitle}>Mức đề ra (Benchmark)</h4>
                 <p className={groupDesc}>
                   Đặt mục tiêu và ngưỡng cảnh báo cho tỷ lệ hoàn thành môn học.
                 </p>
+=======
+                <h4 className={groupTitle}>Mức đề ra / Ngưỡng đánh giá</h4>
+                <p className={groupDesc}>Đặt mục tiêu, ngưỡng cảnh báo cho từng card.</p>
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                 <div className="space-y-4">
                   <div>
                     <label className={label}>Mức đề ra (mục tiêu %)</label>
@@ -484,9 +532,13 @@ const GeneralConfiguration = () => {
                       value={card.benchmark ?? 75}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, benchmark: Number(e.target.value) }))}
                     />
+<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">
                       Tỉ lệ mục tiêu mà khoa mong muốn cho môn học.
                     </p>
+=======
+                    <p className="text-xs text-gray-500 mt-1">Tỷ lệ mục tiêu khoa mong muốn.</p>
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Mức dưới chuẩn (%)</label>
@@ -496,9 +548,13 @@ const GeneralConfiguration = () => {
                       value={card.warning ?? 60}
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, warning: Number(e.target.value) }))}
                     />
+<<<<<<< HEAD
                     <p className="text-xs text-gray-500 mt-1">
                       Nếu kết quả thấp hơn mức này thì hiển thị cảnh báo đỏ.
                     </p>
+=======
+                    <p className="text-xs text-gray-500 mt-1">Nếu kết quả thấp hơn mức này sẽ cảnh báo mạnh.</p>
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                   </div>
                   <div>
                     <label className={label}>Ngưỡng chú ý (%)</label>
@@ -509,7 +565,11 @@ const GeneralConfiguration = () => {
                       onChange={(e) => updateCard(card.id, (c) => ({ ...c, threshold: Number(e.target.value) }))}
                     />
                     <p className="text-xs text-gray-500 mt-1">
+<<<<<<< HEAD
                       Nếu kết quả gần mức dưới chuẩn thì highlight nhẹ (cảnh báo vàng).
+=======
+                      Nếu gần mức dưới chuẩn sẽ highlight nhẹ (vùng cảnh báo).
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
                     </p>
                   </div>
                 </div>

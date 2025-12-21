@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { authAPI, hashPassword } from '../../services/api';
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+
+  console.log('🚀 ResetPassword component mounted');
+  console.log('🔑 Token from URL:', token ? token.substring(0, 10) + '...' : 'NO TOKEN');
 
   const [formData, setFormData] = useState({
     password: '',
@@ -22,17 +25,34 @@ const ResetPassword = () => {
 
   // Verify token on mount
   useEffect(() => {
+    console.log('📋 useEffect triggered, token:', token ? token.substring(0, 10) + '...' : 'NO TOKEN');
+    
     const verifyToken = async () => {
       if (!token) {
+        console.log('⚠️ No token found in URL');
         setTokenValid(false);
         setValidating(false);
         return;
       }
 
       try {
-        await authAPI.verifyResetToken(token);
+        console.log('🔍 Verifying token:', token?.substring(0, 10) + '...');
+        console.log('🌐 About to call authAPI.verifyResetToken...');
+        const response = await authAPI.verifyResetToken(token);
+        console.log('✅ Token verification response:', response);
+        if (response && response.success) {
         setTokenValid(true);
+        } else {
+          setError('Token không hợp lệ');
+          setTokenValid(false);
+        }
       } catch (err) {
+        console.error('❌ Token verification error:', err);
+        console.error('❌ Error details:', {
+          message: err.message,
+          stack: err.stack,
+          name: err.name
+        });
         setError(err.message || 'Token không hợp lệ hoặc đã hết hạn');
         setTokenValid(false);
       } finally {
@@ -73,10 +93,14 @@ const ResetPassword = () => {
     }
 
     try {
+      // Hash password với SHA-256 trước khi gửi lên server
+      const hashedPassword = await hashPassword(formData.password);
+      const hashedConfirmPassword = await hashPassword(formData.confirmPassword);
+      
       await authAPI.resetPassword({
         token,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        password: hashedPassword,
+        confirmPassword: hashedConfirmPassword,
       });
 
       setSuccess('Đặt lại mật khẩu thành công! Đang chuyển đến trang đăng nhập...');

@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   X,
   Home,
@@ -11,10 +11,14 @@ import {
   Layers,
   ChevronRight
 } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 import logo from '../../../assets/unnamed.jpg';
+<<<<<<< HEAD
+=======
+import { clearAccessToken } from '../../../services/api';
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
   const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
@@ -109,39 +113,44 @@ const ClassMenu = ({ isDarkMode, onClose, location }) => {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isDarkMode } = useTheme();
 
   const navigation = [
     {
-      name: 'Trang Ch\u1EE7',
+      name: 'Trang Chủ',
       href: '/dashboard',
       icon: Home,
       current: location.pathname === '/' || location.pathname === '/dashboard'
     },
     {
-      name: 'Qu\u1EA3n L\u00FD L\u1EDBp',
+      name: 'Quản Lý Lớp',
       type: 'class'
     },
     {
+<<<<<<< HEAD
       name: 'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn',
+=======
+      name: 'Quản Lý Giảng Viên',
+>>>>>>> 907fe1c5cc358f0d0b975aa40797ea689b73f735
       href: '/teachers',
       icon: UserCheck,
       current: location.pathname === '/teachers' || location.pathname.startsWith('/teachers/')
     },
     {
-      name: 'Ph\u00E2n t\u00EDch Sinh vi\u00EAn',
+      name: 'Phân tích Sinh viên',
       href: '/students',
       icon: Users,
       current: location.pathname === '/students' || location.pathname.startsWith('/students/')
     },
     {
-      name: 'Hi\u1EC7u su\u1EA5t Kh\u00F3a h\u1ECDc',
+      name: 'Hiệu suất Khóa học',
       href: '/courses',
       icon: BookOpen,
       current: location.pathname === '/courses' || location.pathname.startsWith('/courses/')
     },
     {
-      name: 'Ph\u00E2n T\u00EDch Ng\u00E0nh',
+      name: 'Phân Tích Ngành',
       href: '/reports',
       icon: BarChart3,
       current: location.pathname === '/reports'
@@ -157,6 +166,15 @@ const Sidebar = ({ isOpen, onClose }) => {
     isDarkMode === true
       ? 'bg-blue-900 text-blue-200 border-r-2 border-blue-500'
       : 'bg-blue-50 text-blue-700 border-r-2 border-blue-600';
+
+  const handleLogout = () => {
+    clearAccessToken();
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('dashboardType');
+    onClose?.();
+    // Điều hướng cứng để tháo toàn bộ state còn lại
+    window.location.replace('/login');
+  };
 
   return (
     <>
@@ -247,9 +265,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                   ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
               }`}
+              onClick={handleLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
-              {'\u0110\u0103ng Xu\u1EA5t'}
+              Đăng Xuất
             </button>
           </div>
         </div>

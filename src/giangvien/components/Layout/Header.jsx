@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { authAPI } from '../../../services/api';
+import { authAPI, clearAccessToken } from '../../../services/api';
 import DarkModeToggle from '../../../components/DarkModeToggle';
 import SmartSearch from '../../../components/SmartSearch';
 import NotificationPanel from '../../../components/NotificationPanel';
@@ -97,8 +97,7 @@ const Header = ({ onMenuClick }) => {
       console.error('Logout error:', error);
     } finally {
       // Clear all data
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
+      clearAccessToken();
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('dashboardType');
       
