@@ -20,7 +20,9 @@ app.set('trust proxy', 1);
 const getAllowedOrigins = () => {
   const origins = [
     'http://localhost:5173', // Vite dev server
-    'https://dashboard.shopsheap.online'
+    'http://localhost:3000',
+    'https://dashboard.shopsheap.online', // Production frontend
+    'https://api.shopsheap.online',       // Production API (self)
   ];
   
   if (FRONTEND_URL) {
@@ -65,6 +67,9 @@ const corsOptions = {
   maxAge: 86400 // 24 hours
 };
 
+// Handle preflight OPTIONS requests explicitly BEFORE other middleware
+// This is critical for Nginx reverse proxy setups
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
