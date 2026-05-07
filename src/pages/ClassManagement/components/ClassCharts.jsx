@@ -1,50 +1,47 @@
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
-import { LineChart, Line } from 'recharts';
-import { PieChart, Pie } from 'recharts';
+import React, { useMemo } from 'react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell, LineChart, Line, Legend,
+  PieChart, Pie,
+} from 'recharts';
 import { TrendingUp } from 'lucide-react';
+import { coursePerformanceData, COURSE_NAMES, CLASS_LIST } from '../../../data/coursePerformanceData';
 
-// Bar chart: Tiến độ trung bình các lớp theo giảng viên
+const getBarColor = (v) => v >= 80 ? '#22c55e' : v >= 65 ? '#f59e0b' : '#ef4444';
+
+const CustomTooltip = ({ active, payload, label, unit = '' }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-gray-800 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg shadow text-sm">
+      <p className="font-semibold text-gray-800 dark:text-white mb-1">{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color }}>
+          {p.name}: <span className="font-medium">{typeof p.value === 'number' ? p.value.toFixed(1) : p.value}{unit}</span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
 export const ProgressByInstructorChart = ({ data = [] }) => {
   const chartData = data.length > 0 ? data : [
     { instructor: 'TS. Nguyễn Văn An', progress: 85 },
     { instructor: 'TS. Trần Thị Bình', progress: 78 },
-    { instructor: 'ThS. Lê Văn Cường', progress: 72 },
-    { instructor: 'TS. Phạm Văn Đức', progress: 88 }
+    { instructor: 'TS. Lê Văn Cường', progress: 72 },
+    { instructor: 'ThS. Phạm Thị Dung', progress: 88 },
   ];
-
-  const getBarColor = (progress) => {
-    if (progress >= 80) return '#22c55e';
-    if (progress >= 60) return '#f59e0b';
-    return '#ef4444';
-  };
-
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Tiến độ trung bình các lớp theo giảng viên</h3>
-      <div className="h-80">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Tiến độ TB theo giảng viên</h3>
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis
-              dataKey="instructor"
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              tick={{ fontSize: 11 }}
-              stroke="#6b7280"
-            />
-            <YAxis
-              tick={{ fontSize: 12 }}
-              stroke="#6b7280"
-              domain={[0, 100]}
-              label={{ value: '% Tiến độ', angle: -90, position: 'insideLeft' }}
-            />
-            <Tooltip />
+          <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+            <XAxis dataKey="instructor" angle={-35} textAnchor="end" height={80} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip content={<CustomTooltip unit="%" />} />
             <Bar dataKey="progress" name="Tiến độ TB" radius={[4, 4, 0, 0]}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(entry.progress)} />
-              ))}
+              {chartData.map((entry, i) => (<Cell key={i} fill={getBarColor(entry.progress)} />))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -53,44 +50,53 @@ export const ProgressByInstructorChart = ({ data = [] }) => {
   );
 };
 
-// Line chart: Biến động điểm trung bình các lớp trong 3 tháng
 export const ScoreFluctuationChart = ({ data = [] }) => {
-  const chartData = data.length > 0 ? data : [
-    { month: 'T10/2024', score: 7.5 },
-    { month: 'T11/2024', score: 7.6 },
-    { month: 'T12/2024', score: 7.8 }
-  ];
+  const chartData = useMemo(() => {
+    const courseList = Object.values(COURSE_NAMES);
+    return courseList.map((courseName) => {
+      const shortName = courseName.length > 22 ? courseName.slice(0, 20) + '…' : courseName;
+      const row = { month: shortName };
+      CLASS_LIST.forEach((cls) => {
+        const students = coursePerformanceData.students.filter((s) => s.className === cls);
+        if (!students.length) return;
+        const avg = students.reduce((sum, s) => sum + (s.courses[courseName]?.avgScore ?? 0), 0) / students.length;
+        row[cls] = Math.round(avg * 10) / 10;
+      });
+      return row;
+    });
+  }, []);
+
+  const lineColors = { '22CT111': '#3b82f6', '22CT112': '#f59e0b', '22CT113': '#10b981' };
+  const allScores = chartData.flatMap((d) => CLASS_LIST.map((c) => d[c] ?? 0));
+  const half = Math.floor(allScores.length / 2);
+  const avgFirst = allScores.slice(0, half).reduce((a, b) => a + b, 0) / half;
+  const avgLast = allScores.slice(half).reduce((a, b) => a + b, 0) / (allScores.length - half);
+  const trend = (avgLast - avgFirst).toFixed(1);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Biến động điểm trung bình các lớp trong 3 tháng</h3>
-        <div className="flex items-center gap-2 text-sm text-green-600">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">Điểm TB theo môn học – từng lớp</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">So sánh 22CT111 / 22CT112 / 22CT113</p>
+        </div>
+        <div className={`flex items-center gap-1 text-sm font-semibold ${parseFloat(trend) >= 0 ? 'text-green-600' : 'text-red-500'}`}>
           <TrendingUp className="h-4 w-4" />
-          <span className="font-semibold">+0.3 điểm</span>
+          {parseFloat(trend) >= 0 ? '+' : ''}{trend} điểm
         </div>
       </div>
-      <div className="h-80">
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#6b7280" />
-            <YAxis
-              tick={{ fontSize: 12 }}
-              stroke="#6b7280"
-              domain={[0, 10]}
-              label={{ value: 'Điểm TB', angle: -90, position: 'insideLeft' }}
-            />
-            <Tooltip />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="score"
-              name="Điểm TB ngành"
-              stroke="#3b82f6"
-              strokeWidth={3}
-              dot={{ r: 5, fill: '#3b82f6' }}
-            />
+            <XAxis dataKey="month" angle={-30} textAnchor="end" height={80} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+            <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+            {CLASS_LIST.map((cls) => (
+              <Line key={cls} type="monotone" dataKey={cls} stroke={lineColors[cls]} strokeWidth={2.5}
+                dot={{ r: 4, fill: lineColors[cls] }} activeDot={{ r: 6 }} />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -98,65 +104,47 @@ export const ScoreFluctuationChart = ({ data = [] }) => {
   );
 };
 
-// Pie chart: Tỷ lệ lớp đạt – trung bình – rủi ro
-export const ClassStatusPieChart = ({ data = [] }) => {
-  const chartData = data.length > 0 ? data : [
-    { name: 'Đạt chuẩn', value: 8, color: '#22c55e' },
-    { name: 'Trung bình', value: 3, color: '#f59e0b' },
-    { name: 'Rủi ro', value: 1, color: '#ef4444' }
-  ];
+export const ClassStatusPieChart = ({ classes = [] }) => {
+  const chartData = useMemo(() => {
+    if (!classes.length) return [
+      { name: 'Đạt chuẩn', value: 8, color: '#22c55e' },
+      { name: 'Trung bình', value: 3, color: '#f59e0b' },
+      { name: 'Rủi ro', value: 1, color: '#ef4444' },
+    ];
+    const good = classes.filter((c) => (c.completionRate ?? 0) >= 80).length;
+    const mid  = classes.filter((c) => (c.completionRate ?? 0) >= 60 && (c.completionRate ?? 0) < 80).length;
+    const bad  = classes.filter((c) => (c.completionRate ?? 0) < 60).length;
+    return [
+      { name: 'Đạt chuẩn', value: good, color: '#22c55e' },
+      { name: 'Trung bình', value: mid,  color: '#f59e0b' },
+      { name: 'Rủi ro',     value: bad,  color: '#ef4444' },
+    ];
+  }, [classes]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Tỷ lệ lớp đạt – trung bình – rủi ro</h3>
-      <div className="h-80">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Phân loại lớp học</h3>
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-              outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
+            <Pie data={chartData} cx="50%" cy="50%" innerRadius={55} outerRadius={95}
+              paddingAngle={3} dataKey="value"
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              labelLine={false}>
+              {chartData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
             </Pie>
-            <Tooltip />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              iconType="circle"
-              formatter={(value) => {
-                const data = chartData.find(d => d.name === value);
-                return (
-                  <span className="text-sm">
-                    <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: data?.color }}></span>
-                    {value}
-                  </span>
-                );
-              }}
-            />
+            <Tooltip formatter={(v, n) => [v + ' lớp', n]} />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-100">
-        {chartData.map((item, index) => (
-          <div key={index} className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-              <span className="text-sm font-medium text-gray-700">{item.name}</span>
-            </div>
+      <div className="grid grid-cols-3 gap-3 mt-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+        {chartData.map((item) => (
+          <div key={item.name} className="text-center">
             <p className="text-2xl font-bold" style={{ color: item.color }}>{item.value}</p>
-            <p className="text-xs text-gray-500">lớp</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{item.name}</p>
           </div>
         ))}
       </div>
     </div>
   );
 };
-

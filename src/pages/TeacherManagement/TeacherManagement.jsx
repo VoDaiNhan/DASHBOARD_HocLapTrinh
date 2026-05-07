@@ -1,166 +1,643 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Plus, Eye, Edit, Trash2, Mail, Phone, Star, AlertTriangle, Search } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Plus, Eye, Edit, Trash2, Mail, Phone, Star, Search, X, BookOpen, Users, Award, Briefcase, GraduationCap, BarChart2, AlertTriangle, CheckCircle, History } from 'lucide-react';
 import { mockDepartmentData, mockClassData } from '../../data/mockData';
+import { coursePerformanceData, COURSE_NAMES } from '../../data/coursePerformanceData';
 
+// ─── Mock data ────────────────────────────────────────────────────────────────
+const COURSE_ASSIGNMENTS = {
+  1: ['Nhập môn lập trình', 'Cấu trúc dữ liệu & GT'],
+  2: ['Lập trình hướng đối tượng', 'Kĩ thuật lập trình'],
+  3: ['Kĩ thuật lập trình', 'Cấu trúc dữ liệu & GT'],
+  4: ['Nhập môn lập trình'],
+  5: ['Lập trình hướng đối tượng', 'Cấu trúc dữ liệu & GT'],
+  6: ['Lập trình hướng đối tượng', 'Kĩ thuật lập trình'],
+  7: ['Cấu trúc dữ liệu & GT'],
+  8: ['Nhập môn lập trình', 'Kĩ thuật lập trình'],
+};
+
+const HOMEROOM = { 1: '22CT111', 2: '22CT112', 3: '22CT113' };
+
+// Lịch sử chủ nhiệm lớp (các khóa trước)
+const HOMEROOM_HISTORY = {
+  1: [
+    { className: '20CT111', year: '2020-2024', avgScore: 7.8, completion: 85, status: 'Tốt' },
+    { className: '21CT111', year: '2021-2025', avgScore: 7.5, completion: 80, status: 'Tốt' },
+  ],
+  2: [
+    { className: '20CT112', year: '2020-2024', avgScore: 7.2, completion: 76, status: 'Trung bình' },
+  ],
+  3: [
+    { className: '21CT113', year: '2021-2025', avgScore: 7.6, completion: 82, status: 'Tốt' },
+  ],
+};
+
+// Mock: số buổi nghỉ không phép theo lớp (> 3 buổi = cảnh báo)
+const ABSENT_MOCK = {
+  '22CT111': { count: 4, total: 40 },
+  '22CT112': { count: 2, total: 40 },
+  '22CT113': { count: 7, total: 40 },
+};
+
+// Mock: học sinh chưa đăng ký thi lại (nguy cơ rớt môn)
+const NO_RETAKE_MOCK = {
+  '22CT111': 2,
+  '22CT112': 0,
+  '22CT113': 3,
+};
+
+// Giảng viên dạy môn nào ở lớp nào — so le, không cùng 2 môn 1 lớp
+// Chỉ dùng 4 môn thực tế trong coursePerformanceData
+const TEACHING_ASSIGNMENTS = {
+  1: [
+    { className: '22CT111', courseName: 'Nhập môn lập trình' },
+    { className: '22CT112', courseName: 'Cấu trúc dữ liệu & GT' },
+  ],
+  2: [
+    { className: '22CT112', courseName: 'Lập trình hướng đối tượng' },
+    { className: '22CT113', courseName: 'Kĩ thuật lập trình' },
+  ],
+  3: [
+    { className: '22CT111', courseName: 'Kĩ thuật lập trình' },
+    { className: '22CT113', courseName: 'Cấu trúc dữ liệu & GT' },
+  ],
+  4: [
+    { className: '22CT112', courseName: 'Nhập môn lập trình' },
+  ],
+  5: [
+    { className: '22CT113', courseName: 'Lập trình hướng đối tượng' },
+    { className: '22CT111', courseName: 'Cấu trúc dữ liệu & GT' },
+  ],
+  6: [
+    { className: '22CT111', courseName: 'Lập trình hướng đối tượng' },
+    { className: '22CT112', courseName: 'Kĩ thuật lập trình' },
+  ],
+  7: [
+    { className: '22CT112', courseName: 'Cấu trúc dữ liệu & GT' },
+  ],
+  8: [
+    { className: '22CT113', courseName: 'Nhập môn lập trình' },
+    { className: '22CT111', courseName: 'Kĩ thuật lập trình' },
+  ],
+};
+
+// Map tên hiển thị → key thực trong coursePerformanceData
+const COURSE_NAME_MAP = {
+  'Nhập môn lập trình':        'Nhập môn lập trình',
+  'Kĩ thuật lập trình':        'Kỹ thuật lập trình',
+  'Kỹ thuật lập trình':        'Kỹ thuật lập trình',
+  'Cấu trúc dữ liệu & GT':     'Cấu trúc dữ liệu & GT',
+  'Lập trình hướng đối tượng': 'Lập trình HĐT',
+  'Lập trình HĐT':             'Lập trình HĐT',
+};
+
+// Tính completionRate trung bình của toàn lớp (tất cả môn) — đồng bộ với ClassSummaryTable
+const getClassAvgCompletion = (className) => {
+  const students = coursePerformanceData.students.filter((s) => s.className === className);
+  if (!students.length) return 0;
+  const rates = students.map((s) => {
+    const vals = Object.values(s.courses);
+    return vals.reduce((sum, c) => sum + c.completionRate, 0) / vals.length;
+  });
+  return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+};
+
+// Tính tỉ lệ kỹ năng nâng cao (>= 85%) theo lớp + môn cụ thể (thông tin tham khảo cho GV)
+const getAdvancedRate = (className, courseName) => {
+  const courseKey = COURSE_NAME_MAP[courseName];
+  if (!courseKey) return 0;
+  const students = coursePerformanceData.students.filter((s) => s.className === className);
+  if (!students.length) return 0;
+  const allVals = students.flatMap((s) => Object.values(s.courses[courseKey]?.skills || {}));
+  if (!allVals.length) return 0;
+  return Math.round(allVals.filter((v) => v >= 85).length / allVals.length * 100);
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getSubmissionColor = (rate) => {
+  if (rate >= 80) return { bar: 'bg-green-500', text: 'text-green-600', label: 'Tốt' };
+  if (rate >= 65) return { bar: 'bg-yellow-500', text: 'text-yellow-600', label: 'Trung bình' };
+  return { bar: 'bg-red-500', text: 'text-red-600', label: 'Cần cải thiện' };
+};
+
+// Tính % học sinh yếu (điểm TB tổng < 5) trong lớp từ coursePerformanceData
+const calcWeakStudents = (className) => {
+  const students = coursePerformanceData.students.filter((s) => s.className === className);
+  if (!students.length) return { weak: 0, total: 0, pct: 0 };
+  const weak = students.filter((s) => {
+    const vals = Object.values(s.courses);
+    const avg = vals.reduce((sum, c) => sum + c.avgScore, 0) / vals.length;
+    return avg < 5;
+  }).length;
+  return { weak, total: students.length, pct: Math.round((weak / students.length) * 100) };
+};
+
+// Thông tin chung lớp từ mockClassData
+const getClassInfo = (className) => {
+  const classes = mockClassData?.classes || [];
+  const classItems = classes.filter((c) => c.name === className);
+  if (!classItems.length) return null;
+  const avgCompletion = Math.round(classItems.reduce((s, c) => s + (c.completionRate || 0), 0) / classItems.length);
+  const avgScore = Math.round(classItems.reduce((s, c) => s + (c.averageScore || 0), 0) / classItems.length * 10) / 10;
+  const totalStudents = coursePerformanceData.students.filter((s) => s.className === className).length;
+  return { avgCompletion, avgScore, totalStudents, courseCount: classItems.length };
+};
+
+// ─── Lớp đang chủ nhiệm section ──────────────────────────────────────────────
+const HomeroomSection = ({ className, teacherId }) => {
+  const [showWeakModal, setShowWeakModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+
+  const info = getClassInfo(className);
+  const { weak, total, pct } = calcWeakStudents(className);
+  if (!info) return null;
+
+  // Rủi ro lớp học
+  const absent = ABSENT_MOCK[className] || { count: 0, total: 40 };
+  const noRetake = NO_RETAKE_MOCK[className] || 0;
+  const history = HOMEROOM_HISTORY[teacherId] || [];
+
+  // Học sinh yếu chi tiết
+  const weakStudents = coursePerformanceData.students
+    .filter((s) => s.className === className)
+    .map((s) => {
+      const vals = Object.values(s.courses);
+      const avg = vals.reduce((sum, c) => sum + c.avgScore, 0) / vals.length;
+      return { ...s, avgScore: Math.round(avg * 10) / 10 };
+    })
+    .filter((s) => s.avgScore < 5)
+    .sort((a, b) => a.avgScore - b.avgScore);
+
+  const getRiskLabel = (score) => {
+    if (score < 3.5) return { label: 'Nguy cơ cao', color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30', dot: 'bg-red-500' };
+    if (score < 4.5) return { label: 'Trung bình', color: 'text-yellow-600', bg: 'bg-yellow-100 dark:bg-yellow-900/30', dot: 'bg-yellow-500' };
+    return { label: 'Ổn định', color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30', dot: 'bg-green-500' };
+  };
+
+  // Tiến độ từng môn trong lớp
+  const courseProgressList = Object.values(COURSE_NAMES).map((courseName) => {
+    const students = coursePerformanceData.students.filter((s) => s.className === className);
+    const rates = students.map((s) => s.courses[courseName]?.completionRate ?? 0);
+    const avg = rates.length ? Math.round(rates.reduce((a, b) => a + b, 0) / rates.length) : 0;
+    const plan = 85;
+    return { courseName, avg, plan, diff: avg - plan };
+  });
+
+  const overallRisk = pct > 15 || absent.count > 5 ? 'high' : pct > 5 || absent.count > 3 ? 'medium' : 'low';
+  const riskStyle = {
+    high:   { label: 'Nguy cơ cao', color: 'text-red-600',    bg: 'bg-red-50 dark:bg-red-900/20',    border: 'border-red-200 dark:border-red-700' },
+    medium: { label: 'Trung bình',  color: 'text-yellow-600', bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-700' },
+    low:    { label: 'Ổn định',     color: 'text-green-600',  bg: 'bg-green-50 dark:bg-green-900/20',  border: 'border-green-200 dark:border-green-700' },
+  }[overallRisk];
+
+  return (
+    <div>
+      {/* Header với icon lịch sử */}
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <GraduationCap className="h-4 w-4 text-indigo-500" /> Lớp đang chủ nhiệm
+        </h4>
+        {history.length > 0 && (
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            title="Lịch sử chủ nhiệm"
+            className="flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+          >
+            <History className="h-3.5 w-3.5" />
+            Lịch sử ({history.length})
+          </button>
+        )}
+      </div>
+
+      {/* Lịch sử chủ nhiệm dropdown */}
+      {showHistory && history.length > 0 && (
+        <div className="mb-3 border border-indigo-200 dark:border-indigo-700 rounded-xl p-3 bg-indigo-50/30 dark:bg-indigo-900/10 space-y-2">
+          <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-2">Các lớp đã từng chủ nhiệm</p>
+          {history.map((h) => (
+            <div key={h.className} className="flex items-center justify-between bg-white dark:bg-gray-700/50 rounded-lg px-3 py-2">
+              <div>
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{h.className}</span>
+                <span className="text-xs text-gray-400 ml-2">{h.year}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className={`font-medium ${h.avgScore >= 7 ? 'text-green-600' : 'text-yellow-600'}`}>Điểm TB: {h.avgScore}</span>
+                <span className={`font-medium ${h.completion >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>Tiến độ: {h.completion}%</span>
+                <span className={`px-2 py-0.5 rounded-full font-medium ${h.status === 'Tốt' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                  {h.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={`border ${riskStyle.border} rounded-xl p-4 ${riskStyle.bg}`}>
+        {/* Header lớp */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-bold text-indigo-700 dark:text-indigo-300 text-base">{className}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">{info.totalStudents} sinh viên · {info.courseCount} môn</span>
+            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${riskStyle.bg} ${riskStyle.color} border ${riskStyle.border}`}>
+              {riskStyle.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Thông tin chung — Tiến độ giảng dạy + Trạng thái học tập */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {/* Card 1: Tiến độ giảng dạy (clickable) */}
+          {(() => {
+            const plan = 85; // kế hoạch 85%
+            const diff = info.avgCompletion - plan;
+            const diffLabel = diff >= 0 ? `đúng tiến độ` : `chậm ${Math.abs(diff)}%`;
+            const diffColor = diff >= 0 ? 'text-green-600' : 'text-red-500';
+            return (
+              <button
+                onClick={() => setShowProgressModal(true)}
+                className="bg-white dark:bg-gray-700/50 rounded-lg p-3 text-center hover:shadow-md transition-shadow cursor-pointer w-full"
+              >
+                <p className="text-xs text-gray-400 mb-1">Tiến độ giảng dạy</p>
+                <p className={`text-lg font-bold ${info.avgCompletion >= 80 ? 'text-green-600' : info.avgCompletion >= 65 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  {info.avgCompletion}%
+                </p>
+                <p className={`text-xs font-medium mt-0.5 ${diffColor}`}>
+                  {diff >= 0 ? '✓' : '↓'} {diffLabel}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">Kế hoạch: {plan}%</p>
+              </button>
+            );
+          })()}
+
+          {/* Card 2: Trạng thái học tập */}
+          {(() => {
+            const isGood   = info.avgScore >= 8 && pct <= 5;
+            const isBad    = info.avgScore < 6.5 || pct > 20;
+            const status   = isGood ? 'Tốt' : isBad ? 'Kém' : 'Trung bình';
+            const statusColor = isGood ? 'text-green-600' : isBad ? 'text-red-600' : 'text-yellow-600';
+            const statusBg    = isGood ? 'bg-green-100 dark:bg-green-900/30' : isBad ? 'bg-red-100 dark:bg-red-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30';
+            const emoji = isGood ? '🟢' : isBad ? '🔴' : '🟡';
+            // Trend so với lịch sử (nếu có)
+            const prevHistory = HOMEROOM_HISTORY[teacherId];
+            const prevScore = prevHistory?.length ? prevHistory[prevHistory.length - 1].avgScore : null;
+            const trend = prevScore !== null ? (info.avgScore > prevScore ? '↑' : info.avgScore < prevScore ? '↓' : '→') : null;
+            return (
+              <div className="bg-white dark:bg-gray-700/50 rounded-lg p-3 text-center">
+                <p className="text-xs text-gray-400 mb-1">Trạng thái học tập</p>
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold ${statusBg} ${statusColor}`}>
+                  {emoji} {status} {trend && <span className="text-xs">{trend}</span>}
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                  TB: {info.avgScore} · {weak}/{total} SV yếu
+                </p>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* ── Rủi ro lớp học ── */}
+        <div className="bg-white dark:bg-gray-700/50 rounded-xl p-3 space-y-3">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5 text-orange-400" /> Rủi ro lớp học
+          </p>
+
+          {/* 1. Học sinh yếu */}
+          <div
+            className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600/30 rounded-lg px-2 py-1.5 transition-colors"
+            onClick={() => setShowWeakModal(true)}
+          >
+            <span className="text-xs text-gray-600 dark:text-gray-400">Học sinh yếu (điểm TB &lt; 5)</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              pct > 15 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              : pct > 5 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            }`}>
+              {weak}/{total} · {pct > 15 ? 'Nguy cơ cao' : pct > 5 ? 'Trung bình' : 'Ổn định'}
+            </span>
+          </div>
+
+          {/* 2. Nghỉ học nhiều */}
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-xs text-gray-600 dark:text-gray-400">Nghỉ &gt; 3 buổi không phép</span>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              absent.count > 5 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              : absent.count > 2 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            }`}>
+              {absent.count} SV · {absent.count > 5 ? 'Nguy cơ cao' : absent.count > 2 ? 'Trung bình' : 'Ổn định'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal tiến độ giảng dạy từng môn */}
+      {showProgressModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4" onClick={() => setShowProgressModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white">Tiến độ giảng dạy — {className}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">So sánh với kế hoạch (85%)</p>
+              </div>
+              <button onClick={() => setShowProgressModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              {courseProgressList.map(({ courseName, avg, plan, diff }) => (
+                <div key={courseName} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{courseName}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${avg >= 80 ? 'text-green-600' : avg >= 65 ? 'text-yellow-600' : 'text-red-600'}`}>{avg}%</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${diff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {diff >= 0 ? `+${diff}%` : `${diff}%`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="relative w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
+                    <div className={`h-2.5 rounded-full transition-all ${avg >= 80 ? 'bg-green-500' : avg >= 65 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${avg}%` }} />
+                    {/* Marker kế hoạch */}
+                    <div className="absolute top-0 h-2.5 w-0.5 bg-gray-500 dark:bg-gray-300"
+                      style={{ left: `${plan}%` }} title={`Kế hoạch: ${plan}%`} />
+                  </div>
+                  <p className="text-xs text-gray-400">Kế hoạch: {plan}% · {diff >= 0 ? 'Đúng tiến độ' : `Chậm ${Math.abs(diff)}%`}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal học sinh yếu + nguy cơ rớt môn */}
+      {showWeakModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4" onClick={() => setShowWeakModal(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white">Học sinh yếu — {className}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{weakStudents.length} học sinh có điểm TB &lt; 5</p>
+              </div>
+              <button onClick={() => setShowWeakModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              {weakStudents.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">Không có học sinh yếu</p>
+              ) : weakStudents.map((s) => {
+                const risk = getRiskLabel(s.avgScore);
+                const hasNoRetake = noRetake > 0;
+                return (
+                  <div key={s.id} className={`border rounded-xl p-4 ${risk.bg} border-opacity-50`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{s.name}</p>
+                        <p className="text-xs text-gray-500">{s.studentId}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${risk.color}`}>{s.avgScore}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${risk.bg} ${risk.color}`}>
+                          {risk.label}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Nguy cơ rớt môn */}
+                    {s.avgScore < 4.5 && (
+                      <div className={`mt-2 flex items-center gap-2 px-3 py-2 rounded-lg ${hasNoRetake ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+                        <AlertTriangle className={`h-3.5 w-3.5 flex-shrink-0 ${hasNoRetake ? 'text-red-600' : 'text-green-600'}`} />
+                        <p className={`text-xs font-medium ${hasNoRetake ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
+                          {hasNoRetake ? 'Nguy cơ rớt môn — Chưa đăng ký thi lại' : 'Đã đăng ký thi lại'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Các lớp đang giảng dạy section ──────────────────────────────────────────
+const TeachingClassesSection = ({ teacherId }) => {
+  const assignments = TEACHING_ASSIGNMENTS[teacherId] || [];
+
+  return (
+    <div>
+      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+        <BarChart2 className="h-4 w-4 text-blue-500" /> Các lớp đang giảng dạy
+      </h4>
+      {assignments.length === 0 ? (
+        <p className="text-xs text-gray-400 dark:text-gray-500 italic">Hiện tại đang không có lớp giảng dạy.</p>
+      ) : (
+        <div className="space-y-3">
+          {assignments.map(({ className, courseName }) => {
+            const basicRate = getClassAvgCompletion(className);
+            const advRate   = getAdvancedRate(className, courseName);
+            const { bar, text, label } = getSubmissionColor(basicRate);
+            return (
+              <div key={`${className}-${courseName}`} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">{className}</span>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">· {courseName}</span>
+                  </div>
+                  <span className={`text-xs font-semibold ${text}`}>{label}</span>
+                </div>
+
+                {/* Tiến độ TB lớp — đồng bộ với bảng quản lý lớp */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs text-gray-400 w-28 flex-shrink-0">Tiến độ TB lớp</span>
+                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div className={`${bar} h-2 rounded-full transition-all`} style={{ width: `${basicRate}%` }} />
+                  </div>
+                  <span className={`text-xs font-bold ${text} w-10 text-right`}>{basicRate}%</span>
+                </div>
+
+                {/* Tỉ lệ nâng cao (thông tin tham khảo cho GV) */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 w-28 flex-shrink-0">Kỹ năng nâng cao</span>
+                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                    <div className="bg-purple-400 h-1.5 rounded-full transition-all" style={{ width: `${advRate}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 w-10 text-right">{advRate}%</span>
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 italic">
+                  * Nâng cao: sinh viên tự tìm hiểu thêm từ ngân hàng bài tập nâng cao
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Teacher profile modal ────────────────────────────────────────────────────
+const TeacherProfile = ({ teacher, onClose }) => {
+  if (!teacher) return null;
+  const courses = COURSE_ASSIGNMENTS[teacher.id] || [];
+  const homeroom = HOMEROOM[teacher.id] || null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+              {teacher.name.split(' ').pop().charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{teacher.name}</h2>
+              <p className="text-blue-100 text-sm mt-0.5">{teacher.position}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
+            <X className="h-6 w-6 text-white" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          {/* Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4">
+              <Mail className="h-5 w-5 text-blue-500 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400">Email</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 break-all">{teacher.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4">
+              <Phone className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400">Điện thoại</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{teacher.phone}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Chức vụ */}
+          <div className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
+            <Briefcase className="h-5 w-5 text-purple-500 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-400">Chức vụ</p>
+              <p className="text-sm font-semibold text-purple-700 dark:text-purple-300">{teacher.position}</p>
+            </div>
+          </div>
+
+          {/* Môn phụ trách */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-blue-500" /> Môn phụ trách
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {courses.map((c) => (
+                <span key={c} className="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm rounded-full font-medium">
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Lớp đang chủ nhiệm */}
+          {homeroom && <HomeroomSection className={homeroom} teacherId={teacher.id} />}
+
+          {/* Các lớp đang giảng dạy */}
+          <TeachingClassesSection teacherId={teacher.id} />
+
+          {/* Đánh giá */}
+          <div className="flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
+            <Star className="h-5 w-5 text-yellow-500 fill-yellow-400 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-gray-400">Đánh giá sinh viên</p>
+              <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+                {teacher.averageRating} <span className="text-sm font-normal text-gray-400">/ 5.0</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Học vấn */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Học vấn</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/40 rounded-xl p-4">{teacher.education}</p>
+          </div>
+
+          {/* Nghiên cứu */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4 text-green-500" /> Nghiên cứu & Hướng dẫn
+            </h4>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{teacher.projects}</p>
+                <p className="text-xs text-gray-500 mt-1">Dự án nghiên cứu</p>
+              </div>
+              <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{teacher.publications}</p>
+                <p className="text-xs text-gray-500 mt-1">Bài báo khoa học</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(teacher.researchAreas || []).map((area) => (
+                <span key={area} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded-full">
+                  {area}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
 const TeacherManagement = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [filterPosition, setFilterPosition] = useState('all');
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [filterSpecialization, setFilterSpecialization] = useState('all');
   const [searchName, setSearchName] = useState('');
-  const [activeView, setActiveView] = useState(() => {
-    // Initialize from URL on mount
-    const params = new URLSearchParams(location.search);
-    const view = params.get('view');
-    return (view === 'overview' || view === 'schedule' || view === 'progress') ? view : 'overview';
-  });
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
 
-  // Sync view from URL changes (only when URL changes, not from our own updates)
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const view = params.get('view');
-    if (view === 'overview' || view === 'schedule' || view === 'progress') {
-      if (view !== activeView) {
-        setActiveView(view);
-      }
-    }
-  }, [location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+  const teachers = useMemo(
+    () => (mockDepartmentData?.teachers || []).map((t) => ({
+      ...t,
+      courses: COURSE_ASSIGNMENTS[t.id] || [],
+      homeroomClass: HOMEROOM[t.id] || null,
+    })),
+    []
+  );
 
-  // Update URL when activeView changes (from user interaction, not from URL sync)
-  const prevViewRef = useRef(activeView);
-  useEffect(() => {
-    if (prevViewRef.current !== activeView) {
-      prevViewRef.current = activeView;
-      const params = new URLSearchParams(location.search);
-      if (params.get('view') !== activeView) {
-        params.set('view', activeView);
-        navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
-      }
-    }
-  }, [activeView, navigate, location.pathname, location.search]);
+  // Tất cả môn học từ COURSE_ASSIGNMENTS
+  const allCourses = useMemo(() => {
+    const set = new Set();
+    Object.values(COURSE_ASSIGNMENTS).forEach((arr) => arr.forEach((c) => set.add(c)));
+    return Array.from(set).sort();
+  }, []);
 
-  // Luôn khai báo teachers trước để specializationOptions không lỗi
-  const teachers = (mockDepartmentData && Array.isArray(mockDepartmentData.teachers)) ? mockDepartmentData.teachers : [];
-  // Lấy mảng chuyên môn duy nhất từ danh sách giảng viên
-  const specializationOptions = React.useMemo(() => {
-    const specializations = teachers.map(t => t.specialization);
-    // Tách nhỏ các chuyên môn nếu có dấu phẩy hoặc gạch ngang, sau đó loại trùng trắng đầu/cuối
-    return [
-      'all',
-      ...Array.from(
-        new Set(
-          specializations
-            .flatMap(specs => specs.split(/[,-]/g).map(s => s.trim()))
-            .filter(s => s && s !== '')
-        )
-      ),
-    ];
-  }, [teachers]);
+  const filtered = useMemo(() => {
+    return teachers.filter((t) => {
+      const matchSearch = !searchName || t.name.toLowerCase().includes(searchName.toLowerCase());
+      const matchSpec = filterSpecialization === 'all' || t.courses.includes(filterSpecialization);
+      return matchSearch && matchSpec;
+    });
+  }, [teachers, searchName, filterSpecialization]);
 
-  const filteredTeachers = teachers.filter(teacher => {
-    const name = (teacher?.name || '').toLowerCase();
-    const spec = (teacher?.specialization || '').toLowerCase();
-    const matchesSearch = !searchName || name.includes(searchName.toLowerCase());
-    const matchesPosition = filterPosition === 'all' || teacher?.position === filterPosition;
-    const matchesSpec = filterSpecialization === 'all' || spec === filterSpecialization.toLowerCase();
-    const matchesMin = true; // đã bỏ lọc số lớp
-    return matchesSearch && matchesPosition && matchesSpec && matchesMin;
-  });
-
-  const positions = ['all', 'Trưởng khoa', 'Phó trưởng khoa', 'Giảng viên chính', 'Giảng viên'];
-
-  // PERFORMANCE: Memoize classes and per-instructor stats to avoid recompute
-  const allClasses = useMemo(() => (mockClassData && Array.isArray(mockClassData.classes)) ? mockClassData.classes : [], [mockClassData]);
-
-  const classesByInstructor = useMemo(() => {
-    const map = new Map();
-    for (const c of allClasses) {
-      const key = c.instructor || '—';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(c);
-    }
-    return map;
-  }, [allClasses]);
-
-  const avgCompletionByInstructor = useMemo(() => {
-    const map = new Map();
-    for (const [name, arr] of classesByInstructor.entries()) {
-      if (!arr.length) { map.set(name, 0); continue; }
-      const sum = arr.reduce((acc, c) => acc + (c.completionRate || 0), 0);
-      map.set(name, Math.round((sum / arr.length) * 10) / 10);
-    }
-    return map;
-  }, [classesByInstructor]);
-
-  const weakCountByInstructor = useMemo(() => {
-    const map = new Map();
-    const details = (mockClassData && mockClassData.classDetails) ? mockClassData.classDetails : {};
-    for (const [name, arr] of classesByInstructor.entries()) {
-      let count = 0;
-      for (const cls of arr) {
-        const detail = details[cls.id];
-        if (!detail || !detail.students) continue;
-        count += detail.students.filter(s => (s.averageScore ?? 0) < 6 || (s.completionRate ?? 0) < 60).length;
-      }
-      map.set(name, count);
-    }
-    return map;
-  }, [classesByInstructor, mockClassData]);
-
-  const hasLowProgressByInstructor = useMemo(() => {
-    const map = new Map();
-    for (const [name, arr] of classesByInstructor.entries()) {
-      map.set(name, arr.some(c => (c.completionRate || 0) < 70));
-    }
-    return map;
-  }, [classesByInstructor]);
-
-  // Helper: hoạt động gần nhất (mock hiển thị)
-  const lastActiveMap = useMemo(() => ({
-    1: '2 ngày trước',
-    2: '1 ngày trước',
-    3: '5 giờ trước',
-    4: '3 ngày trước',
-    5: '8 giờ trước',
-    6: 'hôm qua',
-    7: '4 giờ trước',
-    8: '2 giờ trước'
-  }), []);
-
-  const handleViewDetails = (teacher) => {
-    setSelectedTeacher(teacher);
-    setShowDetailModal(true);
-  };
-
-  // Progress helpers
-  const getProgressColor = (percent) => {
-    if (percent >= 80) return 'bg-emerald-500';
-    if (percent >= 60) return 'bg-amber-500';
-    return 'bg-rose-500';
-  };
-
-  const getProgressStatus = (percent) => {
-    if (percent >= 80) return { label: 'Tốt', color: 'text-emerald-600' };
-    if (percent >= 60) return { label: 'Đạt yêu cầu', color: 'text-amber-600' };
-    return { label: 'Cần cải thiện', color: 'text-rose-600' };
-  };
-
-  const departmentAverage = useMemo(() => {
-    if (!teachers.length) return 0;
-    const sum = teachers.reduce((acc, t) => acc + (avgCompletionByInstructor.get(t.name) || 0), 0);
-    return Math.round((sum / teachers.length) * 10) / 10;
-  }, [teachers, avgCompletionByInstructor]);
-
-  const getPositionColor = (position) => {
-    switch (position) {
-      case 'Trưởng khoa': return 'text-purple-600 bg-purple-100';
-      case 'Phó trưởng khoa': return 'text-blue-600 bg-blue-100';
-      case 'Giảng viên chính': return 'text-indigo-600 bg-indigo-100';
-      case 'Giảng viên': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
+  const getPositionColor = (pos) => {
+    switch (pos) {
+      case 'Trưởng khoa':      return 'text-purple-700 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300';
+      case 'Phó trưởng khoa':  return 'text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'Giảng viên chính': return 'text-indigo-700 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300';
+      default:                 return 'text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-300';
     }
   };
 
@@ -168,348 +645,142 @@ const TeacherManagement = () => {
     <div className="p-4 text-sm">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">Quản Lý Giảng Viên</h1>
-        </div>
-        <p className="text-gray-600 text-sm mt-1">Quản lý thông tin và hoạt động của đội ngũ giảng viên trong khoa</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản Lý Giảng Viên</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Quản lý thông tin và hoạt động của đội ngũ giảng viên trong khoa</p>
       </div>
 
-      {/* Removed stats cards as requested */}
-
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-3 md:gap-4">
-          <div className="min-w-[220px] text-sm">
-            <div className="relative">
-              <Search className="h-4 w-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                placeholder="Tìm theo tên giảng viên"
-                className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              placeholder="Tìm theo tên giảng viên"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-          <div className="min-w-[200px] text-sm">
-            <select
-              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={filterPosition}
-              onChange={(e) => setFilterPosition(e.target.value)}
-            >
-              <option value="all">Tất cả chức vụ</option>
-              <option value="Trưởng khoa">Trưởng khoa</option>
-              <option value="Phó trưởng khoa">Phó trưởng khoa</option>
-              <option value="Giảng viên chính">Giảng viên chính</option>
-              <option value="Giảng viên">Giảng viên</option>
-            </select>
-          </div>
-          <div className="min-w-[260px] text-sm">
-            <select
-              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={filterSpecialization}
-              onChange={e => setFilterSpecialization(e.target.value)}
-            >
-              <option value="all">Tất cả chuyên môn</option>
-              {specializationOptions.filter(s => s !== 'all').map(spec => (
-                <option key={spec} value={spec}>{spec}</option>
-              ))}
-            </select>
-          </div>
-          <button className="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center text-sm">
-            <Plus className="h-4 w-4 mr-2" />
+          <select
+            value={filterSpecialization}
+            onChange={(e) => setFilterSpecialization(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 min-w-[220px]"
+          >
+            <option value="all">Tất cả chuyên môn</option>
+            {allCourses.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ml-auto">
+            <Plus className="h-4 w-4" />
             Thêm Giảng Viên
           </button>
         </div>
       </div>
 
-      {/* Teachers List / Schedule / Progress based on view */}
-      {activeView === 'overview' ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Giảng Viên
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Chức Vụ
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Môn phụ trách
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  SV yếu trong lớp
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Đánh giá (feedback)
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Hoạt động gần nhất
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Nghiên cứu/Hướng dẫn
-                </th>
-                <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-                  Thao Tác
-                </th>
+      {/* Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-700/50">
+                {['Giảng Viên', 'Lớp chủ nhiệm', 'Môn phụ trách', 'Hoạt động gần nhất', 'Nghiên cứu / Hướng dẫn', 'Đánh giá', 'Thao tác'].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTeachers.map((teacher) => (
-                <tr key={teacher.id} className="hover:bg-gray-50 text-xs">
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+              {filtered.map((teacher) => (
+                <tr
+                  key={teacher.id}
+                  className="hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors cursor-pointer"
+                  onClick={() => setSelectedTeacher(teacher)}
+                >
+                  {/* Giảng viên */}
+                  <td className="px-4 py-3 align-middle">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                         {teacher.name.split(' ').pop().charAt(0)}
                       </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
-                        <div className="text-[11px] text-gray-500">{teacher.email}</div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{teacher.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{teacher.email}</p>
+                        <span className={`inline-block mt-0.5 px-2 py-0.5 text-xs font-medium rounded-full ${getPositionColor(teacher.position)}`}>
+                          {teacher.position}
+                        </span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPositionColor(teacher.position)}`}>
-                      {teacher.position}
-                    </span>
+
+                  {/* Lớp chủ nhiệm */}
+                  <td className="px-4 py-3 align-middle text-center">
+                    {teacher.homeroomClass
+                      ? <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-full">{teacher.homeroomClass}</span>
+                      : <span className="text-gray-400 text-xs">—</span>}
                   </td>
-                  <td className="px-4 py-2.5">
-                    <div className="text-xs text-gray-900">{teacher.specialization}</div>
-                  </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <div className="text-xs text-gray-900">{weakCountByInstructor.get(teacher.name) || 0} SV</div>
-                  </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Star className="h-3.5 w-3.5 text-yellow-400 mr-1" />
-                      <span className="text-xs font-medium text-gray-900">{teacher.averageRating}</span>
+
+                  {/* Môn phụ trách */}
+                  <td className="px-4 py-3 align-middle">
+                    <div className="flex flex-wrap gap-1">
+                      {(TEACHING_ASSIGNMENTS[teacher.id] || []).map(({ className, courseName }) => (
+                        <span key={`${className}-${courseName}`} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">
+                          {courseName} <span className="text-blue-400">({className})</span>
+                        </span>
+                      ))}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <span className="text-[11px] text-gray-700">{lastActiveMap[teacher.id] || '—'}</span>
+
+                  {/* Hoạt động gần nhất */}
+                  <td className="px-4 py-3 align-middle text-xs text-gray-600 dark:text-gray-400">
+                    {['2 ngày trước','1 ngày trước','5 giờ trước','3 ngày trước','8 giờ trước','hôm qua','4 giờ trước','2 giờ trước'][teacher.id - 1] || '—'}
                   </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap">
-                    <div className="text-xs text-gray-900">{teacher.projects} dự án</div>
-                    <div className="text-[11px] text-gray-500">{teacher.publications} bài báo</div>
+
+                  {/* Nghiên cứu */}
+                  <td className="px-4 py-3 align-middle">
+                    <p className="text-xs text-gray-800 dark:text-gray-200 font-medium">{teacher.projects} dự án</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{teacher.publications} bài báo</p>
                   </td>
-                  <td className="px-4 py-2.5 whitespace-nowrap text-[11px] font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleViewDetails(teacher)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        title="Xem chi tiết"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
+
+                  {/* Đánh giá */}
+                  <td className="px-4 py-3 align-middle">
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{teacher.averageRating}</span>
+                    </div>
+                  </td>
+
+                  {/* Thao tác */}
+                  <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setSelectedTeacher(teacher)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Xem chi tiết">
+                        <Eye className="h-4 w-4" />
                       </button>
-                      <button
-                        className="text-green-600 hover:text-green-900 p-1 rounded"
-                        title="Chỉnh sửa"
-                      >
-                        <Edit className="h-3.5 w-3.5" />
+                      <button className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" title="Chỉnh sửa">
+                        <Edit className="h-4 w-4" />
                       </button>
-                      <button
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
-                        title="Xóa"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <button className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Xóa">
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-            </tbody>
-            </table>
-          </div>
-        </div>
-      ) : activeView === 'schedule' ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              {filtered.length === 0 && (
                 <tr>
-                  <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Lớp</th>
-                  <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Giảng viên</th>
-                  <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Buổi</th>
-                  <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Thời gian / Phòng</th>
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+                    Không tìm thấy giảng viên nào
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {(mockClassData?.classes ?? []).map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50 text-xs">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-gray-900">{c.name || c.code || `Lớp ${c.id}`}</td>
-                    <td className="px-4 py-2.5 whitespace-nowrap text-gray-700">{c.instructor || '—'}</td>
-                    <td className="px-4 py-2.5 whitespace-nowrap text-gray-700">{c.session || c.schedule?.session || c.timeSlot || '—'}</td>
-                    <td className="px-4 py-2.5 text-gray-700">
-                      {c.time || (c.startTime && c.endTime ? `${c.startTime} - ${c.endTime}` : c.schedule?.time) || c.schedule?.day || c.room || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              )}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-semibold text-gray-900">Tỷ lệ hoàn thành trung bình lớp</h3>
-            <div className="text-sm text-gray-700">TB khoa: <span className="font-semibold">{departmentAverage}%</span></div>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">Đánh giá tiến độ giảng dạy trung bình của giảng viên trong khoa.</p>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left: progress list */}
-            <div className="lg:col-span-7 space-y-3">
-              {teachers.map(t => {
-                const p = avgCompletionByInstructor.get(t.name) || 0;
-                const status = getProgressStatus(p);
-                return (
-                  <div key={t.id} className="group">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-800">{t.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium ${status.color}`}>{status.label}</span>
-                        <span className="text-sm font-semibold text-gray-900 min-w-[48px] text-right">{p}%</span>
-                      </div>
-                    </div>
-                    <div className="w-full h-2 rounded bg-gray-200 overflow-hidden">
-                      <div className={`h-2 ${getProgressColor(p)}`} style={{ width: `${p}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Right: simple overview bar chart */}
-            <div className="lg:col-span-5">
-              <div className="border rounded-lg p-3">
-                <div className="text-sm font-medium text-gray-800 mb-2">Tổng quan theo giảng viên</div>
-                <div className="relative h-48 flex items-end gap-3">
-                  {teachers.map(t => {
-                    const p = avgCompletionByInstructor.get(t.name) || 0;
-                    return (
-                      <div key={t.id} className="flex-1 flex flex-col items-center">
-                        <div
-                          className={`w-6 rounded-t ${getProgressColor(p)}`}
-                          style={{ height: `${Math.max(p, 2)}%`, minHeight: '4px' }}
-                          title={`${t.name}: ${p}%`}
-                        />
-                        <div className="mt-1 text-[10px] text-gray-600 text-center truncate w-10" title={t.name}>
-                          {t.name.split(' ').slice(-1)[0]}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div className="absolute left-0 right-0 bottom-[calc(48px)]" />
-                </div>
-                <div className="mt-3 text-[11px] text-gray-500">
-                  <span className="inline-block w-3 h-2 rounded bg-emerald-500 mr-1 align-middle" /> Tốt
-                  <span className="inline-block w-3 h-2 rounded bg-amber-500 mx-3 align-middle" /> Đạt yêu cầu
-                  <span className="inline-block w-3 h-2 rounded bg-rose-500 mr-1 align-middle" /> Cần cải thiện
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Teacher Detail Modal */}
-      {showDetailModal && selectedTeacher && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Chi Tiết Giảng Viên</h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <span className="sr-only">Close</span>
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="flex items-start space-x-4">
-                  <div className="h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-                    {selectedTeacher.name.split(' ').pop().charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-xl font-semibold text-gray-900">{selectedTeacher.name}</h4>
-                    <p className="text-gray-600">{selectedTeacher.position}</p>
-                    <div className="flex items-center mt-2 space-x-4">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Mail className="h-4 w-4 mr-1" />
-                        {selectedTeacher.email}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Phone className="h-4 w-4 mr-1" />
-                        {selectedTeacher.phone}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{selectedTeacher.totalClasses}</div>
-                    <div className="text-sm text-gray-600">Lớp học</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{selectedTeacher.totalStudents}</div>
-                    <div className="text-sm text-gray-600">Sinh viên</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{selectedTeacher.experience}</div>
-                    <div className="text-sm text-gray-600">Năm kinh nghiệm</div>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{selectedTeacher.averageRating}</div>
-                    <div className="text-sm text-gray-600">Đánh giá</div>
-                  </div>
-                </div>
-
-                {/* Education & Research */}
-                <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Học Vấn</h5>
-                  <p className="text-gray-600">{selectedTeacher.education}</p>
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Chuyên Môn</h5>
-                  <p className="text-gray-600">{selectedTeacher.specialization}</p>
-                </div>
-
-                <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Lĩnh Vực Nghiên Cứu</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTeacher.researchAreas.map((area, index) => (
-                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                        {area}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-2">Công Bố Khoa Học</h5>
-                    <p className="text-gray-600">{selectedTeacher.publications} bài báo</p>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-2">Dự Án Nghiên Cứu</h5>
-                    <p className="text-gray-600">{selectedTeacher.projects} dự án</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Profile modal */}
+      {selectedTeacher && (
+        <TeacherProfile teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />
       )}
     </div>
   );

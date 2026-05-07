@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, AlertTriangle, CheckCircle, RefreshCw, Bell, Eye } from 'lucide-react';
+import { Save, AlertTriangle, CheckCircle, RefreshCw, Bell, Eye, BookOpen, Target } from 'lucide-react';
 
 const GeneralConfiguration = () => {
   const [settings, setSettings] = useState({
@@ -9,7 +9,10 @@ const GeneralConfiguration = () => {
     classScoreThreshold: 7.0,
     updateCycle: 'daily',
     autoNotifications: true,
-    hideCompletedClasses: false
+    hideCompletedClasses: false,
+    // Quy chuẩn ngân hàng bài tập
+    exerciseCompletionThreshold: 70,
+    requireAllChapters: true,
   });
 
   const handleChange = (key, value) => {
@@ -220,6 +223,89 @@ const GeneralConfiguration = () => {
                 }`}
               />
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quy chuẩn ngân hàng bài tập */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <BookOpen className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Quy chuẩn ngân hàng bài tập</h3>
+        </div>
+        <p className="text-xs text-gray-500 mb-4 ml-7">
+          Sinh viên phải học hết tất cả các chương và hoàn thành đủ tỷ lệ bài tập yêu cầu
+        </p>
+        <div className="space-y-5">
+          {/* Tỷ lệ hoàn thành bài tập tối thiểu */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tỷ lệ hoàn thành bài tập tối thiểu mỗi chương (%)
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={settings.exerciseCompletionThreshold}
+                onChange={(e) => handleChange('exerciseCompletionThreshold', parseInt(e.target.value))}
+                className="flex-1 accent-blue-600"
+              />
+              <span className="text-lg font-bold text-blue-600 w-16 text-right">
+                ≥{settings.exerciseCompletionThreshold}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-gray-500">
+                Sinh viên cần hoàn thành ít nhất {settings.exerciseCompletionThreshold}% số bài tập trong mỗi chương
+              </p>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                settings.exerciseCompletionThreshold >= 70
+                  ? 'bg-green-100 text-green-700'
+                  : settings.exerciseCompletionThreshold >= 50
+                  ? 'bg-yellow-100 text-yellow-700'
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {settings.exerciseCompletionThreshold >= 70 ? 'Khuyến nghị' : settings.exerciseCompletionThreshold >= 50 ? 'Trung bình' : 'Thấp'}
+              </span>
+            </div>
+          </div>
+
+          {/* Yêu cầu học hết tất cả chương */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-3">
+              <Target className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Bắt buộc học hết tất cả chương</p>
+                <p className="text-xs text-gray-500">
+                  Sinh viên phải hoàn thành tất cả {settings.requireAllChapters ? '11' : 'các'} chương trong môn học mới được tính hoàn thành môn
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleChange('requireAllChapters', !settings.requireAllChapters)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.requireAllChapters ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.requireAllChapters ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Preview box */}
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <p className="text-xs font-semibold text-blue-700 mb-2">📋 Quy chuẩn hiện tại:</p>
+            <ul className="text-xs text-blue-600 space-y-1">
+              <li>• Sinh viên phải hoàn thành <strong>≥{settings.exerciseCompletionThreshold}%</strong> bài tập trong mỗi chương</li>
+              {settings.requireAllChapters && (
+                <li>• Bắt buộc học <strong>tất cả các chương</strong> trong môn học</li>
+              )}
+              <li>• Chương nào chưa đạt ngưỡng sẽ được đánh dấu <strong className="text-red-600">chưa đạt</strong></li>
+            </ul>
           </div>
         </div>
       </div>

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DashboardHeader from './components/DashboardHeader';
-import KPIMetrics from './components/KPIMetrics';
-import CoursePerformanceSection from './components/CoursePerformanceSection';
-import ProgressOverview from './components/ProgressOverview';
-import NotificationPanel from './components/NotificationPanel';
-import PerformanceChart from './components/PerformanceChart';
-import IndustryAnalysis from './components/IndustryAnalysis';
+import CourseCompletionChart from './components/CourseCompletionChart';
+import AcademicRankingChart from './components/AcademicRankingChart';
+import SkillsProficiencyChart from './components/SkillsProficiencyChart';
 import { mockDashboardData } from '../../data/mockData';
 
 const Dashboard = () => {
@@ -17,8 +14,6 @@ const Dashboard = () => {
     performance: 'all',
     status: 'all'
   });
-  const [searchText, setSearchText] = useState('');
-  const [completionRange, setCompletionRange] = useState('all');
 
   useEffect(() => {
     // Simulate API call
@@ -43,11 +38,6 @@ const Dashboard = () => {
       ...prev,
       [filterType]: value
     }));
-  };
-
-  const handleIndustryFilterChange = (newFilters) => {
-    console.log('Industry filters changed:', newFilters);
-    // Xử lý filter change nếu cần
   };
 
 
@@ -81,35 +71,16 @@ const Dashboard = () => {
     <div className="space-y-6">
       <DashboardHeader />
       
-      {/* Phân bố năng lực theo môn học - đã gộp filter và bảng */}
-      <div>
-        <CoursePerformanceSection 
-          searchText={searchText} 
-          completionRange={completionRange}
-          onSearchChange={setSearchText}
-          onCompletionRangeChange={setCompletionRange}
-          onFilterChange={handleIndustryFilterChange}
-        />
-      </div>
-      
-      {/* Chỉ số tổng quan nhanh (KPI Cards) */}
-      <div>
-        <KPIMetrics data={dashboardData?.kpiMetrics} />
-      </div>
-      
-      {/* Phân Tích Ngành */}
-      <IndustryAnalysis />
-      
-      {/* Các phần khác giữ nguyên */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <ProgressOverview data={dashboardData?.progressOverview} selectedClass={filters.class} />
-          <PerformanceChart data={dashboardData?.performanceChart} />
-        </div>
+      {/* 3 Bảng chính */}
+      <div className="space-y-6">
+        {/* Bảng 1: Tỉ lệ hoàn thành môn qua các năm */}
+        <CourseCompletionChart />
         
-        <div className="space-y-6">
-          <NotificationPanel data={dashboardData?.notifications} />
-        </div>
+        {/* Bảng 2: Xếp loại học lực 7 mức độ */}
+        <AcademicRankingChart />
+        
+        {/* Bảng 3: Tập kỹ năng và mức độ thành thạo */}
+        <SkillsProficiencyChart />
       </div>
     </div>
   );

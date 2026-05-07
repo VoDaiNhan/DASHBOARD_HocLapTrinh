@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+﻿import React from 'react';
 import {
   X,
   Home,
@@ -6,20 +6,14 @@ import {
   BookOpen,
   BarChart3,
   LogOut,
-  GraduationCap,
   UserCheck,
   Settings,
-  Layers,
-  ChevronRight
+  Layers
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import { coursePerformanceData, CLASS_LIST } from '../../data/coursePerformanceData';
 
 const TeacherMenu = ({ isDarkMode, onClose, location }) => {
-  const [open, setOpen] = useState(true);
-  const searchParams = new URLSearchParams(location.search);
-  const currentView = searchParams.get('view') || 'overview';
   const isActive = location.pathname.startsWith('/teachers');
 
   const baseButton =
@@ -34,71 +28,28 @@ const TeacherMenu = ({ isDarkMode, onClose, location }) => {
 
   return (
     <div>
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+      <Link
+        to="/teachers"
+        onClick={onClose}
+        className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
           isActive ? activeButton : baseButton
         }`}
       >
-        <span className="flex items-center">
-          <UserCheck
-            className={`mr-3 h-5 w-5 ${
-              isActive
-                ? isDarkMode
-                  ? 'text-blue-400'
-                  : 'text-blue-600'
-                : 'text-gray-400'
-            }`}
-          />
-          {'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn'}
-        </span>
-        <span className="text-xs">{open ? '-' : '+'}</span>
-      </button>
-      {open && (
-        <div className="mt-1 space-y-1 pl-8">
-          <Link
-            to="/teachers?view=overview"
-            onClick={onClose}
-            className={`block px-2 py-2 text-sm rounded-md ${
-              currentView === 'overview'
-                ? isDarkMode
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-100 text-gray-900'
-                : baseButton
-            }`}
-          >
-            {'T\u1ED5ng quan'}
-          </Link>
-        </div>
-      )}
+        <UserCheck
+          className={`mr-3 h-5 w-5 ${
+            isActive
+              ? isDarkMode ? 'text-blue-400' : 'text-blue-600'
+              : 'text-gray-400'
+          }`}
+        />
+        {'Qu\u1EA3n L\u00FD Gi\u1EA3ng Vi\u00EAn'}
+      </Link>
     </div>
   );
 };
 
 const ClassMenu = ({ isDarkMode, onClose, location }) => {
-  const [open, setOpen] = useState(location.pathname.startsWith('/classes'));
-  const classStats = useMemo(() => {
-    return CLASS_LIST.map((className) => {
-      const students = coursePerformanceData.students.filter((student) => student.className === className);
-      const totalStudents = students.length;
-      const avgCompletion =
-        totalStudents === 0
-          ? 0
-          : Math.round(
-              students.reduce((sum, student) => {
-                const courses = Object.values(student.courses || {});
-                if (!courses.length) return sum;
-                const studentCompletion =
-                  courses.reduce((innerSum, course) => innerSum + course.completionRate, 0) / courses.length;
-                return sum + studentCompletion;
-              }, 0) / totalStudents
-            );
-      return { className, totalStudents, avgCompletion };
-    });
-  }, []);
-
-  const searchParams = new URLSearchParams(location.search);
-  const currentClassId = searchParams.get('classId');
+  const isActive = location.pathname.startsWith('/classes');
 
   const baseButton =
     isDarkMode === true
@@ -110,58 +61,26 @@ const ClassMenu = ({ isDarkMode, onClose, location }) => {
       ? 'bg-indigo-900 text-indigo-100 border-r-2 border-indigo-500'
       : 'bg-indigo-50 text-indigo-700 border-r-2 border-indigo-600';
 
-  const subTitleClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
-
   return (
     <div>
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
-          location.pathname.startsWith('/classes') ? activeButton : baseButton
+      <Link
+        to="/classes"
+        onClick={onClose}
+        className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors ${
+          isActive ? activeButton : baseButton
         }`}
       >
-        <span className="flex items-center">
-          <Layers
-            className={`mr-3 h-5 w-5 ${
-              location.pathname.startsWith('/classes')
-                ? isDarkMode
-                  ? 'text-indigo-300'
-                  : 'text-indigo-600'
-                : 'text-gray-400'
-            }`}
-          />
-          Quản lý lớp
-        </span>
-        <span className="text-xs">{open ? '-' : '+'}</span>
-      </button>
-      {open && (
-        <div className="mt-1 space-y-1 pl-8">
-          {classStats.map((item) => (
-            <Link
-              key={item.className}
-              to={`/classes?classId=${item.className}`}
-              onClick={onClose}
-              className={`block px-2 py-2 text-sm rounded-md ${
-                currentClassId === item.className
-                  ? isDarkMode
-                    ? 'bg-gray-700 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                  : baseButton
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">Lớp {item.className}</p>
-                  <p className={`text-xs ${subTitleClass}`}>
-                    {item.totalStudents} sinh viên · Hoàn thành TB {item.avgCompletion}%
-                  </p>
-                </div>
-                <ChevronRight className={`h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+        <Layers
+          className={`mr-3 h-5 w-5 ${
+            isActive
+              ? isDarkMode
+                ? 'text-indigo-300'
+                : 'text-indigo-600'
+              : 'text-gray-400'
+          }`}
+        />
+        Quản lý lớp
+      </Link>
     </div>
   );
 };
@@ -202,6 +121,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       href: '/reports',
       icon: BarChart3,
       current: location.pathname === '/reports'
+    },
+    {
+      name: 'Ng\u00E2n h\u00E0ng b\u00E0i t\u1EADp',
+      href: '/exercises',
+      icon: BookOpen,
+      current: location.pathname === '/exercises'
     }
   ];
 
@@ -300,7 +225,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               onClick={onClose}
             >
               <Settings className="mr-3 h-5 w-5" />
-              {'C\u1EA5u h\u00ECnh Ng\u00E0nh'}
+              {'C\u1EA5u h\u00ECnh chuy\u00EAn ng\u00E0nh'}
             </Link>
             <button
               className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
