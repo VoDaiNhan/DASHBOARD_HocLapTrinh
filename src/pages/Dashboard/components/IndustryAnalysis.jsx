@@ -109,8 +109,9 @@ const IndustryAnalysis = () => {
                   y1={100 - y}
                   x2="300"
                   y2={100 - y}
-                  stroke="#e5e7eb"
+                  stroke="#94a3b8"
                   strokeWidth="0.5"
+                  strokeOpacity="0.4"
                   strokeDasharray="2,2"
                 />
               ))}

@@ -46,7 +46,7 @@ const CourseBarChart = () => {
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#94a3b8'} strokeOpacity={isDarkMode ? 1 : 0.4} />
             <XAxis 
               dataKey="name" 
               angle={-15}

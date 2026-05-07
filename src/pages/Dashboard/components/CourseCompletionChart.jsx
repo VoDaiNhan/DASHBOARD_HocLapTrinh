@@ -444,7 +444,7 @@ const CourseCompletionChart = () => {
               barGap={8}
             >
 
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.4} />
               <XAxis
                 dataKey="year"
                 axisLine={false}

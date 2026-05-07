@@ -1035,7 +1035,7 @@ const AcademicRankingChart = () => {
               maxBarSize={60}
               key={`${viewMode}-legend-order-fixed-${Date.now()}`}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" opacity={0.5} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" strokeOpacity={0.4} />
               <XAxis 
                 dataKey="year" 
                 axisLine={false}

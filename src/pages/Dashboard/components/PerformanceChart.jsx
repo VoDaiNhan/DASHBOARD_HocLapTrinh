@@ -96,7 +96,7 @@ const PerformanceChart = ({ data }) => {
             data={industryPerformanceData} 
             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.4} />
             <XAxis 
               dataKey="week" 
               tick={{ fontSize: 12 }}
