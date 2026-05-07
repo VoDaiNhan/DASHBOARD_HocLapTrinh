@@ -1,11 +1,29 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   Radar, ResponsiveContainer, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
   BarChart, Bar, Cell, ComposedChart,
 } from 'recharts';
-import { AlertTriangle, TrendingUp, TrendingDown, ChevronDown, ChevronUp, Info, ChevronRight } from 'lucide-react';
+import { 
+  AlertTriangle, 
+  TrendingUp, 
+  TrendingDown, 
+  ChevronDown, 
+  ChevronUp, 
+  Info, 
+  ChevronRight,
+  Users, 
+  Target, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Activity, 
+  FileText, 
+  Share2, 
+  Zap,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 
 const COHORTS = [
   { value: '2018-2022', label: '2018-2022' },
@@ -29,108 +47,104 @@ const courses = [
 const skillsData = {
   'intro-prog': [
     { 
-      skill: 'Nhập xuất dữ liệu', 
-      proficiency: 88, 
-      description: 'Input/Output console', 
-      gioi: 45, kha: 35, tb: 15, yeu: 5,
-      causes: {
-        labFail: 15, homeworkIncomplete: 10, quizLow: 8, attendanceLow: 5
-      },
-      trend: 'up', trendValue: 3
-    },
-    { 
-      skill: 'Biến & Kiểu dữ liệu', 
-      proficiency: 85, 
-      description: 'Khai báo và sử dụng biến', 
-      gioi: 40, kha: 38, tb: 17, yeu: 5,
-      causes: {
-        labFail: 12, homeworkIncomplete: 8, quizLow: 10, attendanceLow: 3
-      },
-      trend: 'up', trendValue: 2
-    },
-    { 
-      skill: 'Vòng lặp', 
-      proficiency: 82, 
-      description: 'For, while, do-while loops', 
-      gioi: 38, kha: 35, tb: 20, yeu: 7,
-      causes: {
-        labFail: 18, homeworkIncomplete: 15, quizLow: 12, attendanceLow: 5
-      },
-      trend: 'up', trendValue: 4
-    },
-    { 
-      skill: 'Cấu trúc điều khiển', 
-      proficiency: 78, 
-      description: 'If-else, switch-case', 
-      gioi: 35, kha: 33, tb: 22, yeu: 10,
-      causes: {
-        labFail: 22, homeworkIncomplete: 18, quizLow: 15, attendanceLow: 8
-      },
-      trend: 'stable', trendValue: 0
-    },
-    { 
       skill: 'Hàm cơ bản', 
       proficiency: 75, 
+      masteryScore: 7.5,
+      passRate: 85,
+      failedCount: 12,
+      industryDemand: 'High',
       description: 'Định nghĩa và gọi hàm', 
-      gioi: 30, kha: 35, tb: 25, yeu: 10,
-      causes: {
-        labFail: 25, homeworkIncomplete: 20, quizLow: 18, attendanceLow: 10
-      },
-      trend: 'up', trendValue: 2
+      gioi: 40, kha: 30, tb: 15, yeu: 15,
+      causes: { labFail: 15, homeworkIncomplete: 10, quizLow: 8, attendanceLow: 5 },
+      trend: 'up', trendValue: 5
     },
     { 
       skill: 'Mảng 1 chiều', 
       proficiency: 70, 
+      masteryScore: 6.8,
+      passRate: 72,
+      failedCount: 22,
+      industryDemand: 'High',
       description: 'Khai báo, truy cập mảng', 
       gioi: 25, kha: 35, tb: 28, yeu: 12,
-      causes: {
-        labFail: 30, homeworkIncomplete: 25, quizLow: 20, attendanceLow: 12
-      },
+      causes: { labFail: 30, homeworkIncomplete: 25, quizLow: 20, attendanceLow: 12 },
       trend: 'stable', trendValue: 0
     },
     { 
       skill: 'Chuỗi ký tự', 
       proficiency: 68, 
+      masteryScore: 6.2,
+      passRate: 65,
+      failedCount: 28,
+      industryDemand: 'Medium',
       description: 'Xử lý chuỗi cơ bản', 
       gioi: 22, kha: 33, tb: 30, yeu: 15,
-      causes: {
-        labFail: 35, homeworkIncomplete: 28, quizLow: 22, attendanceLow: 15
-      },
+      causes: { labFail: 35, homeworkIncomplete: 28, quizLow: 22, attendanceLow: 15 },
       trend: 'down', trendValue: -2
     },
     { 
       skill: 'Debug cơ bản', 
       proficiency: 55, 
+      masteryScore: 4.8,
+      passRate: 42,
+      failedCount: 45,
+      industryDemand: 'High',
       description: 'Tìm và sửa lỗi', 
       gioi: 15, kha: 25, tb: 35, yeu: 25,
-      causes: {
-        labFail: 40, homeworkIncomplete: 30, quizLow: 20, attendanceLow: 15
-      },
+      causes: { labFail: 40, homeworkIncomplete: 30, quizLow: 20, attendanceLow: 15 },
+      trend: 'down', trendValue: -8
+    },
+    { 
+      skill: 'Vòng lặp', 
+      proficiency: 82, 
+      masteryScore: 8.2,
+      passRate: 91,
+      failedCount: 7,
+      industryDemand: 'High',
+      description: 'Cấu trúc lặp', 
+      gioi: 45, kha: 35, tb: 12, yeu: 8,
+      causes: { labFail: 10, homeworkIncomplete: 5, quizLow: 5, attendanceLow: 2 },
+      trend: 'up', trendValue: 12
+    },
+  ],
+  'web-dev': [
+    { 
+      skill: 'ReactJS', 
+      proficiency: 78, 
+      masteryScore: 7.8,
+      passRate: 78,
+      failedCount: 18,
+      industryDemand: 'High',
+      description: 'Frontend library', 
+      gioi: 35, kha: 30, tb: 20, yeu: 15,
+      causes: { labFail: 20, homeworkIncomplete: 15, quizLow: 10, attendanceLow: 5 },
+      trend: 'up', trendValue: 15
+    },
+    { 
+      skill: 'Database Design', 
+      proficiency: 65, 
+      masteryScore: 6.5,
+      passRate: 65,
+      failedCount: 32,
+      industryDemand: 'High',
+      description: 'SQL & NoSQL', 
+      gioi: 20, kha: 30, tb: 30, yeu: 20,
+      causes: { labFail: 35, homeworkIncomplete: 25, quizLow: 15, attendanceLow: 10 },
       trend: 'down', trendValue: -5
     },
-  ],
-  'prog-technique': [
     { 
-      skill: 'Struct', 
-      proficiency: 75, 
-      description: 'Cấu trúc dữ liệu', 
-      gioi: 30, kha: 35, tb: 25, yeu: 10,
-      causes: {
-        labFail: 25, homeworkIncomplete: 20, quizLow: 15, attendanceLow: 8
-      },
-      trend: 'up', trendValue: 3
+      skill: 'Git/GitHub', 
+      proficiency: 91, 
+      masteryScore: 9.1,
+      passRate: 95,
+      failedCount: 4,
+      industryDemand: 'High',
+      description: 'Version Control', 
+      gioi: 60, kha: 25, tb: 10, yeu: 5,
+      causes: { labFail: 5, homeworkIncomplete: 2, quizLow: 2, attendanceLow: 1 },
+      trend: 'up', trendValue: 8
     },
-    { 
-      skill: 'Testing', 
-      proficiency: 58, 
-      description: 'Unit testing', 
-      gioi: 12, kha: 26, tb: 37, yeu: 25,
-      causes: {
-        labFail: 45, homeworkIncomplete: 35, quizLow: 30, attendanceLow: 22
-      },
-      trend: 'down', trendValue: -7
-    },
-  ],
+  ]
 };
 
 // Xu hướng theo năm (cho line chart)
@@ -184,415 +198,231 @@ const getActionSuggestions = (skill) => {
   return suggestions.slice(0, 2);
 };
 
-const getTrendIcon = (trend, trendValue) => {
-  if (trend === 'up') return { icon: '↗️', color: 'text-green-600', text: `+${trendValue}%` };
-  if (trend === 'down') return { icon: '↘️', color: 'text-red-600', text: `${trendValue}%` };
-  return { icon: '→', color: 'text-gray-600', text: '0%' };
-};
 const SkillsProficiencyChart = () => {
   const [selectedCourse, setSelectedCourse] = useState('intro-prog');
   const [selectedCohort, setSelectedCohort] = useState('2022-2026');
-  const [viewType, setViewType] = useState('trend');
-  const [comparisonCourse, setComparisonCourse] = useState(null);
-  const [showAllSkills, setShowAllSkills] = useState(false);
-  const [expandedWeakSkill, setExpandedWeakSkill] = useState(null);
+  const [viewType, setViewType] = useState('table'); // Default to table for clarity
   const [showTopSkills, setShowTopSkills] = useState(5);
 
   const skills = skillsData[selectedCourse] || skillsData['intro-prog'];
   const yearlyTrend = yearlyTrendData[selectedCourse] || yearlyTrendData['intro-prog'];
-  const comparisonSkills = comparisonCourse ? (skillsData[comparisonCourse] || skillsData['intro-prog']) : null;
   
-  // Sort skills by proficiency (weakest first for management focus)
-  const sortedSkills = useMemo(() => {
-    return [...skills].sort((a, b) => a.proficiency - b.proficiency);
-  }, [skills]);
+  // KPI Calculations
+  const avgPassRate = Math.round(skills.reduce((acc, s) => acc + s.passRate, 0) / skills.length);
+  const weakestSkill = [...skills].sort((a, b) => a.passRate - b.passRate)[0];
+  const topGrowthSkill = [...skills].sort((a, b) => b.trendValue - a.trendValue)[0];
 
-  // Identify weak skills (< 70%)
-  const weakSkills = useMemo(() => {
-    return skills.filter(s => s.proficiency < 70).sort((a, b) => a.proficiency - b.proficiency);
-  }, [skills]);
-
-  // Identify strong skills (>= 80%)
-  const strongSkills = useMemo(() => {
-    return skills.filter(s => s.proficiency >= 80).sort((a, b) => b.proficiency - a.proficiency);
-  }, [skills]);
-
-  // Calculate summary stats
-  const stats = useMemo(() => {
-    const counts = {
-      thanhThao: skills.filter(s => s.proficiency >= 80).length,
-      kha: skills.filter(s => s.proficiency >= 70 && s.proficiency < 80).length,
-      trungBinh: skills.filter(s => s.proficiency >= 60 && s.proficiency < 70).length,
-      yeu: skills.filter(s => s.proficiency < 60).length,
-    };
-    return counts;
-  }, [skills]);
-
-  // Critical declining skills
-  const criticalSkills = useMemo(() => {
-    return weakSkills.filter(s => s.trend === 'down' && Math.abs(s.trendValue) >= 3);
-  }, [weakSkills]);
-
-  // Prepare chart data (top skills only)
-  const chartData = useMemo(() => {
-    const topSkillNames = [...skills]
-      .sort((a, b) => a.proficiency - b.proficiency)
-      .slice(0, showTopSkills)
-      .map(s => s.skill);
-    
-    return yearlyTrend.map(yearData => {
-      const filteredData = { year: yearData.year };
-      topSkillNames.forEach(skillName => {
-        if (yearData[skillName] !== undefined) {
-          filteredData[skillName] = yearData[skillName];
-        }
-      });
-      return filteredData;
-    });
-  }, [yearlyTrend, skills, showTopSkills]);
-
-  // Auto-expand worst skill
-  React.useEffect(() => {
-    if (weakSkills.length > 0 && !expandedWeakSkill) {
-      setExpandedWeakSkill(weakSkills[0].skill);
-    }
-  }, [weakSkills, expandedWeakSkill]);
   return (
-    <div className="card p-6">
-      {/* 🔷 1. HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-4">
+    <div className="card p-6 shadow-xl border-0 bg-white dark:bg-gray-900">
+      {/* 🔷 1. HEADER & FILTERS */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-            Tập kỹ năng và mức độ thành thạo
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+            Tập kỹ năng & Mức độ thành thạo
           </h3>
+          <p className="text-sm text-gray-500 mt-1">Hệ thống phân tích năng lực chuẩn đầu ra & nhu cầu doanh nghiệp</p>
         </div>
+        
         <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 transition-all"
-          >
-            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          
-          <select
-            value={comparisonCourse || ''}
-            onChange={(e) => setComparisonCourse(e.target.value || null)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 transition-all"
-          >
-            <option value="">So sánh ▼</option>
-            {courses.filter(c => c.id !== selectedCourse).map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          
-          <select
-            value={selectedCohort}
-            onChange={(e) => setSelectedCohort(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 transition-all"
-          >
-            {COHORTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
-          
-          <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-            {[
-              { value: 'trend', label: 'Xu hướng' },
-              { value: 'distribution', label: 'Phân bố' },
-              { value: 'radar', label: 'Radar' },
-            ].map(type => (
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            {['table', 'trend'].map(type => (
               <button
-                key={type.value}
-                onClick={() => setViewType(type.value)}
-                className={`px-3 py-2 text-sm font-medium transition-all ${
-                  viewType === type.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                key={type}
+                onClick={() => setViewType(type)}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  viewType === type 
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {type.label}
+                {type === 'table' ? 'Bảng năng lực' : 'Xu hướng'}
               </button>
             ))}
           </div>
-        </div>
-      </div>
-      {/* 🔴 2. ALERT + SUMMARY (NGẮN GỌN) */}
-      {criticalSkills.length > 0 && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <span className="font-medium text-red-900 dark:text-red-100">
-              {criticalSkills[0].skill} giảm {Math.abs(criticalSkills[0].trendValue)}% trong năm qua ({criticalSkills[0].proficiency}%)
-            </span>
-          </div>
-        </div>
-      )}
-
-      {weakSkills.length > 0 && (
-        <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-          <div className="text-sm text-orange-900 dark:text-orange-100">
-            <span className="font-medium">⚠️ {weakSkills.length} kỹ năng cần cải thiện:</span>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {weakSkills.map(skill => {
-                const trendInfo = getTrendIcon(skill.trend, skill.trendValue);
-                return (
-                  <span key={skill.skill} className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-orange-900/40 rounded text-xs">
-                    {skill.skill} – {skill.proficiency}% 
-                    <span className={trendInfo.color}>{trendInfo.text}</span>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔵 3. OVERVIEW STATS (1 dòng) */}
-      <div className="mb-6 flex items-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-green-600">{stats.thanhThao}</span>
-          <span className="text-gray-600 dark:text-gray-400">🟢 Thành thạo</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-blue-600">{stats.kha}</span>
-          <span className="text-gray-600 dark:text-gray-400">🔵 Khá</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-yellow-600">{stats.trungBinh}</span>
-          <span className="text-gray-600 dark:text-gray-400">🟡 Trung bình</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-red-600">{stats.yeu}</span>
-          <span className="text-gray-600 dark:text-gray-400">🔴 Cần cải thiện</span>
-        </div>
-      </div>
-      {/* 📈 4. CHART */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Xu hướng kỹ năng theo năm</h4>
+          
           <select
-            value={showTopSkills}
-            onChange={(e) => setShowTopSkills(parseInt(e.target.value))}
-            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border-0 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500"
           >
-            <option value={3}>Hiển thị top 3 skill ▼</option>
-            <option value={5}>Hiển thị top 5 skill ▼</option>
-            <option value={8}>Hiển thị tất cả ▼</option>
+            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-        </div>
-        
-        <div className="h-64 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} vertical={false} />
-              <XAxis 
-                dataKey="year" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#6b7280', fontSize: 12 }}
-              />
-              <YAxis 
-                domain={[0, 100]}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#6b7280', fontSize: 11 }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  borderRadius: 8, 
-                  fontSize: 12,
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  border: '1px solid #e5e7eb'
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ paddingTop: '10px' }}
-                iconType="line"
-              />
-              {Object.keys(chartData[0] || {}).filter(k => k !== 'year').map((key, i) => (
-                <Line
-                  key={key}
-                  type="monotone"
-                  dataKey={key}
-                  stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                  strokeWidth={2}
-                  dot={{ r: 3, strokeWidth: 2, fill: '#fff' }}
-                  activeDot={{ r: 5 }}
-                  name={key}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+
+          <select
+            value={selectedCohort}
+            onChange={(e) => setSelectedCohort(e.target.value)}
+            className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border-0 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200"
+          >
+            {COHORTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+
+          <button className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors">
+            <Share2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
-      {/* 🔥 5. FOCUS AREA (CHỈ HIỂN THỊ SKILL YẾU) */}
-      {weakSkills.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-            ⚠️ Kỹ năng cần ưu tiên xử lý
-          </h4>
-          <div className="space-y-3">
-            {weakSkills.map((skill, idx) => {
-              const isExpanded = expandedWeakSkill === skill.skill;
-              const trendInfo = getTrendIcon(skill.trend, skill.trendValue);
-              const mainCauses = getMainCauses(skill.causes);
-              const suggestions = getActionSuggestions(skill);
-              
-              return (
-                <div key={skill.skill} className="border border-gray-200 dark:border-gray-700 rounded-lg">
-                  {/* Header - Always visible */}
-                  <div 
-                    className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                    onClick={() => setExpandedWeakSkill(isExpanded ? null : skill.skill)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className={isExpanded ? 'rotate-90' : ''}>
-                          <ChevronRight className="h-4 w-4 text-gray-400 transition-transform" />
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {skill.skill} ({skill.proficiency}% 
-                          <span className={`ml-1 ${trendInfo.color}`}>{trendInfo.text}</span>)
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          skill.proficiency < 60 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {skill.proficiency < 60 ? '🔴' : '🟡'}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {isExpanded ? 'Thu gọn' : 'Xem chi tiết'}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Expanded Content */}
-                  {isExpanded && (
-                    <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
-                      {/* Phân bố SV */}
-                      <div className="mb-4 pt-3">
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">├─ Phân bố SV:</div>
-                        <div className="flex items-center gap-4 text-xs ml-4">
-                          <span className="text-green-600">🟢{skill.gioi}%</span>
-                          <span className="text-blue-600">🔵{skill.kha}%</span>
-                          <span className="text-yellow-600">🟡{skill.tb}%</span>
-                          <span className="text-red-600">🔴{skill.yeu}%</span>
-                        </div>
-                      </div>
-
-                      {/* Nguyên nhân */}
-                      <div className="mb-4">
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">├─ Nguyên nhân:</div>
-                        <div className="ml-4 space-y-1">
-                          {mainCauses.slice(0, 3).map(cause => (
-                            <div key={cause.key} className="text-xs text-gray-700 dark:text-gray-300">
-                              │   • {cause.label} ({cause.value}%)
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Đề xuất */}
-                      <div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">└─ 👉 Đề xuất:</div>
-                        <div className="ml-8 space-y-1">
-                          {suggestions.map((suggestion, idx) => (
-                            <div key={idx} className="text-xs text-blue-700 dark:text-blue-300">
-                              • {suggestion}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+      {/* 🔥 2. TOP KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="p-5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl text-white shadow-lg shadow-blue-200 dark:shadow-none">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-white/20 rounded-lg"><Target className="h-5 w-5" /></div>
+            <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded-full">Tổng quát</span>
           </div>
+          <div className="text-3xl font-black mb-1">{avgPassRate}%</div>
+          <div className="text-sm font-medium opacity-80">Độ bao phủ kỹ năng đạt chuẩn</div>
+          <div className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-full bg-white" style={{ width: `${avgPassRate}%` }} />
+          </div>
+        </div>
+
+        <div className="p-5 bg-white dark:bg-gray-800 rounded-3xl border border-red-100 dark:border-red-900/30 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10"><AlertCircle className="h-16 w-16 text-red-500" /></div>
+          <div className="flex items-center gap-2 text-red-600 mb-3">
+             <ArrowDownRight className="h-5 w-5" />
+             <span className="text-xs font-black uppercase">Yếu nhất cần cải thiện</span>
+          </div>
+          <div className="text-xl font-black text-gray-900 dark:text-white mb-1">{weakestSkill.skill}</div>
+          <div className="text-sm text-red-500 font-bold">Chỉ đạt {weakestSkill.passRate}% (Dưới chuẩn ⚠️)</div>
+          <div className="mt-4 text-xs text-gray-400 font-medium italic">Nguyên nhân: {getMainCauses(weakestSkill.causes)[0].label}</div>
+        </div>
+
+        <div className="p-5 bg-white dark:bg-gray-800 rounded-3xl border border-green-100 dark:border-green-900/30 shadow-sm">
+          <div className="flex items-center gap-2 text-green-600 mb-3">
+             <ArrowUpRight className="h-5 w-5" />
+             <span className="text-xs font-black uppercase">Cải thiện mạnh nhất</span>
+          </div>
+          <div className="text-xl font-black text-gray-900 dark:text-white mb-1">{topGrowthSkill.skill}</div>
+          <div className="text-sm text-green-600 font-bold">Tăng trưởng +{topGrowthSkill.trendValue}% so với khóa trước</div>
+          <div className="mt-4 flex items-center gap-2">
+             <div className="flex -space-x-2">
+                {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full bg-gray-200 border-2 border-white dark:border-gray-800" />)}
+             </div>
+             <span className="text-[10px] text-gray-400 font-bold">+120 SV đạt mức Advanced</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 📊 3. MAIN CONTENT (TABLE OR CHART) */}
+      {viewType === 'table' ? (
+        <div className="bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase">Kỹ năng</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase text-center">Tỷ lệ Đạt</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase text-center">Thành thạo (0-10)</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase">Nhu cầu DN</th>
+                <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase text-right">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              {skills.map(skill => (
+                <tr key={skill.skill} className="hover:bg-white dark:hover:bg-gray-800 transition-colors group">
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col">
+                      <span className="font-black text-gray-900 dark:text-white">{skill.skill}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">{skill.description}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-2 w-32">
+                        <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${skill.passRate > 80 ? 'bg-green-500' : skill.passRate > 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                            style={{ width: `${skill.passRate}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-black text-gray-700 dark:text-gray-300">{skill.passRate}%</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-red-500/70">{skill.failedCount} SV chưa đạt</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                     <div className="flex flex-col items-center">
+                        <span className="text-lg font-black text-gray-900 dark:text-white">{skill.masteryScore}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          skill.masteryScore >= 8 ? 'text-green-600 bg-green-50' : 
+                          skill.masteryScore >= 6 ? 'text-blue-600 bg-blue-50' : 'text-red-600 bg-red-50'
+                        }`}>
+                          {skill.masteryScore >= 8 ? 'Advanced' : skill.masteryScore >= 6 ? 'Intermediate' : 'Beginner'}
+                        </span>
+                     </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                      skill.industryDemand === 'High' ? 'border-red-200 text-red-600 bg-red-50' : 'border-gray-200 text-gray-500'
+                    }`}>
+                      {skill.industryDemand === 'High' ? '🔥 Cao' : 'Bình thường'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex flex-col items-end">
+                      <div className={`flex items-center gap-1 text-xs font-bold ${skill.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                        {skill.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {skill.trendValue}%
+                      </div>
+                      <span className="text-[10px] text-gray-400 mt-1">So với 2024</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="h-80 bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800 p-6">
+           <ResponsiveContainer width="100%" height="100%">
+             <LineChart data={yearlyTrend}>
+               <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+               <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 'bold' }} />
+               <YAxis axisLine={false} tickLine={false} domain={[0, 100]} tick={{ fontSize: 12 }} />
+               <Tooltip contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+               <Legend iconType="circle" />
+               {Object.keys(yearlyTrend[0] || {}).filter(k => k !== 'year').map((key, i) => (
+                 <Line key={key} type="monotone" dataKey={key} stroke={LINE_COLORS[i % LINE_COLORS.length]} strokeWidth={4} dot={{ r: 6, strokeWidth: 3 }} />
+               ))}
+             </LineChart>
+           </ResponsiveContainer>
         </div>
       )}
-      {/* 🟢 6. TOP + QUICK VIEW (GỌN LẠI) */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Top 3 yếu */}
-        <div>
-          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Top 3 yếu</h5>
-          <div className="space-y-2">
-            {sortedSkills.slice(0, 3).map((skill, idx) => (
-              <div key={skill.skill} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">
-                  {idx + 1}. {skill.skill}
-                </span>
-                <span className="font-medium text-red-600">{skill.proficiency}%</span>
+
+      {/* 🎯 4. BOTTOM: ACTIONS & INSIGHTS */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-3xl border border-blue-100 dark:border-blue-800">
+           <h4 className="flex items-center gap-2 text-blue-900 dark:text-blue-100 font-black mb-4">
+             <Zap className="h-5 w-5 text-amber-500 fill-amber-500" /> Gợi ý hành động từ AI
+           </h4>
+           <div className="space-y-3">
+              <div className="flex gap-3 text-sm">
+                 <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5">1</div>
+                 <p className="text-blue-800 dark:text-blue-200">Kỹ năng <strong>{weakestSkill.skill}</strong> đang lệch 40% so với nhu cầu doanh nghiệp. Cần bổ sung 15 tiết bài tập thực tế.</p>
               </div>
-            ))}
-          </div>
+              <div className="flex gap-3 text-sm">
+                 <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-black flex-shrink-0 mt-0.5">2</div>
+                 <p className="text-blue-800 dark:text-blue-200">Có <strong>{weakestSkill.failedCount} sinh viên</strong> chưa đạt chuẩn kỹ năng nền tảng. Khuyến nghị tổ chức lớp phụ đạo tối thứ 6.</p>
+              </div>
+           </div>
         </div>
 
-        {/* Top 3 mạnh */}
-        <div>
-          <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Top 3 mạnh</h5>
-          <div className="space-y-2">
-            {strongSkills.slice(0, 3).map((skill, idx) => (
-              <div key={skill.skill} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300">
-                  {idx + 1}. {skill.skill}
-                </span>
-                <span className="font-medium text-green-600">{skill.proficiency}%</span>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-3 content-start">
+           <button className="flex-1 min-w-[140px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
+             <Users className="h-4 w-4" /> Xem SV chưa đạt
+           </button>
+           <button className="flex-1 min-w-[140px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
+             <Activity className="h-4 w-4" /> So sánh khóa
+           </button>
+           <button className="flex-1 min-w-[140px] px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
+             <FileText className="h-4 w-4" /> Xuất báo cáo
+           </button>
+           <button className="w-full px-4 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
+             <Zap className="h-5 w-5" /> Tự động lập kế hoạch cải thiện
+           </button>
         </div>
-      </div>
-
-      {/* ⚪ 7. ALL SKILLS (ẨN ĐI – KHÔNG SHOW MẶC ĐỊNH) */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <button
-          onClick={() => setShowAllSkills(!showAllSkills)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <span>Xem tất cả kỹ năng</span>
-          {showAllSkills ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        
-        {showAllSkills && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {sortedSkills.map((skill) => {
-              const trendInfo = getTrendIcon(skill.trend, skill.trendValue);
-              return (
-                <div 
-                  key={skill.skill} 
-                  className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                  onClick={() => setExpandedWeakSkill(skill.skill)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {skill.skill}
-                    </span>
-                    <span className={`text-xs ${trendInfo.color}`}>
-                      {trendInfo.icon}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      {skill.proficiency}%
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      skill.proficiency >= 80 ? 'bg-green-100 text-green-800' :
-                      skill.proficiency >= 70 ? 'bg-blue-100 text-blue-800' :
-                      skill.proficiency >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {skill.proficiency >= 80 ? '🟢' :
-                       skill.proficiency >= 70 ? '🔵' :
-                       skill.proficiency >= 60 ? '🟡' : '🔴'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-export default SkillsProficiencyChart;
+export default React.memo(SkillsProficiencyChart);

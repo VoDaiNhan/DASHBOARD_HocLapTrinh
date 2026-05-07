@@ -87,4 +87,16 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Safari and Chrome */
   }
+
+  /* Remove black outline from Recharts */
+  .recharts-wrapper,
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible,
+  .recharts-surface,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible,
+  .recharts-layer,
+  .recharts-active-dot {
+    outline: none !important;
+  }
 }

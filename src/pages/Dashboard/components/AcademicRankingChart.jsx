@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, ComposedChart, Bar, Line, ReferenceLine, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, AlertTriangle, Info, ChevronDown, ChevronUp, X, ArrowUpDown, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Info, ChevronDown, ChevronUp, X, ArrowUpDown, Search, Bell, Brain, CheckCircle2, Users, Mail } from 'lucide-react';
 
 const COHORTS = [
   { value: '2018-2022', label: '2018-2022' },
@@ -349,6 +349,9 @@ const AcademicRankingChart = () => {
   const [showInsights, setShowInsights] = useState(true);
   const [showDrillDown, setShowDrillDown] = useState(false);
   const [drillDownCategory, setDrillDownCategory] = useState(null);
+
+  // Get years data FIRST - before any useMemo or useCallback that depends on it
+  const yearsData = getDisplayData(selectedCourse, selectedCohort);
   
   // Student modal states
   const [showStudentModal, setShowStudentModal] = useState(false);
@@ -358,6 +361,59 @@ const AcademicRankingChart = () => {
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = từ cao xuống thấp (mặc định), 'asc' = từ thấp đến cao
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all'); // New state for filtering by academic level
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showPredictionModal, setShowPredictionModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
+  const [notificationStudents, setNotificationStudents] = useState([]);
+  const [selectedNotifStudents, setSelectedNotifStudents] = useState([]);
+
+  // Generate students for notification when modal opens
+  const openNotificationModal = useCallback(() => {
+    const latestYearData = yearsData[yearsData.length - 1];
+    if (!latestYearData) return;
+
+    // Generate Yeu and Kem students
+    const yeuStudents = generateStudentData('yeu', latestYearData.year, latestYearData.yeu);
+    const kemStudents = generateStudentData('kem', latestYearData.year, latestYearData.kem);
+    
+    const allRiskStudents = [...yeuStudents, ...kemStudents].map(s => ({
+      ...s,
+      riskSubjects: courses.slice(1, 1 + Math.floor(Math.random() * 3) + 1).map(c => c.name), // Random 1-3 subjects
+    }));
+
+    setNotificationStudents(allRiskStudents);
+    // Auto-select all by default
+    setSelectedNotifStudents(allRiskStudents.map(s => s.id));
+    setShowNotificationModal(true);
+  }, [yearsData]);
+
+  const toggleStudentSelection = (id) => {
+    setSelectedNotifStudents(prev => 
+      prev.includes(id) ? prev.filter(sId => sId !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllByRank = (rank) => {
+    const studentsToSelect = notificationStudents
+      .filter(s => rank === 'all' || s.category === rank)
+      .map(s => s.id);
+    
+    setSelectedNotifStudents(prev => {
+      const otherRanks = notificationStudents
+        .filter(s => rank !== 'all' && s.category !== rank && prev.includes(s.id))
+        .map(s => s.id);
+      return [...new Set([...otherRanks, ...studentsToSelect])];
+    });
+  };
+
+  const [notificationMessage, setNotificationMessage] = useState(
+    `Chào {{tên_sinh_viên}},\n\nDựa trên kết quả học tập môn {{tên_môn}}, khoa nhận thấy em đang gặp một chút khó khăn với mức điểm {{điểm_số}}. Để hỗ trợ kịp thời, khoa sẽ tổ chức buổi tư vấn riêng vào thứ 7 này.\n\nRất mong em có mặt để cùng thầy cô tìm giải pháp cải thiện kết quả học tập nhé.`
+  );
+
+  const insertToken = (token) => {
+    setNotificationMessage(prev => prev + " " + token);
+  };
   
   const [visibleLines, setVisibleLines] = useState({
     excellent: true,
@@ -374,22 +430,21 @@ const AcademicRankingChart = () => {
     danger: true,
   });
 
-  // Get years data FIRST - before any useMemo that depends on it
-  const yearsData = getDisplayData(selectedCourse, selectedCohort);
+
 
   // Handle bar click to show student list
-  const handleBarClick = (data, category, year) => {
+  const handleBarClick = useCallback((data, category, year) => {
     console.log('Bar clicked:', { data, category, year }); // Debug log
     setSelectedCategory(category);
     setSelectedYear(year);
     setFilterCategory('all'); // Reset filter when opening modal
     setSearchTerm(''); // Reset search when opening modal
     setShowStudentModal(true);
-  };
+  }, []);
 
   // Handle card click to filter chart and show students - UPDATED theo yêu cầu mới
-  const handleCardClick = (cardType) => {
-    const latestYearData = enrichedYearsData[enrichedYearsData.length - 1];
+  const handleCardClick = useCallback((cardType) => {
+    const latestYearData = yearsData[yearsData.length - 1];
     if (!latestYearData) return;
 
     let category = 'all';
@@ -397,24 +452,20 @@ const AcademicRankingChart = () => {
     
     switch (cardType) {
       case 'excellent-good':
-        // Card 1: Hiển thị học sinh Xuất sắc + Giỏi (Khá trở lên)
         category = 'all';
-        filterCat = 'excellent'; // Sẽ được xử lý đặc biệt trong modal để hiển thị cả excellent và good
+        filterCat = 'excellent';
         break;
       case 'kha-tbkha':
-        // Card 2: Hiển thị học sinh Khá + TB Khá
         category = 'all';
-        filterCat = 'kha'; // Sẽ được xử lý đặc biệt trong modal để hiển thị cả kha và tbKha
+        filterCat = 'kha';
         break;
       case 'trung-binh':
-        // Card 3: Hiển thị học sinh Trung bình
         category = 'all';
         filterCat = 'trungBinh';
         break;
       case 'yeu-kem':
-        // Card 4: Hiển thị học sinh Yếu + Kém
         category = 'all';
-        filterCat = 'yeu'; // Sẽ được xử lý đặc biệt trong modal để hiển thị cả yeu và kem
+        filterCat = 'yeu';
         break;
     }
     
@@ -423,7 +474,7 @@ const AcademicRankingChart = () => {
     setFilterCategory(filterCat);
     setSearchTerm('');
     setShowStudentModal(true);
-  };
+  }, [yearsData]);
 
   // Generate student data for modal - UPDATED theo yêu cầu mới
   const modalStudentData = useMemo(() => {
@@ -899,27 +950,36 @@ const AcademicRankingChart = () => {
             {COHORTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
           
-          {/* View Mode Toggle */}
-          <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+          {/* View Mode Toggle - Workflow Optimized */}
+          <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-sm">
             <button
               onClick={() => setViewMode('detailed')}
-              className={`px-3 py-2 text-sm font-medium transition-all ${
+              className={`px-3 py-2 text-sm font-bold transition-all flex items-center gap-2 ${
                 viewMode === 'detailed'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-inner'
                   : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
-              Chi tiết
+              🏢 Toàn ngành
             </button>
             <button
-              onClick={() => setViewMode('grouped')}
-              className={`px-3 py-2 text-sm font-medium transition-all border-l border-gray-300 dark:border-gray-600 ${
+              onClick={() => {
+                setViewMode('grouped');
+                alert('Đang chuyển sang chế độ phân tích theo Lớp & Khóa học...');
+              }}
+              className={`px-3 py-2 text-sm font-bold transition-all border-l border-gray-300 dark:border-gray-600 flex items-center gap-2 ${
                 viewMode === 'grouped'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
-              Gộp nhóm
+              🏫 Theo lớp
+            </button>
+            <button
+              onClick={() => alert('Đang chuyển sang chế độ phân tích theo Môn học/Học phần...')}
+              className="px-3 py-2 text-sm font-bold bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border-l border-gray-300 dark:border-gray-600 flex items-center gap-2"
+            >
+              📚 Theo môn
             </button>
           </div>
         </div>
@@ -1029,6 +1089,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.good / 100} 
@@ -1038,6 +1099,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.kha / 100} 
@@ -1047,6 +1109,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.tbKha / 100} 
@@ -1056,6 +1119,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.trungBinh / 100} 
@@ -1065,6 +1129,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.yeu / 100} 
@@ -1074,6 +1139,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.kem / 100} 
@@ -1083,6 +1149,7 @@ const AcademicRankingChart = () => {
                     radius={[8, 8, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   
                   {/* Lines for each category - positioned at middle of each segment */}
@@ -1196,6 +1263,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => (data.kha + data.tbKha) / 100} 
@@ -1205,6 +1273,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => data.trungBinh / 100} 
@@ -1214,6 +1283,7 @@ const AcademicRankingChart = () => {
                     radius={[0, 0, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   <Bar 
                     dataKey={(data) => (data.yeu + data.kem) / 100} 
@@ -1223,6 +1293,7 @@ const AcademicRankingChart = () => {
                     radius={[8, 8, 0, 0]}
                     style={{ outline: 'none' }}
                     stroke="none"
+                    animationDuration={300}
                   />
                   
                   {/* Lines for grouped categories - positioned at middle of each segment */}
@@ -1678,33 +1749,27 @@ const AcademicRankingChart = () => {
               </div>
             )}
             
-            {/* Action Buttons - Enhanced with priority */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              {stats.yeuKem > kpiTargets.yeuKemMax && (
-                <button
-                  onClick={() => handleCardClick('yeu-kem')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 hover:shadow-md transition-all duration-200 flex items-center gap-2"
-                >
-                  🚨 Xử lý SV yếu + kém
-                </button>
-              )}
-              
-              {stats.trungBinh > 10 && (
-                <button
-                  onClick={() => handleCardClick('trung-binh')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 hover:shadow-md transition-all duration-200 flex items-center gap-2"
-                >
-                  🎯 Nâng SV trung bình
-                </button>
-              )}
-              
+            {/* Action Buttons - Management Workflow Optimized */}
+            <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-2">
+              <button
+                onClick={openNotificationModal}
+                className="px-5 py-2.5 text-sm font-black text-white bg-red-600 rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-1"
+              >
+                🔔 Gửi thông báo & Hỗ trợ học tập
+              </button>
+
               <button
                 onClick={() => {
-                  // Export CSV
+                  // Export CSV based on current filters
                   const csvContent = [
-                    ['Báo cáo xếp loại học lực'],
-                    ['Năm', 'Xuất sắc', 'Giỏi', 'Khá', 'TB Khá', 'Trung bình', 'Yếu', 'Kém'],
-                    ...yearsData.map(y => [y.year, y.excellent, y.good, y.kha, y.tbKha, y.trungBinh, y.yeu, y.kem]),
+                    ['Báo cáo quản lý xếp loại học lực - Tối ưu cho quản lý ngành'],
+                    ['Môn học: ' + courses.find(c => c.id === selectedCourse)?.name],
+                    ['Khóa: ' + selectedCohort],
+                    ['Năm', 'Xuất sắc', 'Giỏi', 'Khá', 'TB Khá', 'Trung bình', 'Yếu', 'Kém', 'Tỷ lệ Nguy cơ (%)'],
+                    ...yearsData.map(y => [
+                      y.year, y.excellent, y.good, y.kha, y.tbKha, y.trungBinh, y.yeu, y.kem, 
+                      ((y.yeu + y.kem) / y.total * 100).toFixed(1)
+                    ]),
                   ].map(row => row.join(',')).join('\n');
                   
                   const BOM = '\uFEFF';
@@ -1712,22 +1777,15 @@ const AcademicRankingChart = () => {
                   const link = document.createElement('a');
                   const url = URL.createObjectURL(blob);
                   link.setAttribute('href', url);
-                  link.setAttribute('download', `xep-loai-hoc-luc-${new Date().getTime()}.csv`);
+                  link.setAttribute('download', `bao-cao-quan-ly-nganh-${new Date().getTime()}.csv`);
                   link.style.visibility = 'hidden';
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:shadow-md transition-all duration-200"
+                className="px-5 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2 border border-transparent hover:border-gray-300"
               >
-                📊 Xuất báo cáo
-              </button>
-              
-              <button
-                onClick={() => alert('So sánh với năm trước - Tính năng sẽ được triển khai')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:shadow-md transition-all duration-200"
-              >
-                📈 So sánh xu hướng
+                📄 Xuất báo cáo (Excel)
               </button>
             </div>
           </div>
@@ -1905,7 +1963,6 @@ const AcademicRankingChart = () => {
                           if (!student || typeof student.grade === 'undefined') {
                             return [idx + 1, 'N/A', 'Invalid Student', 'N/A', 'N/A', 'N/A'];
                           }
-                          
                           const actualCategory = getAcademicRank(student.grade);
                           const categoryInfo = RANKING_META.find(r => r.key === actualCategory);
                           return [
@@ -1946,8 +2003,259 @@ const AcademicRankingChart = () => {
           </div>
         </div>
       )}
+
+      {/* Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" onClick={() => setShowNotificationModal(false)} />
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full p-0">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/10 flex items-center justify-between">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                  <Bell className="h-6 w-6 text-red-500" /> Gửi thông báo & Hỗ trợ học tập
+                </h3>
+                <button onClick={() => setShowNotificationModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                   <p className="text-sm text-amber-800 dark:text-amber-200">
+                     Hệ thống đã tự động phân tích <strong>{notificationStudents.length} sinh viên</strong> có nguy cơ rớt môn hoặc GPA thấp (Yếu & Kém). Hãy rà soát danh sách trước khi gửi thông báo.
+                   </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 italic underline">Đối tượng nhận tin ({selectedNotifStudents.length} đã chọn)</label>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => selectAllByRank('yeu')}
+                        className="text-[10px] font-bold text-orange-600 bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded hover:bg-orange-100"
+                      >
+                        Chọn tất cả Yếu
+                      </button>
+                      <button 
+                        onClick={() => selectAllByRank('kem')}
+                        className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-900/30 px-2 py-1 rounded hover:bg-red-100"
+                      >
+                        Chọn tất cả Kém
+                      </button>
+                      <button 
+                        onClick={() => selectAllByRank('all')}
+                        className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded hover:bg-blue-100"
+                      >
+                        Chọn tất cả
+                      </button>
+                      <button 
+                        onClick={() => setSelectedNotifStudents([])}
+                        className="text-[10px] font-bold text-gray-600 bg-gray-50 dark:bg-gray-800/30 px-2 py-1 rounded hover:bg-gray-100"
+                      >
+                        Bỏ chọn tất cả
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-hidden border border-gray-100 dark:border-gray-800 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 uppercase font-bold">
+                        <tr>
+                          <th className="px-3 py-2 w-8 text-center">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedNotifStudents.length === notificationStudents.length && notificationStudents.length > 0}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedNotifStudents(notificationStudents.map(s => s.id));
+                                else setSelectedNotifStudents([]);
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </th>
+                          <th className="px-3 py-2">STT</th>
+                          <th className="px-3 py-2">Họ tên & MSSV</th>
+                          <th className="px-3 py-2">Lớp</th>
+                          <th className="px-3 py-2">Môn nguy cơ</th>
+                          <th className="px-3 py-2 text-right">Điểm TB</th>
+                          <th className="px-3 py-2">Xếp loại</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                        {notificationStudents.map((sv, idx) => (
+                          <tr key={sv.id} className={`${selectedNotifStudents.includes(sv.id) ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors`}>
+                            <td className="px-3 py-2 text-center">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedNotifStudents.includes(sv.id)}
+                                onChange={() => toggleStudentSelection(sv.id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </td>
+                            <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
+                            <td className="px-3 py-2">
+                              <div className="font-bold text-gray-900 dark:text-white">{sv.name}</div>
+                              <div className="text-[10px] text-gray-400">{sv.id}</div>
+                            </td>
+                            <td className="px-3 py-2 text-gray-600 dark:text-gray-400">{sv.class}</td>
+                            <td className="px-3 py-2">
+                              <div className="flex flex-wrap gap-1">
+                                {sv.riskSubjects.map(s => (
+                                  <span key={s} className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded text-[9px] font-bold border border-red-200 dark:border-red-800">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 text-right font-mono font-bold text-red-600">{sv.grade.toFixed(2)}</td>
+                            <td className="px-3 py-2">
+                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${sv.category === 'kem' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                                 {sv.category === 'kem' ? 'Kém' : 'Yếu'}
+                               </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-wrap gap-4 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-700 dark:text-gray-300">Tổng hợp:</span>
+                      <span className="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 shadow-sm">
+                        Đã chọn <strong>{selectedNotifStudents.length}</strong> / {notificationStudents.length} SV
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Phân loại:</span>
+                      <span className="text-orange-600">Yếu: {notificationStudents.filter(s => s.category === 'yeu' && selectedNotifStudents.includes(s.id)).length}</span>
+                      <span className="text-red-600">Kém: {notificationStudents.filter(s => s.category === 'kem' && selectedNotifStudents.includes(s.id)).length}</span>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">Nội dung thông báo</label>
+                  </div>
+                  <textarea 
+                    className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl h-40 text-sm focus:ring-2 focus:ring-red-500 outline-none bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white"
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    placeholder="Nhập nội dung hỗ trợ sinh viên tại đây..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
+                  <button onClick={() => setShowNotificationModal(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Hủy</button>
+                  <button 
+                    onClick={() => {
+                      setShowNotificationModal(false);
+                      setToastMessage(`Đã gửi thông báo hỗ trợ tới ${selectedNotifStudents.length} sinh viên thành công!`);
+                      setTimeout(() => setToastMessage(''), 3000);
+                    }}
+                    disabled={selectedNotifStudents.length === 0}
+                    className={`px-6 py-2 rounded-lg font-bold transition-all shadow-lg ${
+                      selectedNotifStudents.length === 0 
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                        : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200 dark:shadow-none transform hover:-translate-y-1'
+                    }`}
+                  >
+                    Gửi thông báo ({selectedNotifStudents.length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Prediction Modal */}
+      {showPredictionModal && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75" onClick={() => setShowPredictionModal(false)} />
+            <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                  <Brain className="h-6 w-6 text-indigo-500" /> Dự đoán xu hướng học lực (AI Analysis)
+                </h3>
+                <button onClick={() => setShowPredictionModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                  <h4 className="font-bold text-indigo-900 dark:text-indigo-200 mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Dự báo phân bổ kỳ tới
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Nhóm Xuất sắc/Giỏi</span>
+                      <span className="font-bold text-green-600">+2.5%</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Nhóm Trung bình</span>
+                      <span className="font-bold text-gray-500">Ổn định</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Nhóm Yếu/Kém</span>
+                      <span className="font-bold text-red-600">-1.8%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 dark:bg-gray-900/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                  <h4 className="font-bold mb-4 text-gray-900 dark:text-white">🚀 Đề xuất từ hệ thống</h4>
+                  <ul className="text-sm space-y-4 text-gray-600 dark:text-gray-300">
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 bg-green-100 dark:bg-green-900/40 text-green-600 flex items-center justify-center rounded-full text-[10px]">1</span>
+                      ✨ Tập trung nâng cao tỉ lệ nhóm Khá lên Giỏi thông qua các đồ án thực tế.
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center rounded-full text-[10px]">2</span>
+                      ⚠️ Cảnh báo sớm 5 SV có biến động điểm số mạnh để có phương án hỗ trợ kịp thời.
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex-shrink-0 w-5 h-5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center rounded-full text-[10px]">3</span>
+                      📊 Tăng cường thời lượng bài tập thực hành cho môn Cấu trúc dữ liệu.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button 
+                  onClick={() => setShowPredictionModal(false)}
+                  className="px-8 py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all"
+                >
+                  Đã hiểu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-10 right-10 z-[100] animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-gray-900 dark:bg-indigo-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10">
+             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-inner">
+               <CheckCircle2 className="h-5 w-5 text-white" />
+             </div>
+             <div>
+               <div className="font-bold text-sm">Thành công</div>
+               <div className="text-xs text-gray-300 dark:text-indigo-100">{toastMessage}</div>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default AcademicRankingChart;
+export default React.memo(AcademicRankingChart);
