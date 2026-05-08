@@ -9,7 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  LabelList
+  LabelList,
+  Legend
 } from 'recharts';
 import {
   ChevronUp,
@@ -325,14 +326,34 @@ const CourseCompletionChart = () => {
       </div>
 
       {/* Chart Area */}
-      <div className="h-[320px] w-full mb-8">
+      <div className="h-[400px] w-full mt-4">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" strokeOpacity={0.5} />
-
-            <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} dy={10} />
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
+            <defs>
+              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.9}/>
+                <stop offset="100%" stopColor="#818cf8" stopOpacity={0.6}/>
+              </linearGradient>
+              <linearGradient id="compareGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#059669" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.8}/>
+              </linearGradient>
+            </defs>
+            
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" strokeOpacity={0.3} />
+            
+            <XAxis 
+              dataKey="year" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#64748b', fontSize: 12, fontWeight: 800 }} 
+              dy={15} 
+            />
             <YAxis 
-              tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }}
+              tick={{ fontSize: 11, fontWeight: 'bold', fill: '#94a3b8' }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(value) => `${value}%`}
@@ -340,28 +361,55 @@ const CourseCompletionChart = () => {
               ticks={[0, 25, 50, 75, 100]}
             />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9', radius: 10 }} />
+            <Tooltip 
+              content={<CustomTooltip />} 
+              cursor={{ fill: '#f1f5f9', opacity: 0.4 }} 
+            />
+
+            <Legend 
+              verticalAlign="top" 
+              align="right" 
+              height={40}
+              content={() => (
+                <div className="flex items-center justify-end gap-6 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-sm bg-indigo-600"></div>
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Môn hiện tại</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-0.5 border-t-2 border-dashed border-red-600"></div>
+                    <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Chuẩn Ngành</span>
+                  </div>
+                  {comparisonCourse && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-sm bg-emerald-600"></div>
+                      <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Môn so sánh</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
 
             <ReferenceLine 
               y={75} 
-              stroke="#64748b" 
-              strokeDasharray="5 5" 
-              strokeWidth={1}
+              stroke="#ef4444" 
+              strokeDasharray="8 4" 
+              strokeWidth={3}
               label={{ 
-                value: 'MỨC CHUẨN (75%)', 
+                value: 'CHUẨN NGÀNH 75%', 
                 position: 'insideBottomRight', 
-                fill: '#64748b', 
-                fontSize: 9, 
-                fontWeight: 'bold',
-                offset: 10
-              }} 
+                fill: '#ef4444', 
+                fontSize: 10, 
+                fontWeight: 900,
+                className: 'uppercase tracking-tighter'
+              }}
             />
 
             <Bar
               dataKey="completion"
-              fill="#2563eb"
-              radius={[8, 8, 0, 0]}
-              barSize={comparisonCourse ? 30 : 50}
+              fill="url(#barGradient)"
+              radius={[12, 12, 4, 4]}
+              barSize={comparisonCourse ? 35 : 65}
               name="Hoàn thành"
               className="cursor-pointer hover:opacity-80 transition-opacity"
               onClick={handleBarClick}
@@ -371,17 +419,33 @@ const CourseCompletionChart = () => {
                   dataKey="completion"
                   position="top"
                   formatter={(val) => `${val}%`}
-                  style={{ fill: '#2563eb', fontSize: 12, fontWeight: 900 }}
+                  style={{ fill: '#4f46e5', fontSize: 12, fontWeight: 900 }}
                   offset={10}
                 />
               )}
             </Bar>
 
             {comparisonCourse && (
-              <Bar dataKey="compareCompletion" fill="#94a3b8" radius={[8, 8, 0, 0]} barSize={30} name="So sánh" onClick={handleBarClick} className="cursor-pointer" />
+              <Bar 
+                dataKey="compareCompletion" 
+                fill="url(#compareGradient)" 
+                radius={[12, 12, 4, 4]} 
+                barSize={35} 
+                name="So sánh" 
+                onClick={handleBarClick} 
+                className="cursor-pointer" 
+              />
             )}
 
-            <Line type="monotone" dataKey="completion" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: '#2563eb' }} name="Xu hướng" />
+            <Line 
+              type="monotone" 
+              dataKey="completion" 
+              stroke="#4f46e5" 
+              strokeWidth={4} 
+              dot={{ r: 6, fill: '#4f46e5', strokeWidth: 3, stroke: '#fff' }} 
+              name="Xu hướng" 
+              animationDuration={2000}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
