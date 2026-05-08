@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Eye, Edit, Trash2, Mail, Phone, Star, Search, X, BookOpen, Users, Award, Briefcase, GraduationCap, BarChart2, AlertTriangle, CheckCircle, History } from 'lucide-react';
+import { 
+  Plus, Eye, Edit, Trash2, Mail, Phone, Star, Search, X, 
+  BookOpen, Users, Award, Briefcase, GraduationCap, 
+  BarChart2, AlertTriangle, CheckCircle, History, Send, Download, FileText
+} from 'lucide-react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend
+} from 'recharts';
 import { mockDepartmentData, mockClassData } from '../../data/mockData';
 import { coursePerformanceData, COURSE_NAMES } from '../../data/coursePerformanceData';
 
@@ -500,12 +508,23 @@ const TeacherProfile = ({ teacher, onClose }) => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">{teacher.name}</h2>
-              <p className="text-blue-100 text-sm mt-0.5">{teacher.position}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-blue-100 text-sm">{teacher.position}</p>
+                <span className="w-1 h-1 bg-white/30 rounded-full"></span>
+                <p className="text-blue-100 text-xs italic">ID: GV-{teacher.id.toString().padStart(3, '0')}</p>
+              </div>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
-            <X className="h-6 w-6 text-white" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => onShowToast(`Đã xuất báo cáo năng lực cho giảng viên ${teacher.name}`)}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white" title="Xuất báo cáo PDF">
+              <Download className="h-5 w-5" />
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
+              <X className="h-6 w-6 text-white" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
@@ -556,14 +575,71 @@ const TeacherProfile = ({ teacher, onClose }) => {
           {/* Các lớp đang giảng dạy */}
           <TeachingClassesSection teacherId={teacher.id} />
 
-          {/* Đánh giá */}
-          <div className="flex items-center gap-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4">
-            <Star className="h-5 w-5 text-yellow-500 fill-yellow-400 flex-shrink-0" />
-            <div>
-              <p className="text-xs text-gray-400">Đánh giá sinh viên</p>
-              <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
-                {teacher.averageRating} <span className="text-sm font-normal text-gray-400">/ 5.0</span>
-              </p>
+          {/* Hiệu suất & Đánh giá năng lực */}
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <BarChart2 className="h-4 w-4 text-blue-500" /> Phân tích hiệu suất & Năng lực
+            </h4>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Line Chart: Student GPA Trend */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-4 uppercase tracking-wider">Xu hướng điểm TB sinh viên (4 Học kỳ)</p>
+                <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={[
+                      { name: 'HK1-23', score: 7.2 },
+                      { name: 'HK2-23', score: 7.5 },
+                      { name: 'HK1-24', score: 7.4 },
+                      { name: 'HK2-24', score: 7.8 },
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10}} />
+                      <YAxis axisLine={false} tickLine={false} domain={[0, 10]} hide />
+                      <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                      <Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Radar Chart: Competency */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-4 uppercase tracking-wider">Đánh giá năng lực giảng dạy</p>
+                <div className="h-48 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
+                      { subject: 'Chuyên môn', A: 90 },
+                      { subject: 'Sư phạm', A: 85 },
+                      { subject: 'Hỗ trợ SV', A: 95 },
+                      { subject: 'Nghiên cứu', A: 75 },
+                      { subject: 'Công nghệ', A: 80 },
+                    ]}>
+                      <PolarGrid strokeOpacity={0.1} />
+                      <PolarAngleAxis dataKey="subject" tick={{fontSize: 10}} />
+                      <Radar name="Năng lực" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-4">
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Đánh giá chung</span>
+                  <span className="text-xl font-black text-yellow-500">{teacher.averageRating} / 5.0</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Xếp hạng khoa</span>
+                  <span className="text-xl font-black text-blue-600">Top 5%</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => onShowToast(`Đã gửi thông báo nhắc nhở cập nhật học liệu cho giảng viên ${teacher.name}`)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-100 transition-all">
+                <Send className="h-3.5 w-3.5" /> Gửi nhắc nhở
+              </button>
             </div>
           </div>
 
@@ -607,6 +683,13 @@ const TeacherManagement = () => {
   const [filterSpecialization, setFilterSpecialization] = useState('all');
   const [searchName, setSearchName] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const teachers = useMemo(
     () => (mockDepartmentData?.teachers || []).map((t) => ({
@@ -628,9 +711,15 @@ const TeacherManagement = () => {
     return teachers.filter((t) => {
       const matchSearch = !searchName || t.name.toLowerCase().includes(searchName.toLowerCase());
       const matchSpec = filterSpecialization === 'all' || t.courses.includes(filterSpecialization);
-      return matchSearch && matchSpec;
+      
+      let matchTab = true;
+      if (activeTab === 'teaching') matchTab = (TEACHING_ASSIGNMENTS[t.id] || []).length > 0;
+      if (activeTab === 'research') matchTab = t.projects > 5 || t.publications > 15;
+      if (activeTab === 'homeroom') matchTab = !!HOMEROOM[t.id];
+      
+      return matchSearch && matchSpec && matchTab;
     });
-  }, [teachers, searchName, filterSpecialization]);
+  }, [teachers, searchName, filterSpecialization, activeTab]);
 
   const getPositionColor = (pos) => {
     switch (pos) {
@@ -649,16 +738,45 @@ const TeacherManagement = () => {
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Quản lý thông tin và hoạt động của đội ngũ giảng viên trong khoa</p>
       </div>
 
-      {/* Filters */}
+      {/* Filters & Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl w-fit">
+            {[
+              { id: 'all', label: 'Tất cả', icon: Users },
+              { id: 'teaching', label: 'Khối Giảng dạy', icon: BookOpen },
+              { id: 'research', label: 'Khối Nghiên cứu', icon: Award },
+              { id: 'homeroom', label: 'Cố vấn học tập', icon: GraduationCap },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  activeTab === tab.id 
+                    ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <tab.icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium">
+            <Plus className="h-4 w-4" />
+            Thêm Giảng Viên
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-gray-50 dark:border-gray-700 pt-4">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              placeholder="Tìm theo tên giảng viên"
+              placeholder="Tìm theo tên giảng viên..."
               className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -670,10 +788,6 @@ const TeacherManagement = () => {
             <option value="all">Tất cả chuyên môn</option>
             {allCourses.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium ml-auto">
-            <Plus className="h-4 w-4" />
-            Thêm Giảng Viên
-          </button>
         </div>
       </div>
 
@@ -753,8 +867,15 @@ const TeacherManagement = () => {
                   {/* Thao tác */}
                   <td className="px-4 py-3 align-middle" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => setSelectedTeacher(teacher)} className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Xem chi tiết">
+                      <button 
+                        onClick={() => setSelectedTeacher(teacher)} 
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Xem chi tiết">
                         <Eye className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => showToast(`Mở cửa sổ chat với giảng viên ${teacher.name}`)}
+                        className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" title="Gửi tin nhắn">
+                        <Mail className="h-4 w-4" />
                       </button>
                       <button className="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" title="Chỉnh sửa">
                         <Edit className="h-4 w-4" />
@@ -780,7 +901,15 @@ const TeacherManagement = () => {
 
       {/* Profile modal */}
       {selectedTeacher && (
-        <TeacherProfile teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} />
+        <TeacherProfile teacher={selectedTeacher} onClose={() => setSelectedTeacher(null)} onShowToast={showToast} />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-bold flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-8">
+          <CheckCircle className="h-5 w-5 text-green-400" />
+          {toast}
+        </div>
       )}
     </div>
   );

@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, FileText, Download } from 'lucide-react';
 import ReportStats from './components/ReportStats';
 import ReportFilters from './components/ReportFilters';
-import ComparisonChart from './components/ComparisonChart';
-import DetailedDataTable from './components/DetailedDataTable';
+import EnrollmentTrendChart from './components/EnrollmentTrendChart';
+import GraduationEmploymentChart from './components/GraduationEmploymentChart';
+
+import DepartmentHealthScore from './components/DepartmentHealthScore';
 import InsightsPanel from './components/InsightsPanel';
+import DetailedDataTable from './components/DetailedDataTable';
 import { mockDashboardData, mockStudentTrackingData, mockClassData } from '../../data/mockData';
 
 const Reports = () => {
@@ -17,22 +20,27 @@ const Reports = () => {
   useEffect(() => {
     // Load stats
     setStats({
-      totalStudents: mockDashboardData.kpiMetrics.totalStudents,
-      studentChange: mockDashboardData.kpiMetrics.studentChange,
-        totalTeachers: mockDashboardData.kpiMetrics.totalTeachers,
-        teacherChange: mockDashboardData.kpiMetrics.teacherChange,
-        activeCourses: mockDashboardData.kpiMetrics.activeCourses || 4,
-        courseChange: mockDashboardData.kpiMetrics.courseChange || 0,
-        activeClasses: 12,
-        classChange: 2,
-        averageScore: (mockDashboardData.kpiMetrics.averageProgress || 78.5) / 10,
-        scoreChange: mockDashboardData.kpiMetrics.progressChange || 3.2,
-        completionRate: mockDashboardData.kpiMetrics.averageProgress || 78.5,
-        completionChange: mockDashboardData.kpiMetrics.progressChange || 3.2,
-        atRiskStudents: mockDashboardData.kpiMetrics.atRiskStudents || 15,
-        riskChange: mockDashboardData.kpiMetrics.riskChange || -5,
-        atRiskCourses: 1,
-        riskCourseChange: 0
+      totalStudents: 660,
+      studentChange: 12,
+      totalTeachers: mockDashboardData.kpiMetrics.totalTeachers,
+      teacherChange: mockDashboardData.kpiMetrics.teacherChange,
+      graduationRate: 85.2,
+      graduationChange: 2.5,
+      employmentRate: 92.5,
+      employmentChange: 1.8,
+      averageScore: 7.5,
+      scoreChange: 3.2,
+      atRiskStudents: 15,
+      atRiskPercentage: 8,
+      riskChange: -5,
+      activeCourses: mockDashboardData.kpiMetrics.activeCourses || 4,
+      courseChange: mockDashboardData.kpiMetrics.courseChange || 0,
+      activeClasses: 12,
+      classChange: 2,
+      completionRate: mockDashboardData.kpiMetrics.averageProgress || 78.5,
+      completionChange: mockDashboardData.kpiMetrics.progressChange || 3.2,
+      atRiskCourses: 1,
+      riskCourseChange: 0
     });
 
     // Load performance data
@@ -47,13 +55,12 @@ const Reports = () => {
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-    // In real app, fetch data based on filters
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -61,15 +68,15 @@ const Reports = () => {
                 <BarChart3 className="text-white" size={32} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Phân Tích Ngành</h1>
-                <p className="text-gray-600 mt-1">
-                  Thống kê và phân tích toàn diện về hiệu suất ngành - giảng viên, khóa học, lớp học và sinh viên
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Phân Tích Ngành</h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Ngành mình đang đi đúng hướng không? — Phân tích vĩ mô toàn ngành
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 Cập nhật: {new Date().toLocaleDateString('vi-VN')}
               </span>
             </div>
@@ -79,43 +86,54 @@ const Reports = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
+        {/* KPI Stats - 6 cards */}
         <ReportStats stats={stats} />
 
         {/* Filters */}
         <ReportFilters onFilterChange={handleFilterChange} />
 
-        {/* Comparison Chart */}
-        <ComparisonChart currentData={performanceData} />
+        {/* Row 1: Enrollment Trend + Graduation/Employment */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <EnrollmentTrendChart />
+          <GraduationEmploymentChart />
+        </div>
 
-        {/* Insights Panel */}
-        <InsightsPanel stats={stats} courses={courses} />
+
+        {/* Row 3: Department Health + Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-1">
+            <DepartmentHealthScore />
+          </div>
+          <div className="lg:col-span-2">
+            <InsightsPanel stats={stats} courses={courses} />
+          </div>
+        </div>
 
         {/* Detailed Data Table */}
-        <DetailedDataTable 
-          courses={courses} 
+        <DetailedDataTable
+          courses={courses}
           classes={mockClassData.classes || []}
           students={students}
         />
 
         {/* Export Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mt-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Xuất Báo Cáo</h3>
-              <p className="text-sm text-gray-600">Tải xuống báo cáo chi tiết định dạng PDF hoặc Excel</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Xuất Báo Cáo</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Tải xuống báo cáo chi tiết định dạng PDF hoặc Excel</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => alert('Tính năng xuất PDF sẽ được triển khai')}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium shadow-sm"
               >
                 <FileText className="h-4 w-4" />
                 Xuất PDF
               </button>
               <button
                 onClick={() => alert('Tính năng xuất Excel sẽ được triển khai')}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm font-medium shadow-sm"
               >
                 <Download className="h-4 w-4" />
                 Xuất Excel
@@ -123,11 +141,9 @@ const Reports = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
 export default Reports;
-

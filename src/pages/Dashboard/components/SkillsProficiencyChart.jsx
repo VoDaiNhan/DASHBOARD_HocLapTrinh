@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  Radar, ResponsiveContainer, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
   BarChart, Bar, Cell, ComposedChart,
+  ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { 
   AlertTriangle, 
@@ -17,13 +16,10 @@ import {
   Target, 
   ArrowUpRight, 
   ArrowDownRight, 
-  Activity, 
-  FileText, 
-  Share2, 
-  Zap,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
+  FileText,
+  Share2,
   X,
   Search,
   Download,
@@ -163,10 +159,8 @@ const SkillsProficiencyChart = () => {
   const [selectedCohort, setSelectedCohort] = useState('2022-2026');
   const [viewType, setViewType] = useState('table'); 
   const [showStudentModal, setShowStudentModal] = useState(false);
-  const [showPlanModal, setShowPlanModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState(null);
-  const [activePlan, setActivePlan] = useState([]);
 
   const skills = skillsData[selectedCourse] || skillsData['intro-prog'];
   const yearlyTrend = yearlyTrendData[selectedCourse] || yearlyTrendData['intro-prog'];
@@ -221,8 +215,7 @@ const SkillsProficiencyChart = () => {
           <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
             {[
               { id: 'table', label: 'Bảng năng lực' },
-              { id: 'trend', label: 'Xu hướng' },
-              { id: 'radar', label: 'So sánh (Radar)' }
+              { id: 'trend', label: 'Xu hướng' }
             ].map(type => (
               <button
                 key={type.id}
@@ -362,7 +355,7 @@ const SkillsProficiencyChart = () => {
             </tbody>
           </table>
         </div>
-      ) : viewType === 'trend' ? (
+      ) : (
         <div className="h-80 bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800 p-6">
            <ResponsiveContainer width="100%" height="100%">
              <LineChart data={yearlyTrend}>
@@ -377,116 +370,71 @@ const SkillsProficiencyChart = () => {
              </LineChart>
            </ResponsiveContainer>
         </div>
-      ) : (
-        <div className="h-80 bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border border-gray-100 dark:border-gray-800 p-6 flex items-center justify-center">
-           <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skills}>
-                <PolarGrid stroke="#94a3b8" strokeOpacity={0.3} />
-                <PolarAngleAxis dataKey="skill" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 8 }} axisLine={false} />
-                <Radar
-                  name="Tỷ lệ đạt (%)"
-                  dataKey="passRate"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.5}
-                />
-                <Radar
-                  name="Thành thạo (x10)"
-                  dataKey={(d) => d.masteryScore * 10}
-                  stroke="#8b5cf6"
-                  fill="#8b5cf6"
-                  fillOpacity={0.3}
-                />
-                <Tooltip contentStyle={{ borderRadius: 16, border: 'none' }} />
-                <Legend iconType="diamond" />
-              </RadarChart>
-           </ResponsiveContainer>
-        </div>
       )}
 
 
       {/* 🎯 4. BOTTOM: ACTIONS & INSIGHTS */}
-      <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div 
-          onClick={() => {
-            setShowPlanModal(true);
-            setToast('Đã khởi tạo kế hoạch cải thiện dựa trên gợi ý AI');
-            setTimeout(() => setToast(null), 3000);
-          }}
-          className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800 cursor-pointer hover:border-blue-300 transition-all group"
-        >
-           <h4 className="flex items-center gap-2 text-blue-900 dark:text-blue-100 font-black mb-2 text-sm">
-             <Zap className="h-4 w-4 text-amber-500 fill-amber-500" /> Gợi ý AI (Click để áp dụng)
-           </h4>
-           <div className="space-y-1.5">
-              <div className="flex gap-2 text-[11px] leading-snug">
-                 <div className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-black flex-shrink-0 mt-0.5">1</div>
-                 <p className="text-blue-800 dark:text-blue-200"><strong>{weakestSkill.skill}</strong> lệch 40% nhu cầu DN. Cần tăng 15 tiết bài tập.</p>
-                 <ArrowRight className="h-3 w-3 text-blue-400 opacity-0 group-hover:opacity-100 transition-all" />
-              </div>
-           </div>
-        </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button 
+          onClick={() => setShowStudentModal(true)}
+          className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+          <Users className="h-4 w-4" /> Danh sách SV chưa đạt
+        </button>
 
-
-        <div className="flex flex-wrap gap-2 content-start">
-           <button 
-            onClick={() => setShowStudentModal(true)}
-            className="flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-[11px] text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-             <Users className="h-3 w-3" /> SV chưa đạt
-           </button>
-           <button 
-            onClick={() => setViewType('radar')}
-            className={`flex-1 min-w-[120px] px-3 py-2 border rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 transition-all ${
-              viewType === 'radar' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50'
-            }`}>
-             <Activity className="h-3 w-3" /> So sánh (Radar)
-           </button>
-
-           <button 
-            onClick={handleExportCSV}
-            className="flex-1 min-w-[120px] px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-[11px] text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
-             <FileText className="h-3 w-3" /> Báo cáo
-           </button>
-           <button 
-            onClick={() => setShowPlanModal(true)}
-            className="w-full px-3 py-2 bg-indigo-600 text-white rounded-xl font-black text-xs shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all">
-             <Zap className="h-4 w-4" /> Lập kế hoạch cải thiện
-           </button>
-        </div>
+        <button 
+          onClick={handleExportCSV}
+          className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+          <FileText className="h-4 w-4" /> Xuất báo cáo CSV
+        </button>
       </div>
 
-      {/* 🟢 MODAL: DANH SÁCH SV CHƯA ĐẠT */}
+      {/* 🟢 INLINE DRILL-DOWN: DANH SÁCH SV CHƯA ĐẠT */}
       {showStudentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-gray-50 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-              <div>
-                <h4 className="text-lg font-black text-gray-900 dark:text-white">Sinh viên chưa đạt chuẩn</h4>
-                <p className="text-xs text-gray-500 font-medium">Môn: {courses.find(c => c.id === selectedCourse)?.name} • Ngưỡng chuẩn 75%</p>
+        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-4 duration-500">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <button 
+                  onClick={() => setShowStudentModal(false)}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-500 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+                <h4 className="text-lg font-black text-gray-900 dark:text-white">
+                  Sinh viên chưa đạt chuẩn
+                </h4>
               </div>
-              <button onClick={() => setShowStudentModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                <X className="h-5 w-5 text-gray-400" />
-              </button>
+              <p className="text-xs text-gray-500 font-bold ml-9 uppercase tracking-widest">
+                Môn: {courses.find(c => c.id === selectedCourse)?.name} • Ngưỡng chuẩn 75%
+              </p>
             </div>
             
-            <div className="p-4">
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input 
                   type="text" 
                   placeholder="Tìm tên, mã số sinh viên..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500"
+                  className="pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-xs font-bold w-48 focus:ring-2 focus:ring-blue-500 outline-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              <button 
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg"
+              >
+                <Mail size={12} /> Gửi hỗ trợ nhóm
+              </button>
+            </div>
+          </div>
 
-              <div className="max-h-[400px] overflow-y-auto pr-2 space-y-2">
+          <div className="bg-gray-50/50 dark:bg-gray-800/30 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+              <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {failedStudents.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map(student => (
-                  <div key={student.id} className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-between border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-all">
+                  <div key={student.id} className="p-4 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-between border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center font-black text-red-600 text-xs">
+                      <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center font-black text-red-600 text-xs">
                         {student.name.split(' ').pop()?.[0]}
                       </div>
                       <div>
@@ -502,80 +450,13 @@ const SkillsProficiencyChart = () => {
                 ))}
               </div>
             </div>
-            
-            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex gap-3">
-              <button className="flex-1 py-2.5 bg-blue-600 text-white rounded-2xl font-black text-xs hover:bg-blue-700 flex items-center justify-center gap-2">
-                <Mail className="h-3.5 w-3.5" /> Gửi thông báo hỗ trợ học tập
-              </button>
-            </div>
           </div>
         </div>
       )}
 
 
 
-      {/* 🟣 MODAL: LẬP KẾ HOẠCH CẢI THIỆN (Interactive Action Center) */}
-      {showPlanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-300">
-            <div className="p-6 border-b border-gray-50 dark:border-gray-800 flex justify-between items-center bg-indigo-600">
-              <div className="flex items-center gap-3">
-                <Zap className="h-6 w-6 text-white fill-white" />
-                <h4 className="text-lg font-black text-white uppercase tracking-wider">Trung tâm hành động AI</h4>
-              </div>
-              <button onClick={() => setShowPlanModal(false)} className="p-2 hover:bg-white/10 rounded-full">
-                <X className="h-5 w-5 text-white" />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <div className="mb-6">
-                <h5 className="text-sm font-black text-gray-900 dark:text-white mb-2">Lộ trình cải thiện môn: {courses.find(c => c.id === selectedCourse)?.name}</h5>
-                <p className="text-xs text-gray-500 font-medium">AI đã tự động lập danh sách 5 nhiệm vụ khẩn cấp để kéo tỷ lệ đạt lên chuẩn 75%.</p>
-              </div>
 
-              <div className="space-y-3">
-                {[
-                  { id: 1, title: `Phụ đạo chuyên sâu: ${weakestSkill.skill}`, type: 'Lịch trình', icon: '📅', detail: 'Tổ chức 2 buổi phụ đạo vào T4, T6 cho 15 SV yếu.' },
-                  { id: 2, title: `Kho bài tập thích nghi (Adaptive)`, type: 'Bài tập', icon: '📝', detail: 'Giao 10 bài tập mức độ Dễ - Trung bình để SV lấy lại gốc.' },
-                  { id: 3, title: `Gửi Mail/Zalo nhắc nhở tự động`, type: 'Liên lạc', icon: '✉️', detail: 'Cảnh báo rủi ro học vụ cho các SV vắng quá 20%.' },
-                  { id: 4, title: `Review code trực tuyến (1-1)`, type: 'Hỗ trợ', icon: '💻', detail: 'Mời các SV giỏi hỗ trợ nhóm SV yếu thông qua Discord.' }
-                ].map(action => (
-                  <label key={action.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-transparent hover:border-indigo-200 transition-all cursor-pointer group">
-                    <div className="mt-1">
-                      <input type="checkbox" className="w-5 h-5 rounded-lg border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" defaultChecked />
-                    </div>
-                    <div className="flex-1">
-                       <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-black text-gray-900 dark:text-white">{action.icon} {action.title}</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full">{action.type}</span>
-                       </div>
-                       <p className="text-xs text-gray-500">{action.detail}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 flex gap-4">
-               <button 
-                onClick={() => setShowPlanModal(false)}
-                className="flex-1 py-3.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all">
-                 Lưu bản nháp
-               </button>
-               <button 
-                onClick={() => {
-                  setShowPlanModal(false);
-                  setToast('Đã kích hoạt lộ trình cải thiện & Gửi nhiệm vụ cho Giảng viên');
-                  setTimeout(() => setToast(null), 3000);
-                }}
-                className="flex-2 py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200">
-                 Kích hoạt lộ trình ngay 🚀
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
 
 
       {/* 🚀 TOAST NOTIFICATION */}

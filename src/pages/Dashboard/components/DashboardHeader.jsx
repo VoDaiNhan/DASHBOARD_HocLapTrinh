@@ -10,15 +10,15 @@ const DashboardHeader = () => {
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-          <button className="btn-secondary flex items-center space-x-2">
-            <RefreshCw className="h-4 w-4" />
-            <span>Làm mới</span>
-          </button>
-          
-          <button className="btn-primary flex items-center space-x-2">
-            <Download className="h-4 w-4" />
-            <span>Xuất báo cáo</span>
-          </button>
+        <button className="btn-secondary flex items-center space-x-2">
+          <RefreshCw className="h-4 w-4" />
+          <span>Làm mới</span>
+        </button>
+
+        <button className="btn-primary flex items-center space-x-2">
+          <Download className="h-4 w-4" />
+          <span>Xuất báo cáo</span>
+        </button>
       </div>
     </div>
   );

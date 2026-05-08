@@ -4,99 +4,36 @@
 
 @layer base {
   html {
-    /* Tự động co giãn kích thước chữ theo độ rộng màn hình để zoom hợp lý */
     font-size: clamp(13px, 0.95vw, 16px);
     scroll-behavior: smooth;
   }
   * {
-    @apply border-gray-200;
+    @apply border-gray-200 transition-colors duration-200;
   }
   body {
-    @apply bg-gray-50 text-gray-900 font-sans;
+    @apply bg-[#f8fafc] dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  /* Line clamp utilities */
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-  }
-  
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-  
-  .line-clamp-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-
+  /* Simplified Card */
   .card {
-    @apply bg-white rounded-xl shadow-soft border border-gray-100;
-  }
-  
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
-  }
-  
-  .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-  
-  .status-active {
-    @apply bg-success-100 text-success-800;
-  }
-  
-  .status-pending {
-    @apply bg-warning-100 text-warning-800;
-  }
-  
-  .status-completed {
-    @apply bg-primary-100 text-primary-800;
-  }
-  
-  .status-at-risk {
-    @apply bg-danger-100 text-danger-800;
+    @apply bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm;
   }
 }
 
 @layer utilities {
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  .glass-effect {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border border-white/20 dark:border-white/5;
   }
   
-  /* Hidden scrollbar utilities */
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Safari and Chrome */
+  .shadow-premium {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 10px 20px -10px rgba(0, 0, 0, 0.02);
   }
 
   /* Remove black outline from Recharts */
-  .recharts-wrapper,
-  .recharts-wrapper:focus,
-  .recharts-wrapper:focus-visible,
-  .recharts-surface,
-  .recharts-surface:focus,
-  .recharts-surface:focus-visible,
-  .recharts-layer,
-  .recharts-active-dot {
+  .recharts-wrapper, .recharts-surface, .recharts-layer {
     outline: none !important;
   }
 }

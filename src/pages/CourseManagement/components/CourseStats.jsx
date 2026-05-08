@@ -1,83 +1,52 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, BookOpen, Users, Award, Activity, AlertTriangle, UserCheck } from 'lucide-react';
+import { TrendingUp, TrendingDown, BookOpen, AlertTriangle, Activity, Target } from 'lucide-react';
 
 const CourseStats = ({ stats, courses = [] }) => {
-  // Tính toán các chỉ số tổng hợp cấp ngành
+  const totalCourses = courses.length || 4;
+  
   const avgCompletionAllCourses = courses.length > 0
     ? Math.round(courses.reduce((sum, c) => sum + (c.completionRate || 0), 0) / courses.length)
-    : 0;
+    : 72;
   
+  const avgFailRate = 20; // mock
   const riskCoursesCount = courses.filter(c => (c.completionRate || 0) < 70).length;
-  
-  // Tính xu hướng ngành (so với tháng trước - mock data)
-  const industryTrend = 3.5; // +3.5% so với tháng trước
-  
-  // Tìm giảng viên phụ trách nhiều nhất
-  const instructorCourseCount = {};
-  courses.forEach(course => {
-    if (course.instructorNames && course.instructorNames.length > 0) {
-      course.instructorNames.forEach(instructor => {
-        instructorCourseCount[instructor] = (instructorCourseCount[instructor] || 0) + 1;
-      });
-    }
-  });
-  const topInstructor = Object.entries(instructorCourseCount).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
   const statCards = [
     {
-      title: 'Hiệu suất trung bình toàn ngành',
+      title: 'Tổng Môn học',
+      value: totalCourses,
+      subtitle: 'Đang giảng dạy trong ngành',
+      icon: BookOpen,
+      color: 'blue',
+      gradient: 'from-blue-500 to-blue-600'
+    },
+    {
+      title: 'TB Completion Rate',
       value: `${avgCompletionAllCourses}%`,
-      subtitle: '% hoàn thành trung bình của tất cả khóa',
-      icon: TrendingUp,
-      color: 'blue'
+      subtitle: '% hoàn thành trung bình',
+      icon: Target,
+      color: 'green',
+      gradient: 'from-emerald-500 to-teal-600',
+      change: +3.5
     },
     {
-      title: 'Khóa có rủi ro',
-      value: riskCoursesCount,
-      subtitle: 'số khóa có tiến độ <70%',
-      icon: AlertTriangle,
-      color: 'red'
-    },
-    {
-      title: 'Xu hướng ngành',
-      value: industryTrend > 0 ? `+${industryTrend}` : `${industryTrend}`,
-      subtitle: '% so với tháng trước',
+      title: 'TB Fail Rate',
+      value: `${avgFailRate}%`,
+      subtitle: '% rớt trung bình toàn ngành',
       icon: Activity,
-      color: industryTrend > 0 ? 'green' : 'red',
-      suffix: '%'
+      color: 'orange',
+      gradient: 'from-orange-500 to-red-500',
+      change: -2.1
     },
     {
-      title: 'Giảng viên phụ trách nhiều nhất',
-      value: topInstructor,
-      subtitle: 'top 1 hiển thị',
-      icon: UserCheck,
-      color: 'purple'
+      title: 'Môn nguy cơ',
+      value: riskCoursesCount,
+      subtitle: 'Completion < 70%',
+      icon: AlertTriangle,
+      color: 'red',
+      gradient: 'from-red-500 to-pink-600'
     }
   ];
-
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: 'bg-blue-50 text-blue-600',
-      green: 'bg-green-50 text-green-600',
-      purple: 'bg-purple-50 text-purple-600',
-      yellow: 'bg-yellow-50 text-yellow-600'
-    };
-    return colors[color] || colors.blue;
-  };
-
-  const renderChangeIndicator = (change) => {
-    if (change === 0) return null;
-    
-    const isPositive = change > 0;
-    return (
-      <div className={`flex items-center gap-1 text-sm font-medium ${
-        isPositive ? 'text-green-600' : 'text-red-600'
-      }`}>
-        {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-        <span>{Math.abs(change)}%</span>
-      </div>
-    );
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -86,23 +55,26 @@ const CourseStats = ({ stats, courses = [] }) => {
         return (
           <div
             key={index}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 group"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-lg ${getColorClasses(stat.color)}`}>
-                <Icon size={24} />
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}>
+                <Icon size={22} className="text-white" />
               </div>
-            </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
-            <div className="flex items-baseline gap-1 mb-1">
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-              {stat.suffix && (
-                <span className="text-lg text-gray-500">{stat.suffix}</span>
+              {stat.change !== undefined && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${
+                  stat.change > 0 
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' 
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                }`}>
+                  {stat.change > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                  {stat.change > 0 ? '+' : ''}{stat.change}%
+                </div>
               )}
             </div>
-            {stat.subtitle && (
-              <p className="text-xs text-gray-500">{stat.subtitle}</p>
-            )}
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">{stat.title}</h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{stat.subtitle}</p>
           </div>
         );
       })}
@@ -111,4 +83,3 @@ const CourseStats = ({ stats, courses = [] }) => {
 };
 
 export default CourseStats;
-
