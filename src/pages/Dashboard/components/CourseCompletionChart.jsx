@@ -219,7 +219,7 @@ const CourseCompletionChart = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden relative">
+    <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden relative">
       {/* Modals */}
       <DrillDownModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} data={drillData} />
 
@@ -285,19 +285,19 @@ const CourseCompletionChart = () => {
       )}
 
       {/* Header section */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-8 gap-6">
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-6 gap-4">
         <div>
-          <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+          <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
             Tỉ lệ hoàn thành môn học
           </h3>
-          <p className="text-xs text-gray-500 font-medium mt-1">Phân tích xu hướng • Click vào cột để xem chi tiết các lớp đóng góp</p>
+          <p className="text-[10px] text-gray-500 font-medium mt-0.5 uppercase tracking-widest">Phân tích xu hướng • Click cột để xem chi tiết</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-4 py-2 border rounded-xl text-sm font-bold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            className="px-3 py-1.5 border rounded-xl text-[10px] font-black uppercase bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
           >
             {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
@@ -305,9 +305,9 @@ const CourseCompletionChart = () => {
           <select
             value={comparisonCourse}
             onChange={(e) => setComparisonCourse(e.target.value)}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-colors"
+            className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-xl text-[10px] font-black uppercase bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer transition-colors"
           >
-            <option value="">So sánh với...</option>
+            <option value="">So sánh...</option>
             {courses.filter(c => c.id !== selectedCourse).map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -316,17 +316,15 @@ const CourseCompletionChart = () => {
           <select
             value={yearRange}
             onChange={(e) => setYearRange(e.target.value)}
-            className="px-4 py-2 border rounded-xl text-sm font-bold bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+            className="px-3 py-1.5 border rounded-xl text-[10px] font-black uppercase bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
           >
             <option value="2022-2026">2022-2026</option>
-            <option value="2018-2022">2018-2022</option>
-            <option value="2024-2028">2024-2028</option>
           </select>
         </div>
       </div>
 
       {/* Chart Area */}
-      <div className="h-[400px] w-full mt-4">
+      <div className="h-[300px] w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
@@ -408,29 +406,19 @@ const CourseCompletionChart = () => {
             <Bar
               dataKey="completion"
               fill="url(#barGradient)"
-              radius={[12, 12, 4, 4]}
-              barSize={comparisonCourse ? 35 : 65}
+              radius={[10, 10, 2, 2]}
+              barSize={comparisonCourse ? 30 : 40}
               name="Hoàn thành"
               className="cursor-pointer hover:opacity-80 transition-opacity"
               onClick={handleBarClick}
-            >
-              {!comparisonCourse && (
-                <LabelList
-                  dataKey="completion"
-                  position="top"
-                  formatter={(val) => `${val}%`}
-                  style={{ fill: '#4f46e5', fontSize: 12, fontWeight: 900 }}
-                  offset={10}
-                />
-              )}
-            </Bar>
+            />
 
             {comparisonCourse && (
               <Bar 
                 dataKey="compareCompletion" 
                 fill="url(#compareGradient)" 
-                radius={[12, 12, 4, 4]} 
-                barSize={35} 
+                radius={[10, 10, 2, 2]} 
+                barSize={30} 
                 name="So sánh" 
                 onClick={handleBarClick} 
                 className="cursor-pointer" 

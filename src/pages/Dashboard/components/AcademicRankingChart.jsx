@@ -67,16 +67,16 @@ const AcademicRankingChart = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="card p-8 group transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-10 gap-6">
+    <div className="space-y-4">
+      <div className="card p-6 group transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-50 dark:bg-purple-500/10 rounded-2xl text-purple-600 dark:text-purple-400">
-              <Award size={24} />
+              <Award size={22} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight uppercase">Phân bổ Xếp loại học lực</h3>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Chu kỳ đào tạo 4 năm gần nhất</p>
+              <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight uppercase">Phân bổ Xếp loại học lực</h3>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Chu kỳ đào tạo 4 năm gần nhất</p>
             </div>
           </div>
           
@@ -84,21 +84,21 @@ const AcademicRankingChart = () => {
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="pl-4 pr-10 py-2 border-none rounded-xl text-[11px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-purple-500/20 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_12px_center] bg-no-repeat cursor-pointer"
+              className="pl-4 pr-10 py-1.5 border-none rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-purple-500/20 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_12px_center] bg-no-repeat cursor-pointer"
             >
               {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select
               value={selectedCohort}
               onChange={(e) => setSelectedCohort(e.target.value)}
-              className="pl-4 pr-10 py-2 border-none rounded-xl text-[11px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-purple-500/20 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_12px_center] bg-no-repeat cursor-pointer"
+              className="pl-4 pr-10 py-1.5 border-none rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-purple-500/20 transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right_12px_center] bg-no-repeat cursor-pointer"
             >
               {COHORTS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="h-[450px] w-full relative">
+        <div className="h-[320px] w-full relative">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} stackOffset="expand" margin={{ top: 20, right: 0, left: -20, bottom: 20 }}>
               <defs>
@@ -155,26 +155,19 @@ const AcademicRankingChart = () => {
                 <LabelList value="Mục tiêu tốt" position="top" fill="#10b981" fontSize={10} fontWeight="900" className="uppercase tracking-widest" />
               </ReferenceLine>
 
-              <Bar dataKey="xuatSac" stackId="a" fill="url(#colorXuatSac)" name="Xuất sắc" barSize={65}>
-                <LabelList dataKey="vXuatSac" content={renderCustomLabel} />
+              <Bar dataKey="xuatSac" stackId="a" fill="url(#colorXuatSac)" name="Xuất sắc" barSize={35}>
               </Bar>
               <Bar dataKey="gioi" stackId="a" fill="url(#colorGioi)" name="Giỏi">
-                <LabelList dataKey="vGioi" content={renderCustomLabel} />
               </Bar>
               <Bar dataKey="kha" stackId="a" fill="url(#colorKha)" name="Khá">
-                <LabelList dataKey="vKha" content={renderCustomLabel} />
               </Bar>
               <Bar dataKey="trungBinhKha" stackId="a" fill="url(#colorTBKha)" name="Trung bình Khá">
-                <LabelList dataKey="vTrungBinhKha" content={renderCustomLabel} />
               </Bar>
               <Bar dataKey="trungBinh" stackId="a" fill="url(#colorTB)" name="Trung bình">
-                <LabelList dataKey="vTrungBinh" content={renderCustomLabel} />
               </Bar>
               <Bar dataKey="yeu" stackId="a" fill="url(#colorYeu)" name="Yếu">
-                <LabelList dataKey="vYeu" content={renderCustomLabel} />
               </Bar>
-              <Bar dataKey="kem" stackId="a" fill="url(#colorKem)" name="Kém" radius={[15, 15, 0, 0]}>
-                <LabelList dataKey="vKem" content={renderCustomLabel} />
+              <Bar dataKey="kem" stackId="a" fill="url(#colorKem)" name="Kém" radius={[8, 8, 0, 0]}>
               </Bar>
             </ComposedChart>
           </ResponsiveContainer>
