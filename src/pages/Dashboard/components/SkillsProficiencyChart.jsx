@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Plus
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const COHORTS = [
   { value: '2018-2022', label: '2018-2022' },
@@ -154,11 +155,66 @@ const getActionSuggestions = (skill) => {
   return suggestions.slice(0, 2);
 };
 
+const SendSupportModal = ({ isOpen, onClose, courseName, students, onSent }) => {
+  const [isSending, setIsSending] = useState(false);
+  const [message, setMessage] = useState(`Chào các em,\n\nKết quả đánh giá định kỳ môn ${courseName} cho thấy một số bạn vẫn chưa nắm vững phần kiến thức này. Khoa sẽ mở một buổi hướng dẫn thực hành bổ sung vào chiều thứ 5 tới.\n\nCác em vui lòng sắp xếp thời gian tham gia nhé.`);
+
+  if (!isOpen) return null;
+
+  const handleSend = () => {
+    setIsSending(true);
+    setTimeout(() => {
+      setIsSending(false);
+      onSent();
+      onClose();
+    }, 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-in zoom-in-95">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-xl"><Mail size={20} /></div>
+            <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm">Gửi hỗ trợ học thuật</h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="p-3 bg-blue-50/50 dark:bg-blue-500/5 rounded-xl border border-blue-100 dark:border-blue-900/30">
+            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Đối tượng gửi</p>
+            <p className="text-xs font-black text-gray-700 dark:text-gray-200 uppercase">{students.length} Sinh viên chưa đạt môn {courseName}</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nội dung thông báo</label>
+            <textarea 
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full h-32 p-4 bg-gray-50 dark:bg-gray-800 border-0 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+        </div>
+        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
+          <button onClick={onClose} className="px-6 py-2 text-xs font-bold text-gray-500 hover:text-gray-700">Hủy</button>
+          <button 
+            onClick={handleSend}
+            disabled={isSending}
+            className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+          >
+            {isSending ? 'Đang gửi...' : 'Xác nhận gửi'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SkillsProficiencyChart = () => {
   const [selectedCourse, setSelectedCourse] = useState('intro-prog');
   const [selectedCohort, setSelectedCohort] = useState('2022-2026');
   const [viewType, setViewType] = useState('table'); 
   const [showStudentModal, setShowStudentModal] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState(null);
 
@@ -176,24 +232,29 @@ const SkillsProficiencyChart = () => {
     })).sort((a, b) => a.score - b.score);
   }, [selectedCourse]);
 
-  const handleExportCSV = () => {
-    const csvContent = [
-      ['Báo cáo năng lực kỹ năng - ' + courses.find(c => c.id === selectedCourse)?.name],
-      ['Kỹ năng', 'Tỷ lệ đạt (%)', 'Điểm thành thạo', 'Nhu cầu DN', 'Xu hướng (%)'],
-      ...skills.map(s => [s.skill, s.passRate, s.masteryScore, s.industryDemand, s.trendValue])
-    ].map(row => row.join(',')).join('\n');
-    
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `bao-cao-nang-luc-${selectedCourse}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    setToast('Đã xuất báo cáo thành công!');
-    setTimeout(() => setToast(null), 3000);
+  const handleExportExcel = () => {
+    try {
+      const data = skills.map(s => ({
+        "Kỹ năng": s.skill,
+        "Mô tả": s.description,
+        "Tỷ lệ đạt (%)": s.passRate,
+        "Điểm thành thạo": s.masteryScore,
+        "Nhu cầu DN": s.industryDemand,
+        "Số SV chưa đạt": s.failedCount,
+        "Xu hướng": s.trend === 'up' ? `+${s.trendValue}%` : `${s.trendValue}%`
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, "Năng lực kỹ năng");
+      XLSX.writeFile(wb, `Bao-cao-nang-luc-${selectedCourse}.xlsx`);
+      
+      setToast('Đã xuất báo cáo Excel thành công!');
+      setTimeout(() => setToast(null), 3000);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      alert("Có lỗi xảy ra khi xuất Excel");
+    }
   };
   
   // KPI Calculations
@@ -382,9 +443,9 @@ const SkillsProficiencyChart = () => {
         </button>
 
         <button 
-          onClick={handleExportCSV}
+          onClick={handleExportExcel}
           className="px-6 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
-          <FileText className="h-4 w-4" /> Xuất báo cáo CSV
+          <FileText className="h-4 w-4" /> Xuất báo cáo Excel
         </button>
       </div>
 
@@ -421,6 +482,7 @@ const SkillsProficiencyChart = () => {
                 />
               </div>
               <button 
+                onClick={() => setShowSendModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg"
               >
                 <Mail size={12} /> Gửi hỗ trợ nhóm
@@ -458,6 +520,18 @@ const SkillsProficiencyChart = () => {
 
 
 
+
+      {/* 🚀 SEND SUPPORT MODAL */}
+      <SendSupportModal 
+        isOpen={showSendModal} 
+        onClose={() => setShowSendModal(false)}
+        courseName={courses.find(c => c.id === selectedCourse)?.name}
+        students={failedStudents}
+        onSent={() => {
+          setToast(`Đã gửi thông báo hỗ trợ tới ${failedStudents.length} sinh viên!`);
+          setTimeout(() => setToast(null), 3000);
+        }}
+      />
 
       {/* 🚀 TOAST NOTIFICATION */}
       {toast && (

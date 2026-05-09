@@ -7,19 +7,21 @@ const DrillDownModal = ({ isOpen, onClose, data }) => {
 
   if (!isOpen) return null;
 
+  const reportYearShort = (data?.year || 2023) % 100;
+  
   const classes = [
-    { name: 'K22_CNTT1', instructor: 'ThS. Nguyễn Văn A', completion: 85, failRate: '5%', status: 'good', size: 45, gpa: 7.8, riskStudents: 2, pendingTasks: 5 },
-    { name: 'K22_CNTT2', instructor: 'TS. Trần Thị B', completion: 72, failRate: '15%', status: 'warning', size: 42, gpa: 6.5, riskStudents: 8, pendingTasks: 12 },
-    { name: 'K22_CNTT3', instructor: 'ThS. Lê Hoàng C', completion: 92, failRate: '2%', status: 'good', size: 48, gpa: 8.2, riskStudents: 1, pendingTasks: 2 },
-    { name: 'K22_CNTT4', instructor: 'ThS. Phạm Nam D', completion: 45, failRate: '40%', status: 'critical', size: 40, gpa: 4.8, riskStudents: 18, pendingTasks: 25 },
-    { name: 'K22_CNTT5', instructor: 'ThS. Đỗ Minh E', completion: 88, failRate: '4%', status: 'good', size: 44, gpa: 7.6, riskStudents: 3, pendingTasks: 4 },
+    { name: `K${reportYearShort}_CNTT1`, instructor: 'ThS. Nguyễn Văn A', completion: 85, failRate: '5%', status: 'good', size: 45, gpa: 7.8, riskStudents: 2, pendingTasks: 5 },
+    { name: `K${reportYearShort-1}_CNTT2`, instructor: 'TS. Trần Thị B', completion: 72, failRate: '15%', status: 'warning', size: 42, gpa: 6.5, riskStudents: 8, pendingTasks: 12 },
+    { name: `K${reportYearShort}_CNTT3`, instructor: 'ThS. Lê Hoàng C', completion: 92, failRate: '2%', status: 'good', size: 48, gpa: 8.2, riskStudents: 1, pendingTasks: 2 },
+    { name: `K${reportYearShort-1}_CNTT4`, instructor: 'ThS. Phạm Nam D', completion: 45, failRate: '40%', status: 'critical', size: 40, gpa: 4.8, riskStudents: 18, pendingTasks: 25 },
+    { name: `K${reportYearShort}_CNTT5`, instructor: 'ThS. Đỗ Minh E', completion: 88, failRate: '4%', status: 'good', size: 44, gpa: 7.6, riskStudents: 3, pendingTasks: 4 },
   ];
 
   const students = [
-    { name: 'Nguyễn Văn Nam', id: 'SV001', class: 'K22_CNTT4', gpa: 3.2, reason: 'Nghỉ học quá 25%', priority: 'High' },
-    { name: 'Trần Minh Hải', id: 'SV005', class: 'K22_CNTT4', gpa: 3.8, reason: 'Nợ 5 bài tập Lab', priority: 'High' },
-    { name: 'Lê Thu Trang', id: 'SV012', class: 'K22_CNTT2', gpa: 4.5, reason: 'Điểm Mid-term < 4.0', priority: 'Medium' },
-    { name: 'Phạm Đức Anh', id: 'SV022', class: 'K22_CNTT4', gpa: 2.1, reason: 'Mất gốc thuật toán', priority: 'High' },
+    { name: 'Nguyễn Văn Nam', id: 'SV001', class: `K${reportYearShort-1}_CNTT4`, gpa: 3.2, reason: 'Nghỉ học quá 25%', priority: 'High' },
+    { name: 'Trần Minh Hải', id: 'SV005', class: `K${reportYearShort-1}_CNTT4`, gpa: 3.8, reason: 'Nợ 5 bài tập Lab', priority: 'High' },
+    { name: 'Lê Thu Trang', id: 'SV012', class: `K${reportYearShort-1}_CNTT2`, gpa: 4.5, reason: 'Điểm Mid-term < 4.0', priority: 'Medium' },
+    { name: 'Phạm Đức Anh', id: 'SV022', class: `K${reportYearShort-1}_CNTT4`, gpa: 2.1, reason: 'Mất gốc thuật toán', priority: 'High' },
   ];
 
   const handleClassClick = (className) => {
@@ -163,7 +165,12 @@ const DrillDownModal = ({ isOpen, onClose, data }) => {
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
                 <AlertCircle size={14} className="text-rose-500" /> Nhận diện Sinh viên Nguy cơ cao
               </h4>
-              <button className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline">Xem tất cả</button>
+              <button 
+                onClick={() => { onClose(); navigate('/students'); }}
+                className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:underline"
+              >
+                Xem tất cả
+              </button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -23,8 +23,10 @@ import {
   MessageCircle,
   AlertCircle,
   Sparkles,
-  Info
+  Info,
+  Download
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 import { COHORTS, courses, getDisplayData } from '../services/academicDataService';
 
@@ -419,6 +421,42 @@ const AcademicRankingChart = () => {
     { key: 'nguyCo', label: 'Nguy cơ (Yếu/Kém)', sub: 'Yếu & Kém', value: '10 SV', color: 'red', gradient: 'from-red-50' }
   ];
 
+  const handleExportExcel = () => {
+    try {
+      // 1. Tạo dữ liệu cho Sheet Tổng quan (KPIs)
+      const summaryData = kpiGroups.map(g => ({
+        "Phân loại": g.label,
+        "Chi tiết": g.sub,
+        "Số lượng": g.value
+      }));
+
+      // 2. Tạo dữ liệu cho Sheet Danh sách sinh viên
+      const studentsData = mockStudents.map(s => ({
+        "Mã SV": s.id,
+        "Họ tên": s.name,
+        "Lớp": s.class,
+        "Xếp loại": s.rank,
+        "Điểm GPA": s.gpa,
+        "Môn học cần hỗ trợ": s.subjects.join(', ') || 'Không'
+      }));
+
+      // 3. Khởi tạo Workbook và Sheets
+      const wb = XLSX.utils.book_new();
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      const wsStudents = XLSX.utils.json_to_sheet(studentsData);
+
+      // 4. Thêm Sheets vào Workbook
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Tổng quan xếp loại");
+      XLSX.utils.book_append_sheet(wb, wsStudents, "Danh sách sinh viên");
+
+      // 5. Xuất file
+      XLSX.writeFile(wb, `Bao-cao-hoc-luc-${selectedCohort}.xlsx`);
+    } catch (error) {
+      console.error("Lỗi khi xuất Excel:", error);
+      alert("Có lỗi xảy ra khi xuất báo cáo. Vui lòng thử lại!");
+    }
+  };
+
   return (
     <div className="space-y-8">
       <RankingDetailModal isOpen={!!detailGroup} onClose={() => setDetailGroup(null)} group={detailGroup || {}} students={detailGroup ? getFilteredStudents(detailGroup.key) : []} />
@@ -544,7 +582,7 @@ const AcademicRankingChart = () => {
           Gửi thông báo & Hỗ trợ học tập
         </button>
         <button 
-          onClick={() => alert('Hệ thống đang trích xuất dữ liệu và khởi tạo tệp báo cáo Excel (.xlsx)...')}
+          onClick={handleExportExcel}
           className="flex items-center gap-2 px-10 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-[24px] text-[13px] font-black uppercase tracking-tight shadow-sm transition-all hover:scale-105 active:scale-95 border border-gray-200/50 dark:border-white/5"
         >
           <FileText size={18} className="text-purple-500" />

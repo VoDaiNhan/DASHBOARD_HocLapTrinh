@@ -20,11 +20,12 @@ const ClassManagement = () => {
   const [selectedClasses, setSelectedClasses] = useState([]);
   const [instructorFilter, setInstructorFilter] = useState(null);
   const [showProgressModal, setShowProgressModal] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'single'|'bulk', data: any }
 
   // Generate cohort years dynamically (from 2020 to current year)
   const cohortYears = useMemo(() => {
     const years = [];
-    for (let year = 2020; year <= currentYear; year++) {
+    for (let year = 2020; year <= currentYear + 2; year++) {
       years.push(year);
     }
     return years.reverse(); // Most recent first
@@ -32,20 +33,7 @@ const ClassManagement = () => {
 
   // Filter classes
   const filteredClasses = useMemo(() => {
-    const currentDate = new Date();
-    
     return classes.filter(cls => {
-      // IMPORTANT: Check if cohort has started yet
-      // Year 1 (Freshman) starts in October
-      // Example: Cohort 2026 starts in October 2026
-      const cohortYear = cls.cohort;
-      const cohortStartDate = new Date(cohortYear, 9, 1); // October 1st (month 9 = October in JS)
-      
-      // If current date is before cohort start date, don't show this class
-      if (currentDate < cohortStartDate) {
-        return false;
-      }
-      
       // Instructor filter (when clicking on instructor name)
       if (instructorFilter && cls.instructor !== instructorFilter) {
         return false;
@@ -113,10 +101,22 @@ const ClassManagement = () => {
   };
 
   const handleDeleteClass = (cls) => {
-    if (window.confirm(`Bạn có chắc muốn xóa lớp ${cls.name}?`)) {
+    setDeleteConfirm({ type: 'single', data: cls });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    
+    if (deleteConfirm.type === 'single') {
+      const cls = deleteConfirm.data;
       setClasses(prev => prev.filter(c => c.id !== cls.id));
       setSelectedClasses(prev => prev.filter(id => id !== cls.id));
+    } else if (deleteConfirm.type === 'bulk') {
+      setClasses(prev => prev.filter(c => !selectedClasses.includes(c.id)));
+      setSelectedClasses([]);
     }
+    
+    setDeleteConfirm(null);
   };
 
   const handleSelectClass = (classId) => {
@@ -724,6 +724,45 @@ const ClassManagement = () => {
           isEdit={!!editingClass}
         />
       )}
+
+      {/* 🗑️ DELETE CONFIRM MODAL */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200" 
+            onClick={() => setDeleteConfirm(null)} 
+          />
+          <div className="relative bg-white dark:bg-gray-800 w-full max-w-sm rounded-[24px] shadow-2xl p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-50 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 text-red-600">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Xác nhận xóa</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                {deleteConfirm.type === 'single' 
+                  ? `Bạn có chắc chắn muốn xóa lớp ${deleteConfirm.data.name}? Hành động này không thể hoàn tác.`
+                  : `Bạn có chắc chắn muốn xóa ${selectedClasses.length} lớp đã chọn? Hành động này không thể hoàn tác.`
+                }
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mt-8">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-6 py-3 text-xs font-black text-gray-500 uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-all"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-red-500/30 transition-all hover:scale-105 active:scale-95"
+              >
+                Xóa ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -810,7 +849,7 @@ const ClassModal = ({ isOpen, onClose, onSubmit, initialData, isEdit }) => {
                 onChange={(e) => setFormData(prev => ({ ...prev, cohort: parseInt(e.target.value) }))}
                 className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {Array.from({ length: 7 }, (_, i) => currentYear - i).map(year => (
+                {Array.from({ length: 10 }, (_, i) => (currentYear + 2) - i).map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
