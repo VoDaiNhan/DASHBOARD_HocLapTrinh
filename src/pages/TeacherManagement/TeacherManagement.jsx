@@ -691,7 +691,7 @@ const TeacherManagement = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const teachers = useMemo(
+  const initialTeachers = useMemo(
     () => (mockDepartmentData?.teachers || []).map((t) => ({
       ...t,
       courses: COURSE_ASSIGNMENTS[t.id] || [],
@@ -699,6 +699,9 @@ const TeacherManagement = () => {
     })),
     []
   );
+
+  const [teachers, setTeachers] = useState(initialTeachers);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Tất cả môn học từ COURSE_ASSIGNMENTS
   const allCourses = useMemo(() => {
@@ -763,7 +766,10 @@ const TeacherManagement = () => {
             ))}
           </div>
 
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+          >
             <Plus className="h-4 w-4" />
             Thêm Giảng Viên
           </button>
@@ -908,6 +914,81 @@ const TeacherManagement = () => {
       {toast && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-bold flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-8">
           <CheckCircle className="h-5 w-5 text-green-400" />
+          {toast}
+        </div>
+      )}
+      {/* Add Teacher Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="relative bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Thêm giảng viên mới</h3>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                <X size={20} className="text-gray-400" />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const newTeacher = {
+                id: teachers.length + 1,
+                name: formData.get('name'),
+                position: formData.get('position'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                averageRating: 5.0,
+                projects: 0,
+                publications: 0,
+                courses: [formData.get('specialization')],
+                status: 'active'
+              };
+              setTeachers([newTeacher, ...teachers]);
+              setShowAddModal(false);
+              showToast(`Đã thêm giảng viên ${newTeacher.name} thành công!`);
+            }} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Họ và tên</label>
+                <input name="name" required type="text" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="Ví dụ: TS. Nguyễn Văn A" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Chức vụ</label>
+                  <select name="position" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                    <option>Giảng viên</option>
+                    <option>Giảng viên chính</option>
+                    <option>Phó trưởng khoa</option>
+                    <option>Trưởng khoa</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Chuyên môn</label>
+                  <select name="specialization" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                    {allCourses.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email công vụ</label>
+                <input name="email" required type="email" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="example@university.edu.vn" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Số điện thoại</label>
+                <input name="phone" required type="text" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="090x xxx xxx" />
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">Hủy</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">Xác nhận thêm</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] px-6 py-3 bg-gray-900 text-white rounded-full text-sm font-bold flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-8">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           {toast}
         </div>
       )}
