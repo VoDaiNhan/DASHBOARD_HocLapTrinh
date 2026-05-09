@@ -31,14 +31,7 @@ const ReportFilters = ({ onFilterChange }) => {
     { value: 'custom', label: 'Tùy chỉnh' }
   ];
 
-  const reportTypes = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'performance', label: 'Hiệu suất' },
-    { value: 'students', label: 'Sinh viên' },
-    { value: 'courses', label: 'Khóa học' },
-    { value: 'teachers', label: 'Giảng viên' },
-    { value: 'classes', label: 'Lớp học' }
-  ];
+
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -57,7 +50,7 @@ const ReportFilters = ({ onFilterChange }) => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="max-w-xl">
         {/* Date Range Filter */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
@@ -81,29 +74,7 @@ const ReportFilters = ({ onFilterChange }) => {
           </div>
         </div>
 
-        {/* Report Type Filter */}
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
-            <Filter size={16} />
-            Loại báo cáo
-          </label>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-            {reportTypes.map((type) => (
-              <button
-                key={type.value}
-                onClick={() => handleReportTypeChange(type.value)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  reportType === type.value
-                    ? 'bg-blue-500 text-white shadow-sm'
-                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                {type.label}
-              </button>
-            ))}
-          </div>
         </div>
-      </div>
 
       {/* Custom Date Range (shown when custom is selected) */}
       {dateRange === 'custom' && (

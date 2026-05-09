@@ -1,21 +1,28 @@
 import React from 'react';
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from 'recharts';
 import { GraduationCap } from 'lucide-react';
 
-const GraduationEmploymentChart = () => {
-  const data = [
-    { cohort: 'K18', graduationRate: 82, employmentRate: 85, label: 'Khóa 2018' },
-    { cohort: 'K19', graduationRate: 84, employmentRate: 87, label: 'Khóa 2019' },
-    { cohort: 'K20', graduationRate: 85, employmentRate: 90, label: 'Khóa 2020' },
-    { cohort: 'K21', graduationRate: 87, employmentRate: 92, label: 'Khóa 2021' },
-    { cohort: 'K22', graduationRate: 85, employmentRate: 93, label: 'Khóa 2022' },
+const GraduationEmploymentChart = ({ filters }) => {
+  // Base data for 6 cohorts
+  const baseData = [
+    { cohort: 'K18', graduated: 450, label: 'Khóa 2018' },
+    { cohort: 'K19', graduated: 480, label: 'Khóa 2019' },
+    { cohort: 'K20', graduated: 510, label: 'Khóa 2020' },
+    { cohort: 'K21', graduated: 535, label: 'Khóa 2021' },
+    { cohort: 'K22', graduated: 520, label: 'Khóa 2022' },
+    { cohort: 'K23', graduated: 560, label: 'Khóa 2023' },
   ];
 
-  const latestGrad = data[data.length - 1].graduationRate;
-  const latestEmp = data[data.length - 1].employmentRate;
+  // Simulate filter effect
+  const data = baseData.map(d => ({
+    ...d,
+    graduated: filters?.dateRange === 'month' ? d.graduated + 15 : d.graduated
+  }));
+
+  const latestGrad = data[data.length - 1].graduated;
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -26,13 +33,8 @@ const GraduationEmploymentChart = () => {
           <div className="space-y-1">
             <p className="text-sm flex items-center gap-2">
               <span className="w-3 h-3 rounded-sm bg-emerald-500 inline-block"></span>
-              <span className="text-gray-500">Tốt nghiệp: </span>
-              <span className="font-bold text-emerald-600">{d?.graduationRate}%</span>
-            </p>
-            <p className="text-sm flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-              <span className="text-gray-500">Có việc làm: </span>
-              <span className="font-bold text-blue-600">{d?.employmentRate}%</span>
+              <span className="text-gray-500">Đã tốt nghiệp: </span>
+              <span className="font-bold text-emerald-600">{d?.graduated} SV</span>
             </p>
           </div>
         </div>
@@ -49,45 +51,27 @@ const GraduationEmploymentChart = () => {
             <GraduationCap className="text-emerald-600 dark:text-emerald-400" size={22} />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Tốt nghiệp & Việc làm</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Theo dõi qua các khóa đã ra trường</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Sinh viên Tốt nghiệp</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Số lượng sinh viên ra trường (6 khóa gần nhất)</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-center">
-            <p className="text-xl font-bold text-emerald-600">{latestGrad}%</p>
-            <p className="text-xs text-gray-500">Tốt nghiệp</p>
-          </div>
-          <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-blue-600">{latestEmp}%</p>
-            <p className="text-xs text-gray-500">Có việc</p>
+            <p className="text-xl font-bold text-emerald-600">{latestGrad}</p>
+            <p className="text-xs text-gray-500">Sinh viên (K23)</p>
           </div>
         </div>
       </div>
 
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-            <XAxis dataKey="cohort" tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }} />
-            <YAxis domain={[70, 100]} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(v) => `${v}%`} />
+          <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} vertical={false} />
+            <XAxis dataKey="cohort" tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 500 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              formatter={(value) => value === 'graduationRate' ? 'Tốt nghiệp' : 'Việc làm'}
-              iconType="circle"
-              wrapperStyle={{ fontSize: 12 }}
-            />
-            <Bar dataKey="graduationRate" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={40} opacity={0.85} />
-            <Line
-              type="monotone"
-              dataKey="employmentRate"
-              stroke="#3b82f6"
-              strokeWidth={3}
-              dot={{ r: 5, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
-              activeDot={{ r: 7 }}
-            />
-          </ComposedChart>
+            <Bar dataKey="graduated" name="Sinh viên tốt nghiệp" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={50} opacity={0.85} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>

@@ -5,20 +5,32 @@ import {
 } from 'recharts';
 import { History, LayoutGrid, Filter, ArrowDownToLine } from 'lucide-react';
 
-const CourseAnalytics = () => {
-  const comparisonData = [
+const CourseAnalytics = ({ filters }) => {
+  const cohortName = filters?.cohort && filters.cohort !== 'all' ? `(Khóa ${filters.cohort})` : '';
+  const courseName = filters?.course && filters.course !== 'all' ? ` - Môn ${filters.course}` : '';
+  
+  // Fake dynamic data based on filters
+  const baseComparison = [
     { name: 'OOP', prev: 18, current: 28, label: 'Fail Rate (%)' },
     { name: 'CTDLGT', prev: 15, current: 22, label: 'Fail Rate (%)' },
     { name: 'KTLT', prev: 12, current: 15, label: 'Fail Rate (%)' },
     { name: 'NMLT', prev: 10, current: 12, label: 'Fail Rate (%)' },
   ];
+  
+  const comparisonData = filters?.course && filters.course !== 'all' 
+    ? baseComparison.filter(d => d.name === filters.course)
+    : baseComparison.map(d => ({
+        ...d,
+        current: filters?.cohort === 'K25' ? d.current + 5 : filters?.cohort === 'K26' ? d.current - 3 : d.current
+      }));
 
   const funnelData = [
-    { step: 'Đăng ký', count: 120, fill: '#6366f1' },
-    { step: 'Tham gia', count: 110, fill: '#8b5cf6' },
-    { step: 'Hoàn thành', count: 92, fill: '#ec4899' },
-    { step: 'Đạt (Pass)', count: 75, fill: '#10b981' },
+    { step: 'Đăng ký', count: filters?.cohort === 'K25' ? 80 : 120, fill: '#6366f1' },
+    { step: 'Tham gia', count: filters?.cohort === 'K25' ? 70 : 110, fill: '#8b5cf6' },
+    { step: 'Hoàn thành', count: filters?.cohort === 'K25' ? 60 : 92, fill: '#ec4899' },
+    { step: 'Đạt (Pass)', count: filters?.cohort === 'K25' ? 45 : 75, fill: '#10b981' },
   ];
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -31,7 +43,9 @@ const CourseAnalytics = () => {
             </div>
             <div>
               <h3 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">So sánh Tỷ lệ Rớt (HK trước vs Nay)</h3>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Xác định xu hướng biến động chất lượng</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                Xác định xu hướng biến động chất lượng {cohortName}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -65,8 +79,10 @@ const CourseAnalytics = () => {
               <Filter className="text-indigo-600" size={20} />
             </div>
             <div>
-              <h3 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">Phễu Hoàn thành (Completion Funnel)</h3>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Theo dõi tỷ lệ rơi rụng sinh viên</p>
+              <h3 className="text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">Phễu Hoàn thành {courseName}</h3>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">
+                Theo dõi tỷ lệ rơi rụng sinh viên {cohortName}
+              </p>
             </div>
           </div>
           <button className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors">

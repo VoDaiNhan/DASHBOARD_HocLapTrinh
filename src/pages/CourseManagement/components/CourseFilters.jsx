@@ -6,7 +6,8 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedInstructor, setSelectedInstructor] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
-  const [selectedRisk, setSelectedRisk] = useState('all');
+  const [selectedCohort, setSelectedCohort] = useState('all');
+  const [selectedCourse, setSelectedCourse] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   
   // Lấy danh sách giảng viên duy nhất
@@ -20,7 +21,7 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
 
   const handleStatusChange = (status) => {
     setSelectedStatus(status);
-    onFilterChange?.({ status: status === 'all' ? null : status, instructor: selectedInstructor, semester: selectedSemester, risk: selectedRisk });
+    onFilterChange?.({ status: status === 'all' ? null : status, instructor: selectedInstructor, semester: selectedSemester, cohort: selectedCohort, course: selectedCourse });
   };
 
   const handleInstructorChange = (instructor) => {
@@ -30,7 +31,17 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
 
   const handleSemesterChange = (semester) => {
     setSelectedSemester(semester);
-    onFilterChange?.({ status: selectedStatus === 'all' ? null : selectedStatus, instructor: selectedInstructor, semester: semester === 'all' ? null : semester, risk: selectedRisk });
+    onFilterChange?.({ status: selectedStatus === 'all' ? null : selectedStatus, instructor: selectedInstructor, semester: semester === 'all' ? null : semester, cohort: selectedCohort, course: selectedCourse });
+  };
+
+  const handleCohortChange = (cohort) => {
+    setSelectedCohort(cohort);
+    onFilterChange?.({ status: selectedStatus === 'all' ? null : selectedStatus, instructor: selectedInstructor, semester: selectedSemester, cohort: cohort === 'all' ? null : cohort, course: selectedCourse });
+  };
+
+  const handleCourseChange = (course) => {
+    setSelectedCourse(course);
+    onFilterChange?.({ status: selectedStatus === 'all' ? null : selectedStatus, instructor: selectedInstructor, semester: selectedSemester, cohort: selectedCohort, course: course === 'all' ? null : course });
   };
 
   const handleRiskChange = (risk) => {
@@ -43,9 +54,10 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
     setSelectedStatus('all');
     setSelectedInstructor('all');
     setSelectedSemester('all');
-    setSelectedRisk('all');
+    setSelectedCohort('all');
+    setSelectedCourse('all');
     onSearch?.('');
-    onFilterChange?.({ status: null, instructor: null, semester: null, risk: null });
+    onFilterChange?.({ status: null, instructor: null, semester: null, cohort: null, course: null });
   };
 
   const statusOptions = [
@@ -122,18 +134,34 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
               </select>
             </div>
 
-            {/* Theo rủi ro */}
+            {/* Theo khóa */}
             <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className="text-gray-500" />
+              <UserCheck size={16} className="text-gray-500" />
               <select
-                value={selectedRisk}
-                onChange={(e) => handleRiskChange(e.target.value)}
+                value={selectedCohort}
+                onChange={(e) => handleCohortChange(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">Theo rủi ro</option>
-                <option value="risk">Khóa có rủi ro</option>
-                <option value="stable">Khóa ổn định</option>
-                <option value="good">Khóa tốt</option>
+                <option value="all">Tất cả Khóa</option>
+                <option value="K26">Khóa K26</option>
+                <option value="K25">Khóa K25</option>
+                <option value="K24">Khóa K24</option>
+              </select>
+            </div>
+
+            {/* Theo môn học */}
+            <div className="flex items-center gap-2">
+              <UserCheck size={16} className="text-gray-500" />
+              <select
+                value={selectedCourse}
+                onChange={(e) => handleCourseChange(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Tất cả Môn học</option>
+                <option value="OOP">Lập trình hướng đối tượng</option>
+                <option value="CTDLGT">Cấu trúc dữ liệu & GT</option>
+                <option value="KTLT">Kỹ thuật lập trình</option>
+                <option value="NMLT">Nhập môn lập trình</option>
               </select>
             </div>
           </div>
@@ -156,7 +184,7 @@ const CourseFilters = ({ onFilterChange, onSearch, courses = [] }) => {
             ))}
 
             {/* Clear Filters */}
-            {(searchTerm || selectedStatus !== 'all' || selectedInstructor !== 'all' || selectedSemester !== 'all' || selectedRisk !== 'all') && (
+            {(searchTerm || selectedStatus !== 'all' || selectedInstructor !== 'all' || selectedSemester !== 'all' || selectedCohort !== 'all' || selectedCourse !== 'all') && (
               <button
                 onClick={clearFilters}
                 className="ml-auto flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"

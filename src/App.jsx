@@ -8,8 +8,6 @@ import ClassManagement from './pages/ClassManagement/ClassManagement';
 import ClassDetail from './pages/ClassDetail/ClassDetail';
 import ClassDetailPage from './pages/ClassDetail/ClassDetailPage';
 import ClassDetailManagement from './pages/ClassDetail/ClassDetailManagement';
-import CourseManagement from './pages/CourseManagement/CourseManagement';
-import CourseDetail from './pages/CourseManagement/CourseDetail';
 import StudentTracking from './pages/StudentTracking/StudentTracking';
 // Ẩn Assignment Management vì quản lý ngành không chấm bài
 // import AssignmentManagement from './pages/AssignmentManagement/AssignmentManagement';
@@ -37,8 +35,6 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/teachers" element={<TeacherManagement />} />
             <Route path="/students" element={<StudentTracking />} />
-            <Route path="/courses" element={<CourseManagement />} />
-            <Route path="/courses/:id" element={<CourseDetail />} />
             <Route path="/classes" element={<ClassManagement />} />
             <Route path="/classes/:classId" element={<ClassDetailManagement />} />
             <Route path="/classes/:classId/progress" element={<ClassDetailPage />} />

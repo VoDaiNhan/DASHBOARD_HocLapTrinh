@@ -6,8 +6,6 @@ import EnrollmentTrendChart from './components/EnrollmentTrendChart';
 import GraduationEmploymentChart from './components/GraduationEmploymentChart';
 
 import DepartmentHealthScore from './components/DepartmentHealthScore';
-import InsightsPanel from './components/InsightsPanel';
-import DetailedDataTable from './components/DetailedDataTable';
 import { mockDashboardData, mockStudentTrackingData, mockClassData } from '../../data/mockData';
 
 const Reports = () => {
@@ -94,27 +92,17 @@ const Reports = () => {
 
         {/* Row 1: Enrollment Trend + Graduation/Employment */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <EnrollmentTrendChart />
-          <GraduationEmploymentChart />
+          <EnrollmentTrendChart filters={filters} />
+          <GraduationEmploymentChart filters={filters} />
         </div>
 
 
-        {/* Row 3: Department Health + Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-1">
+        {/* Row 3: Department Health */}
+        <div className="flex justify-center mb-6">
+          <div className="w-full lg:w-1/2">
             <DepartmentHealthScore />
           </div>
-          <div className="lg:col-span-2">
-            <InsightsPanel stats={stats} courses={courses} />
-          </div>
         </div>
-
-        {/* Detailed Data Table */}
-        <DetailedDataTable
-          courses={courses}
-          classes={mockClassData.classes || []}
-          students={students}
-        />
 
         {/* Export Section */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mt-6">

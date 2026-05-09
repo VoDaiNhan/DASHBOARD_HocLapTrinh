@@ -76,12 +76,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       current: location.pathname === '/students' || location.pathname.startsWith('/students/')
     },
     {
-      name: 'Hiệu suất Khóa học',
-      href: '/courses',
-      icon: BookOpen,
-      current: location.pathname === '/courses' || location.pathname.startsWith('/courses/')
-    },
-    {
       name: 'Phân Tích Ngành',
       href: '/reports',
       icon: BarChart3,

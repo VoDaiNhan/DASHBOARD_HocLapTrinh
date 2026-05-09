@@ -5,9 +5,8 @@ import {
 } from 'recharts';
 import { Users } from 'lucide-react';
 
-const EnrollmentTrendChart = () => {
-  const data = [
-    { year: 'K20', enrolled: 111, label: 'Khóa 2020' },
+const EnrollmentTrendChart = ({ filters }) => {
+  const baseData = [
     { year: 'K21', enrolled: 117, label: 'Khóa 2021' },
     { year: 'K22', enrolled: 132, label: 'Khóa 2022' },
     { year: 'K23', enrolled: 123, label: 'Khóa 2023' },
@@ -15,6 +14,12 @@ const EnrollmentTrendChart = () => {
     { year: 'K25', enrolled: 179, label: 'Khóa 2025' },
     { year: 'K26', enrolled: 186, label: 'Khóa 2026' },
   ];
+
+  // Simulate filter effect
+  const data = baseData.map(d => ({
+    ...d,
+    enrolled: filters?.dateRange === 'month' ? d.enrolled - 10 : d.enrolled
+  }));
 
   const totalCurrentYear = data[data.length - 1].enrolled;
   const growth = Math.round(((data[data.length - 1].enrolled - data[data.length - 2].enrolled) / data[data.length - 2].enrolled) * 100);

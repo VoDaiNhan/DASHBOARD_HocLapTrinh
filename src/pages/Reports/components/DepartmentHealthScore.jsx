@@ -9,7 +9,6 @@ const DepartmentHealthScore = () => {
   const healthData = [
     { metric: 'GPA', value: 78, fullMark: 100 },
     { metric: 'Tốt nghiệp', value: 85, fullMark: 100 },
-    { metric: 'Việc làm', value: 93, fullMark: 100 },
     { metric: 'Nghiên cứu', value: 72, fullMark: 100 },
     { metric: 'Chuyên cần', value: 86, fullMark: 100 },
     { metric: 'Hài lòng', value: 88, fullMark: 100 },
@@ -59,8 +58,8 @@ const DepartmentHealthScore = () => {
           <Shield className="text-teal-600 dark:text-teal-400" size={22} />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Sức khỏe Ngành</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Đánh giá tổng hợp 6 chỉ số</p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Chỉ Số Năng Lực</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Đánh giá tổng hợp 5 chỉ số</p>
         </div>
       </div>
 

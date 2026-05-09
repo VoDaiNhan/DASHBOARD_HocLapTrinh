@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Filter, Download, AlertCircle } from 'lucide-react';
+import { BookOpen, Search, Filter, Download, AlertCircle, X, Calendar, Clock, MapPin, Users, Send } from 'lucide-react';
 import CourseKPIs from './components/CourseKPIs';
 import CourseAlertCenter from './components/CourseAlertCenter';
 
@@ -11,6 +11,60 @@ import { mockDashboardData } from '../../data/mockData';
 const CourseManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({ cohort: null, course: null });
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+
+  const MeetingScheduleModal = () => (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowMeetingModal(false)}>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-indigo-50 dark:bg-indigo-900/20">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-800/40 rounded-xl">
+              <Calendar className="text-indigo-600 dark:text-indigo-400" size={20} />
+            </div>
+            <h3 className="text-base font-black text-gray-900 dark:text-white">Lên lịch họp tổ bộ môn</h3>
+          </div>
+          <button onClick={() => setShowMeetingModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Chủ đề cuộc họp</label>
+            <input type="text" defaultValue="Review đề thi OOP và đánh giá tiến độ môn CTDLGT" className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Calendar size={12}/> Ngày họp</label>
+              <input type="date" className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Clock size={12}/> Thời gian</label>
+              <input type="time" defaultValue="09:00" className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><MapPin size={12}/> Địa điểm / Link họp</label>
+            <input type="text" defaultValue="Phòng họp khoa (P.301) / Google Meet" className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Users size={12}/> Thành phần tham dự</label>
+            <div className="p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl space-y-2">
+              <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="rounded text-indigo-600 focus:ring-indigo-500" /><span className="text-sm font-bold">Ban chủ nhiệm khoa</span></label>
+              <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="rounded text-indigo-600 focus:ring-indigo-500" /><span className="text-sm font-bold">Tổ trưởng bộ môn KTPM</span></label>
+              <label className="flex items-center gap-2"><input type="checkbox" defaultChecked className="rounded text-indigo-600 focus:ring-indigo-500" /><span className="text-sm font-bold">Các giảng viên phụ trách OOP & CTDLGT</span></label>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+          <button onClick={() => setShowMeetingModal(false)} className="px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">Hủy</button>
+          <button onClick={() => { alert('Đã gửi giấy mời họp thành công!'); setShowMeetingModal(false); }} className="px-5 py-2 bg-indigo-600 text-white text-sm font-black rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2">
+            <Send size={16} /> Gửi lời mời họp
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-900 pb-20">
@@ -53,7 +107,14 @@ const CourseManagement = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+        {isFilterOpen && (
+          <CourseFilters 
+            onFilterChange={(newFilters) => setFilters(newFilters)} 
+            onSearch={setSearchTerm} 
+          />
+        )}
+        
         {/* TOP: KPI — Các chỉ số đào tạo then chốt */}
         <CourseKPIs />
 
@@ -65,7 +126,7 @@ const CourseManagement = () => {
         <TeacherImpact />
 
         {/* MID 4: ANALYTICS — Trend và Phễu hoàn thành */}
-        <CourseAnalytics />
+        <CourseAnalytics filters={filters} />
 
         {/* Footer recommendation (Factual only) */}
         <div className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-200">
@@ -92,12 +153,17 @@ const CourseManagement = () => {
                 </p>
               </div>
             </div>
-            <button className="px-8 py-4 bg-white text-indigo-900 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-50 transition-all shrink-0 shadow-lg">
+            <button 
+              onClick={() => setShowMeetingModal(true)}
+              className="px-8 py-4 bg-white text-indigo-900 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-50 transition-all shrink-0 shadow-lg"
+            >
               Lên lịch họp tổ bộ môn
             </button>
           </div>
         </div>
       </div>
+      
+      {showMeetingModal && <MeetingScheduleModal />}
     </div>
   );
 };
