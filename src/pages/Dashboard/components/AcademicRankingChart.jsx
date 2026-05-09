@@ -26,63 +26,18 @@ import {
   Info
 } from 'lucide-react';
 
-const courses = [
-  { id: 'all', name: 'Tất cả môn học' },
-  { id: 'it', name: 'Công nghệ thông tin' },
-  { id: 'cs', name: 'Khoa học máy tính' },
-  { id: 'is', name: 'Hệ thống thông tin' }
-];
+import { COHORTS, courses, getDisplayData } from '../services/academicDataService';
 
-const academicData = [
-  {
-    year: "2022",
-    categories: [
-      { name: "Xuất sắc", value: 8, key: "xuatSac" },
-      { name: "Giỏi", value: 15, key: "gioi" },
-      { name: "Khá", value: 25, key: "kha" },
-      { name: "Trung bình Khá", value: 15, key: "trungBinhKha" },
-      { name: "Trung bình", value: 20, key: "trungBinh" },
-      { name: "Yếu", value: 12, key: "yeu" },
-      { name: "Kém", value: 5, key: "kem" },
-    ]
-  },
-  {
-    year: "2023",
-    categories: [
-      { name: "Xuất sắc", value: 10, key: "xuatSac" },
-      { name: "Giỏi", value: 18, key: "gioi" },
-      { name: "Khá", value: 22, key: "kha" },
-      { name: "Trung bình Khá", value: 18, key: "trungBinhKha" },
-      { name: "Trung bình", value: 17, key: "trungBinh" },
-      { name: "Yếu", value: 10, key: "yeu" },
-      { name: "Kém", value: 5, key: "kem" },
-    ]
-  },
-  {
-    year: "2024",
-    categories: [
-      { name: "Xuất sắc", value: 12, key: "xuatSac" },
-      { name: "Giỏi", value: 20, key: "gioi" },
-      { name: "Khá", value: 25, key: "kha" },
-      { name: "Trung bình Khá", value: 15, key: "trungBinhKha" },
-      { name: "Trung bình", value: 18, key: "trungBinh" },
-      { name: "Yếu", value: 7, key: "yeu" },
-      { name: "Kém", value: 3, key: "kem" },
-    ]
-  },
-  {
-    year: "2025",
-    categories: [
-      { name: "Xuất sắc", value: 15, key: "xuatSac" },
-      { name: "Giỏi", value: 22, key: "gioi" },
-      { name: "Khá", value: 28, key: "kha" },
-      { name: "Trung bình Khá", value: 12, key: "trungBinhKha" },
-      { name: "Trung bình", value: 13, key: "trungBinh" },
-      { name: "Yếu", value: 7, key: "yeu" },
-      { name: "Kém", value: 3, key: "kem" },
-    ]
-  }
-];
+// Initial data will be handled by useMemo using getDisplayData
+const CATEGORY_MAP = {
+  excellent: "xuatSac",
+  good: "gioi",
+  kha: "kha",
+  tbKha: "trungBinhKha",
+  trungBinh: "trungBinh",
+  yeu: "yeu",
+  kem: "kem"
+};
 
 const COLORS = {
   "xuatSac": "#10b981",
@@ -415,24 +370,37 @@ const NotificationHubModal = ({ isOpen, onClose }) => {
 
 const AcademicRankingChart = () => {
   const [selectedCourse, setSelectedCourse] = useState('all');
+  const [selectedCohort, setSelectedCohort] = useState('2022-2026');
   const [detailGroup, setDetailGroup] = useState(null);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
 
+  const rawData = useMemo(() => getDisplayData(selectedCourse, selectedCohort), [selectedCourse, selectedCohort]);
+
   const processedData = useMemo(() => {
-    return academicData.map(d => {
-      const total = d.categories.reduce((sum, c) => sum + c.value, 0);
+    return rawData.map(d => {
       const entry = { year: d.year };
+      const categories = [
+        { key: 'xuatSac', value: d.excellent || 0 },
+        { key: 'gioi', value: d.good || 0 },
+        { key: 'kha', value: d.kha || 0 },
+        { key: 'trungBinhKha', value: d.tbKha || 0 },
+        { key: 'trungBinh', value: d.trungBinh || 0 },
+        { key: 'yeu', value: d.yeu || 0 },
+        { key: 'kem', value: d.kem || 0 }
+      ];
+
+      const total = categories.reduce((sum, c) => sum + c.value, 0);
       let currentY = 0;
       
-      d.categories.forEach(c => {
+      categories.forEach(c => {
         entry[c.key] = c.value;
-        const height = (c.value / total);
+        const height = (c.value / (total || 1));
         entry[`c_${c.key}`] = currentY + height / 2;
         currentY += height;
       });
       return entry;
     });
-  }, []);
+  }, [rawData]);
 
   const getFilteredStudents = (groupKey) => {
     switch(groupKey) {
@@ -466,9 +434,31 @@ const AcademicRankingChart = () => {
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5 italic">Số liệu thống kê 4 năm • Đường nối tâm điểm chuẩn xác</p>
             </div>
           </div>
-          <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="pl-4 pr-10 py-1.5 border-none rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22/%3E%3C/svg%3E')] bg-[length:20px_20px] bg-[right:12px_center] bg-no-repeat cursor-pointer">
-            {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <div className="flex items-center gap-6">
+            {/* Course Selector */}
+            <div className="relative group">
+              <select 
+                value={selectedCourse} 
+                onChange={(e) => setSelectedCourse(e.target.value)} 
+                className="pl-4 pr-12 py-2.5 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-200 outline-none appearance-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-all min-w-[180px] shadow-sm"
+              >
+                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <ArrowUpDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-indigo-500 transition-colors" />
+            </div>
+
+            {/* Cohort Selector */}
+            <div className="relative group">
+              <select 
+                value={selectedCohort} 
+                onChange={(e) => setSelectedCohort(e.target.value)} 
+                className="pl-4 pr-12 py-2.5 border-none rounded-2xl text-[10px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 outline-none appearance-none cursor-pointer hover:bg-indigo-100/50 dark:hover:bg-indigo-900/50 transition-all min-w-[140px] shadow-sm"
+              >
+                {COHORTS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+              <Sparkles size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none group-hover:scale-110 transition-transform" />
+            </div>
+          </div>
         </div>
 
         <div className="h-[320px] w-full">
@@ -512,7 +502,15 @@ const AcademicRankingChart = () => {
         </div>
 
         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex flex-wrap justify-center gap-x-6 gap-y-3">
-          {academicData[0].categories.map((cat) => (
+          {[
+            { name: "Xuất sắc", key: "xuatSac" },
+            { name: "Giỏi", key: "gioi" },
+            { name: "Khá", key: "kha" },
+            { name: "Trung bình Khá", key: "trungBinhKha" },
+            { name: "Trung bình", key: "trungBinh" },
+            { name: "Yếu", key: "yeu" },
+            { name: "Kém", key: "kem" },
+          ].map((cat) => (
             <div key={cat.key} className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[cat.key] }}></div>
               <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">{cat.name}</span>

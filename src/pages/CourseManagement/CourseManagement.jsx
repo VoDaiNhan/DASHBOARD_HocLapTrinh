@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Search, Filter, Download, AlertCircle } from 'lucide-react';
 import CourseKPIs from './components/CourseKPIs';
 import CourseAlertCenter from './components/CourseAlertCenter';
-import CourseHealthScore from './components/CourseHealthScore';
+
 import TeacherImpact from './components/TeacherImpact';
 import CourseAnalytics from './components/CourseAnalytics';
 import CourseFilters from './components/CourseFilters';
@@ -60,8 +60,6 @@ const CourseManagement = () => {
         {/* MID 1: ALERTS — Những gì cần xử lý ngay? */}
         <CourseAlertCenter />
 
-        {/* MID 2: HEALTH & HEATMAP — Scan nhanh sức khỏe toàn khóa */}
-        <CourseHealthScore />
 
         {/* MID 3: TEACHER IMPACT — Đánh giá đội ngũ giảng dạy */}
         <TeacherImpact />

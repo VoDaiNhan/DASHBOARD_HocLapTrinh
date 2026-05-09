@@ -118,10 +118,10 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div className="flex flex-col">
               <span className={`text-sm font-black uppercase tracking-tighter leading-none ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Department
+                Quản lý
               </span>
               <span className={`text-lg font-black uppercase tracking-widest leading-none ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                Manager
+                Chuyên ngành
               </span>
             </div>
           </div>
